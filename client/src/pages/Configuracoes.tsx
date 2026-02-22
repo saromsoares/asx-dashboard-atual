@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { useIdioma } from '@/hooks/useIdioma';
 import { useCustos } from '@/hooks/useCustos';
-import { Clock } from 'lucide-react';
+import { Clock, ArrowLeft } from 'lucide-react';
 
 export default function Configuracoes() {
+  const [, setLocation] = useLocation();
   const { idioma, setIdioma, t } = useIdioma();
   const { taxaCambio, setTaxaCambio } = useCustos();
   const [horaBrasil, setHoraBrasil] = useState('');
@@ -47,8 +49,20 @@ export default function Configuracoes() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+      {/* Botão Voltar */}
+      <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+        <button
+          onClick={() => setLocation('/')}
+          className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
+          style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+          title="Voltar ao menu principal"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Menu</span>
+        </button>
+      </div>
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+      <header className="sticky top-12 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
         <h1 className="font-rajdhani font-bold text-2xl" style={{ color: 'oklch(0.80 0.005 65)' }}>
           {t('configuracoes')}
         </h1>

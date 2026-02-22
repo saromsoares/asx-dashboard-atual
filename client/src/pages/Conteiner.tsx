@@ -2,7 +2,8 @@
 // Gerenciamento de processos de importação com invoice, NCM e itens
 
 import { useState, useMemo } from 'react';
-import { X, Plus, Trash2, Copy } from 'lucide-react';
+import { useLocation } from 'wouter';
+import { X, Plus, Trash2, Copy, ArrowLeft } from 'lucide-react';
 
 interface ItemConteiner {
   id: string;
@@ -27,6 +28,7 @@ interface ProcessoSR {
 }
 
 export default function Conteiner() {
+  const [, setLocation] = useLocation();
   const [processos, setProcessos] = useState<ProcessoSR[]>([]);
   const [showNovoProcesso, setShowNovoProcesso] = useState(false);
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
@@ -181,9 +183,20 @@ export default function Conteiner() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+      {/* Botão Voltar */}
+      <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+        <button
+          onClick={() => setLocation('/')}
+          className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
+          style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+          title="Voltar ao menu principal"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Menu</span>
+        </button>
+      </div>
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b px-6 h-14 flex items-center gap-4"
-        style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+      <header className="sticky top-12 z-40 border-b px-6 h-14 flex items-center gap-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
         <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
           GERENCIADOR DE CONTÊINERES
         </span>

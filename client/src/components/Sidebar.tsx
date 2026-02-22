@@ -65,21 +65,26 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       }}
     >
       {/* Logo */}
-      <div className="p-4 border-b flex items-center gap-3" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+      <div className="p-4 border-b flex items-center gap-4" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         <img
           src={LOGO_URL}
           alt="ASX Logo"
-          className={collapsed ? "w-12 h-12 object-contain flex-shrink-0" : "w-14 h-14 object-contain flex-shrink-0"}
+          className={collapsed ? "w-16 h-16 object-contain flex-shrink-0" : "w-20 h-20 object-contain flex-shrink-0"}
           style={{ filter: 'brightness(1.1)' }}
         />
         {!collapsed && (
-          <div className="overflow-hidden">
-            <h1 className="font-rajdhani font-bold text-xl tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>
+          <div className="overflow-hidden flex-1">
+            <h1 className="font-rajdhani font-bold text-2xl tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>
               ASX
             </h1>
-            <p className="text-[10px] uppercase tracking-widest" style={{ color: 'oklch(0.50 0.010 285)' }}>
+            <p className="text-[11px] uppercase tracking-widest" style={{ color: 'oklch(0.50 0.010 285)' }}>
               Iluminação
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-lg">🇧🇷</span>
+              <span className="text-lg">🇨🇳</span>
+              <span className="text-[10px] font-rajdhani font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>USD: R$ 5,20</span>
+            </div>
           </div>
         )}
       </div>

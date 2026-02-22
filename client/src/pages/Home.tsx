@@ -14,7 +14,9 @@ import {
   X,
   Download,
   Settings,
+  ArrowLeft,
 } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 const formatBRL = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -27,6 +29,7 @@ type SortField = 'codigo' | 'descricao' | 'preco_venda' | 'lucro' | 'lucro_pct';
 type SortDir = 'asc' | 'desc';
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const [search, setSearch] = useState('');
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todas');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -126,111 +129,121 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-screen flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+      {/* Botão Voltar */}
+      <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+        <button
+          onClick={() => setLocation('/')}
+          className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
+          style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+          title="Voltar ao menu principal"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Menu</span>
+        </button>
+      </div>
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-        <div className="flex items-center gap-4 h-14 px-6">
-          <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
-            DASHBOARD DE PRODUTOS
-          </span>
+      <header className="sticky top-12 z-40 border-b px-6 h-14 flex items-center gap-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+        <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
+          DASHBOARD DE PRODUTOS
+        </span>
 
-          <div className="flex-1" />
+        <div className="flex-1" />
 
-          {/* Search */}
-          <div className="relative w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
-            <input
-              type="text"
-              placeholder="Buscar código, nome, cód. barras..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-sm rounded-md border"
-              style={{
-                background: 'oklch(0.18 0.005 285)',
-                borderColor: 'oklch(0.28 0.005 285)',
-                color: 'oklch(0.90 0.005 65)',
-                outline: 'none',
-              }}
-              onFocus={e => (e.target.style.borderColor = 'oklch(0.48 0.22 25)')}
-              onBlur={e => (e.target.style.borderColor = 'oklch(0.28 0.005 285)')}
-            />
-            {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                <X className="w-3.5 h-3.5" style={{ color: 'oklch(0.60 0.010 285)' }} />
-              </button>
-            )}
-          </div>
-
-          {/* Filters */}
-          <select
-            value={voltFilter}
-            onChange={e => setVoltFilter(e.target.value)}
-            className="px-3 py-2 text-sm rounded-md border"
+        {/* Search */}
+        <div className="relative w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
+          <input
+            type="text"
+            placeholder="Buscar código, nome, cód. barras..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 text-sm rounded-md border"
             style={{
               background: 'oklch(0.18 0.005 285)',
               borderColor: 'oklch(0.28 0.005 285)',
-              color: 'oklch(0.80 0.005 65)',
+              color: 'oklch(0.90 0.005 65)',
+              outline: 'none',
             }}
-          >
-            {volts.map(v => <option key={v} value={v}>{v === 'TODOS' ? 'Volt: Todos' : v}</option>)}
-          </select>
-
-          <select
-            value={unidFilter}
-            onChange={e => setUnidFilter(e.target.value)}
-            className="px-3 py-2 text-sm rounded-md border"
-            style={{
-              background: 'oklch(0.18 0.005 285)',
-              borderColor: 'oklch(0.28 0.005 285)',
-              color: 'oklch(0.80 0.005 65)',
-            }}
-          >
-            {unids.map(u => <option key={u} value={u}>{u === 'TODOS' ? 'Unid: Todas' : u}</option>)}
-          </select>
-
-          {/* View toggle */}
-          <div className="flex rounded-md overflow-hidden border" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
-            <button
-              onClick={() => setViewMode('grid')}
-              className="px-3 py-2 transition-colors"
-              style={{
-                background: viewMode === 'grid' ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-                color: viewMode === 'grid' ? 'white' : 'oklch(0.60 0.010 285)',
-              }}
-            >
-              <LayoutGrid className="w-4 h-4" />
+            onFocus={e => (e.target.style.borderColor = 'oklch(0.48 0.22 25)')}
+            onBlur={e => (e.target.style.borderColor = 'oklch(0.28 0.005 285)')}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <X className="w-3.5 h-3.5" style={{ color: 'oklch(0.60 0.010 285)' }} />
             </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className="px-3 py-2 transition-colors"
-              style={{
-                background: viewMode === 'list' ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-                color: viewMode === 'list' ? 'white' : 'oklch(0.60 0.010 285)',
-              }}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
+          )}
+        </div>
 
-          {/* Export CSV */}
+        {/* Filters */}
+        <select
+          value={voltFilter}
+          onChange={e => setVoltFilter(e.target.value)}
+          className="px-3 py-2 text-sm rounded-md border"
+          style={{
+            background: 'oklch(0.18 0.005 285)',
+            borderColor: 'oklch(0.28 0.005 285)',
+            color: 'oklch(0.80 0.005 65)',
+          }}
+        >
+          {volts.map(v => <option key={v} value={v}>{v === 'TODOS' ? 'Volt: Todos' : v}</option>)}
+        </select>
+
+        <select
+          value={unidFilter}
+          onChange={e => setUnidFilter(e.target.value)}
+          className="px-3 py-2 text-sm rounded-md border"
+          style={{
+            background: 'oklch(0.18 0.005 285)',
+            borderColor: 'oklch(0.28 0.005 285)',
+            color: 'oklch(0.80 0.005 65)',
+          }}
+        >
+          {unids.map(u => <option key={u} value={u}>{u === 'TODOS' ? 'Unid: Todas' : u}</option>)}
+        </select>
+
+        {/* View toggle */}
+        <div className="flex rounded-md overflow-hidden border" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
           <button
-            onClick={handleExportCSV}
-            className="p-2 rounded-md border transition-colors hover:border-green-500"
-            style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
-            title="Exportar CSV"
+            onClick={() => setViewMode('grid')}
+            className="px-3 py-2 transition-colors"
+            style={{
+              background: viewMode === 'grid' ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
+              color: viewMode === 'grid' ? 'white' : 'oklch(0.60 0.010 285)',
+            }}
           >
-            <Download className="w-4 h-4" />
+            <LayoutGrid className="w-4 h-4" />
           </button>
-
-          {/* Settings */}
           <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-md border transition-colors hover:border-red-500"
-            style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+            onClick={() => setViewMode('list')}
+            className="px-3 py-2 transition-colors"
+            style={{
+              background: viewMode === 'list' ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
+              color: viewMode === 'list' ? 'white' : 'oklch(0.60 0.010 285)',
+            }}
           >
-            <Settings className="w-4 h-4" />
+            <List className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Export CSV */}
+        <button
+          onClick={handleExportCSV}
+          className="p-2 rounded-md border transition-colors hover:border-green-500"
+          style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+          title="Exportar CSV"
+        >
+          <Download className="w-4 h-4" />
+        </button>
+
+        {/* Settings */}
+        <button
+          onClick={() => setShowSettings(true)}
+          className="p-2 rounded-md border transition-colors hover:border-red-500"
+          style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+        >
+          <Settings className="w-4 h-4" />
+        </button>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

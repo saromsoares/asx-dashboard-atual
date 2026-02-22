@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
 import { usePedidos, type ItemPedido } from '@/hooks/usePedidos';
 import {
@@ -11,12 +11,14 @@ import {
   X,
   Download,
   FileText,
+  ArrowLeft,
 } from 'lucide-react';
 
 const formatUSD = (v: number) =>
   v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
 export default function Compras() {
+  const [, setLocation] = useLocation();
   const {
     pedidos,
     criarPedido,
