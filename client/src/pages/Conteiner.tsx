@@ -553,7 +553,7 @@ export default function Conteiner() {
 
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* Botão Voltar */}
       <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         <button
@@ -788,8 +788,9 @@ export default function Conteiner() {
             </div>
 
             {/* Tabela de Itens */}
-            <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-              <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)' }}>
+            <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: 0 }}>
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '900px' }}>
                 <thead style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }} className="border-b sticky top-0">
                   <tr>
                     <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Código</th>
@@ -853,6 +854,7 @@ export default function Conteiner() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
 
             {/* Form para Adicionar Item */}

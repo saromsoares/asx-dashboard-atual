@@ -129,7 +129,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* Botão Voltar */}
       <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         <button
@@ -143,7 +143,7 @@ export default function Home() {
         </button>
       </div>
       {/* Header */}
-      <header className="sticky top-12 z-40 border-b px-6 h-14 flex items-center gap-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+      <header className="z-40 border-b px-6 h-14 flex items-center gap-4 flex-shrink-0" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
         <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
           DASHBOARD DE PRODUTOS
         </span>
@@ -246,7 +246,7 @@ export default function Home() {
         </button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {/* Sidebar Categorias */}
         <aside className="w-52 flex-shrink-0 border-r overflow-y-auto"
           style={{ background: 'oklch(0.13 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
@@ -306,9 +306,9 @@ export default function Home() {
           </div>
 
           {/* Products */}
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 flex flex-col p-4" style={{ minHeight: 0 }}>
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-auto flex-1">
                 {filtered.map(p => (
                   <ProductCard
                     key={p.id}
@@ -322,17 +322,17 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)' }}>
+              <div className="overflow-auto flex-1" style={{ minHeight: 0 }}>
+                <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '1200px' }}>
                   <thead>
                     <tr style={{ borderColor: 'oklch(0.22 0.005 285)' }} className="border-b">
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Foto</th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', width: '56px' }}>Foto</th>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[56px] z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', width: '100px' }}>
                         <button onClick={() => toggleSort('codigo')} className="flex items-center gap-1">
                           Código <SortIcon field="codigo" />
                         </button>
                       </th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[156px] z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', minWidth: '200px', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>
                         <button onClick={() => toggleSort('descricao')} className="flex items-center gap-1">
                           Descrição <SortIcon field="descricao" />
                         </button>
@@ -372,7 +372,7 @@ export default function Home() {
                           onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.16 0.005 285)')}
                           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                         >
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 sticky left-0 z-10" style={{ background: 'inherit' }}>
                             {p.imagem_url ? (
                               <img src={p.imagem_url} alt={p.codigo} className="w-10 h-10 object-contain rounded" style={{ background: 'oklch(0.20 0.005 285)' }} />
                             ) : (
@@ -381,8 +381,8 @@ export default function Home() {
                               </div>
                             )}
                           </td>
-                          <td className="px-3 py-2 font-rajdhani font-semibold text-xs tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>{p.codigo}</td>
-                          <td className="px-3 py-2 text-xs max-w-[280px] truncate">{p.descricao}</td>
+                          <td className="px-3 py-2 font-rajdhani font-semibold text-xs tracking-wide sticky left-[56px] z-10" style={{ color: 'oklch(0.48 0.22 25)', background: 'inherit' }}>{p.codigo}</td>
+                          <td className="px-3 py-2 text-xs max-w-[280px] truncate sticky left-[156px] z-10" style={{ background: 'inherit', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>{p.descricao}</td>
                           <td className="px-3 py-2 font-mono text-[11px]" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.cod_barras}</td>
                           <td className="px-3 py-2 text-xs" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.unid}</td>
                           <td className="px-3 py-2 text-right font-rajdhani font-semibold">{formatBRL(p.preco_venda)}</td>

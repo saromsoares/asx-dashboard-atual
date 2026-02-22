@@ -534,7 +534,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
   // ---- Render ----
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* Header */}
       <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
         <div className="flex items-center justify-between">
@@ -553,7 +553,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
             </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setShowConfig(!showConfig)}
               className="px-3 py-2 rounded-md border transition-colors text-sm flex items-center gap-2"
@@ -711,16 +711,16 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
       </div>
 
       {/* Tabela */}
-      <div className="flex-1 px-6 pb-6 overflow-auto">
-        <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-          <div className="overflow-x-auto">
+      <div className="flex-1 px-6 pb-6 flex flex-col" style={{ minHeight: 0 }}>
+        <div className="rounded-lg border flex-1 flex flex-col overflow-hidden" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+          <div className="flex-1 overflow-auto">
             <table className="w-full text-xs" style={{ minWidth: '1400px' }}>
               <thead>
                 <tr style={{ background: 'oklch(0.16 0.005 285)' }}>
-                  <th className="px-3 py-2.5 text-left font-semibold cursor-pointer select-none" style={{ color: 'oklch(0.55 0.010 285)', width: '100px' }} onClick={() => handleSort('codigo')}>
+                  <th className="px-3 py-2.5 text-left font-semibold cursor-pointer select-none sticky left-0 z-20" style={{ color: 'oklch(0.55 0.010 285)', width: '100px', background: 'oklch(0.16 0.005 285)' }} onClick={() => handleSort('codigo')}>
                     Código <SortIcon field="codigo" />
                   </th>
-                  <th className="px-3 py-2.5 text-left font-semibold cursor-pointer select-none" style={{ color: 'oklch(0.55 0.010 285)' }} onClick={() => handleSort('descricao')}>
+                  <th className="px-3 py-2.5 text-left font-semibold cursor-pointer select-none sticky left-[100px] z-20" style={{ color: 'oklch(0.55 0.010 285)', background: 'oklch(0.16 0.005 285)', minWidth: '220px' }} onClick={() => handleSort('descricao')}>
                     Descrição <SortIcon field="descricao" />
                   </th>
                   <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.55 0.010 285)', width: '50px' }}>
@@ -782,13 +782,13 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
                     onMouseEnter={e => { e.currentTarget.style.background = 'oklch(0.16 0.005 285)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = idx % 2 === 0 ? 'oklch(0.12 0.005 285)' : 'oklch(0.13 0.005 285)'; }}
                   >
-                    {/* Código */}
-                    <td className="px-3 py-2 font-mono font-semibold" style={{ color: corAcento }}>
+                    {/* Código — sticky */}
+                    <td className="px-3 py-2 font-mono font-semibold sticky left-0 z-10" style={{ color: corAcento, background: idx % 2 === 0 ? 'oklch(0.12 0.005 285)' : 'oklch(0.13 0.005 285)' }}>
                       {p.codigo}
                     </td>
 
-                    {/* Descrição */}
-                    <td className="px-3 py-2 truncate max-w-[280px]" style={{ color: 'oklch(0.80 0.005 65)' }} title={p.descricao}>
+                    {/* Descrição — sticky */}
+                    <td className="px-3 py-2 truncate max-w-[280px] sticky left-[100px] z-10" style={{ color: 'oklch(0.80 0.005 65)', background: idx % 2 === 0 ? 'oklch(0.12 0.005 285)' : 'oklch(0.13 0.005 285)', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }} title={p.descricao}>
                       {p.descricao}
                     </td>
 

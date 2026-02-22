@@ -227,19 +227,38 @@
     font-family: 'Rajdhani', sans-serif;
   }
 
-  /* Scrollbar styling */
+  /* Scrollbar styling — global */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
     background: oklch(0.14 0.005 285);
+    border-radius: 5px;
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.30 0.005 285);
-    border-radius: 3px;
+    background: oklch(0.35 0.005 285);
+    border-radius: 5px;
+    border: 2px solid oklch(0.14 0.005 285);
   }
   ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.48 0.22 25);
+  }
+
+  /* Scrollbar horizontal mais visível para tabelas */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 12px;
+  }
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: oklch(0.16 0.005 285);
+    border-radius: 6px;
+  }
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: oklch(0.40 0.010 285);
+    border-radius: 6px;
+    border: 2px solid oklch(0.16 0.005 285);
+  }
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
     background: oklch(0.48 0.22 25);
   }
 }

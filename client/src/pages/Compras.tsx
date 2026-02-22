@@ -94,7 +94,7 @@ export default function Compras() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* Header */}
       <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
         <div className="flex items-center justify-between">

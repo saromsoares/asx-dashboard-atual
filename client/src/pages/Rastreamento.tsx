@@ -93,7 +93,7 @@ export default function Rastreamento() {
   };
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: 'oklch(0.12 0.005 285)' }}>
+    <div className="flex flex-col h-full" style={{ background: 'oklch(0.12 0.005 285)' }}>
       {/* Header */}
       <header className="border-b p-4 flex items-center justify-between" style={{ borderColor: 'oklch(0.22 0.005 285)', background: 'oklch(0.14 0.005 285)' }}>
         <div className="flex items-center gap-3">
