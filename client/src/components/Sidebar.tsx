@@ -194,7 +194,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           src={LOGO_URL}
           alt="ASX Logo"
           className={collapsed ? "w-16 h-16 object-contain flex-shrink-0" : "w-20 h-20 object-contain flex-shrink-0"}
-          style={{ filter: 'brightness(1.1)' }}
+          style={{ mixBlendMode: 'screen', filter: 'brightness(1.1) contrast(1.2)' }}
         />
         {!collapsed && (
           <div className="overflow-hidden flex-1">
