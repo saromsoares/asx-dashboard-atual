@@ -22,6 +22,8 @@ import {
   HelpCircle,
   Settings,
   ShoppingCart,
+  Ship,
+  Link2,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -411,6 +413,124 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
     );
   };
 
+  // ---- A Chegar Cell (com vinculação ao contêiner) ----
+
+  const AChegarCell = ({ produto: p }: { produto: ProdutoComEstoque }) => {
+    const hasConteiner = p.mercadoriaAChegarConteiner > 0;
+    const hasManual = p.mercadoriaAChegarManual > 0;
+    const total = p.mercadoriaAChegar;
+
+    // Tooltip com detalhamento
+    const tooltipParts: string[] = [];
+    if (hasConteiner) {
+      tooltipParts.push(`Contêiner: ${formatNum(p.mercadoriaAChegarConteiner)} (${p.processosVinculados.join(', ')})`);
+    }
+    if (hasManual) {
+      tooltipParts.push(`Manual: ${formatNum(p.mercadoriaAChegarManual)}`);
+    }
+    if (total > 0 && hasConteiner && hasManual) {
+      tooltipParts.push(`Total: ${formatNum(total)}`);
+    }
+    const tooltip = tooltipParts.length > 0 ? tooltipParts.join(' | ') : 'Clique para editar (manual)';
+
+    // Se tem dados do contêiner, mostra badge especial
+    if (hasConteiner) {
+      return (
+        <div className="flex items-center justify-center gap-1" title={tooltip}>
+          {/* Ícone de vinculação */}
+          <Link2 className="w-3 h-3 flex-shrink-0" style={{ color: 'oklch(0.65 0.17 145)' }} />
+          {/* Valor do contêiner */}
+          <span className="text-xs font-semibold" style={{ color: 'oklch(0.72 0.17 145)' }}>
+            {formatNum(p.mercadoriaAChegarConteiner)}
+          </span>
+          {/* Se também tem manual, mostra o + manual */}
+          {hasManual && (
+            <>
+              <span className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>+</span>
+              <button
+                onClick={() => startEdit(p.id, 'mercadoriaAChegarManual', p.mercadoriaAChegarManual)}
+                className="px-1 py-0.5 rounded text-xs cursor-pointer transition-colors"
+                style={{
+                  background: 'oklch(0.18 0.005 285)',
+                  color: 'oklch(0.80 0.18 85)',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'oklch(0.22 0.005 285)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'oklch(0.18 0.005 285)'; }}
+                title="Editar quantidade manual adicional"
+              >
+                {formatNum(p.mercadoriaAChegarManual)}
+              </button>
+            </>
+          )}
+          {/* Se não tem manual, mostra botão + para adicionar */}
+          {!hasManual && (
+            <button
+              onClick={() => startEdit(p.id, 'mercadoriaAChegarManual', 0)}
+              className="px-1 py-0.5 rounded text-[10px] cursor-pointer transition-colors"
+              style={{
+                background: 'oklch(0.16 0.005 285)',
+                color: 'oklch(0.40 0.010 285)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'oklch(0.22 0.005 285)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'oklch(0.16 0.005 285)'; }}
+              title="Adicionar quantidade manual"
+            >
+              +
+            </button>
+          )}
+          {/* Total se ambos existem */}
+          {hasManual && (
+            <span className="text-[10px] font-semibold" style={{ color: 'oklch(0.70 0.15 250)' }}>
+              ={formatNum(total)}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    // Sem dados de contêiner: célula editável normal (campo manual)
+    const isEditing = editingCell?.id === p.id && editingCell?.field === 'mercadoriaAChegarManual';
+
+    if (isEditing) {
+      return (
+        <input
+          type="number"
+          value={editValue}
+          onChange={e => setEditValue(e.target.value)}
+          onBlur={commitEdit}
+          onKeyDown={e => {
+            if (e.key === 'Enter') commitEdit();
+            if (e.key === 'Escape') cancelEdit();
+          }}
+          autoFocus
+          className="w-14 px-1.5 py-0.5 rounded text-xs text-right border"
+          style={{
+            background: 'oklch(0.20 0.005 285)',
+            borderColor: corAcento,
+            color: 'oklch(0.95 0.005 65)',
+          }}
+          min="0"
+        />
+      );
+    }
+
+    return (
+      <button
+        onClick={() => startEdit(p.id, 'mercadoriaAChegarManual', p.mercadoriaAChegarManual)}
+        className="w-14 px-1.5 py-0.5 rounded text-xs text-right transition-colors cursor-pointer"
+        style={{
+          background: total > 0 ? 'oklch(0.18 0.005 285)' : 'oklch(0.15 0.005 285)',
+          color: total > 0 ? 'oklch(0.90 0.005 65)' : 'oklch(0.40 0.010 285)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'oklch(0.22 0.005 285)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = total > 0 ? 'oklch(0.18 0.005 285)' : 'oklch(0.15 0.005 285)'; }}
+        title={tooltip}
+      >
+        {total > 0 ? formatNum(total) : '—'}
+      </button>
+    );
+  };
+
   // ---- Render ----
 
   return (
@@ -611,8 +731,11 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
                   <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.70 0.15 250)', width: '80px', borderLeft: '2px solid oklch(0.22 0.005 285)' }}>
                     Estoque
                   </th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.70 0.15 250)', width: '80px' }}>
-                    A Chegar
+                  <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.70 0.15 250)', width: '110px' }}>
+                    <div className="flex items-center justify-center gap-1">
+                      <Ship className="w-3 h-3" />
+                      A Chegar
+                    </div>
                   </th>
                   <th className="px-3 py-2.5 text-center font-semibold cursor-pointer select-none" style={{ color: 'oklch(0.70 0.15 250)', width: '80px' }} onClick={() => handleSort('estoqueProjetado')}>
                     Projetado <SortIcon field="estoqueProjetado" />
@@ -679,7 +802,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
                       <EditableCell produtoId={p.id} field="estoqueInicial" value={p.estoqueInicial} width="w-14" />
                     </td>
                     <td className="px-2 py-1.5 text-center">
-                      <EditableCell produtoId={p.id} field="mercadoriaAChegar" value={p.mercadoriaAChegar} width="w-14" />
+                      <AChegarCell produto={p} />
                     </td>
                     <td className="px-3 py-2 text-center font-semibold" style={{ color: p.estoqueProjetado > 0 ? 'oklch(0.70 0.15 250)' : 'oklch(0.40 0.010 285)' }}>
                       {p.estoqueProjetado > 0 ? formatNum(p.estoqueProjetado) : '—'}

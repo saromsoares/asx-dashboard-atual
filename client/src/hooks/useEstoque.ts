@@ -2,6 +2,7 @@
   Hook useEstoque — Gestão de Estoque e Necessidade de Compra
   Persistência independente por comprador (Sarom / Alexandre)
   Cálculos automáticos: média mensal, cobertura, necessidade de compra, valor investimento
+  VINCULAÇÃO AUTOMÁTICA: lê processos de contêiner em trânsito para alimentar "A Chegar"
 */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
@@ -12,7 +13,7 @@ import { produtos, TAXA_CAMBIO } from '@/data/produtos';
 export interface DadosEstoqueProduto {
   produtoId: number;
   estoqueInicial: number;
-  mercadoriaAChegar: number;
+  mercadoriaAChegarManual: number; // preenchido manualmente pelo usuário
   vendaMes1: number;
   vendaMes2: number;
   vendaMes3: number;
@@ -31,7 +32,9 @@ export interface ProdutoComEstoque {
 
   // Bloco 2 — Posição de Estoque
   estoqueInicial: number;
-  mercadoriaAChegar: number;
+  mercadoriaAChegarManual: number;   // manual
+  mercadoriaAChegarConteiner: number; // automático dos contêineres
+  mercadoriaAChegar: number;          // total = manual + contêiner
   estoqueProjetado: number;
 
   // Bloco 3 — Métricas de Venda
@@ -46,7 +49,10 @@ export interface ProdutoComEstoque {
   necessidadeCompra: number;
   valorCompraUsd: number;
   valorCompraBrl: number;
-  status: 'critico' | 'atencao' | 'ok' | 'excesso' | 'sem_dados';
+  status: StatusEstoque;
+
+  // Info de vinculação
+  processosVinculados: string[]; // números dos processos que contribuem para "A Chegar"
 }
 
 export type StatusEstoque = 'critico' | 'atencao' | 'ok' | 'excesso' | 'sem_dados';
@@ -62,6 +68,36 @@ export interface KPIsEstoque {
   investimentoTotalUsd: number;
   investimentoTotalBrl: number;
   coberturaMediaGeral: number;
+}
+
+// ---- Interfaces do Contêiner (espelhadas do Conteiner.tsx) ----
+
+interface ItemConteiner {
+  id: string;
+  codigo: string;
+  descricao: string;
+  unidade: string;
+  quantidade: number;
+  precoUnitarioDolar: number;
+  precoTotalDolar: number;
+  pedidoSarom: number;
+  pedidoAlexandre: number;
+}
+
+interface ProcessoSR {
+  id: string;
+  numeroProcesso: string;
+  nomeInvoice: string;
+  dataProcesso: string;
+  observacoes: string;
+  ncm: string;
+  itens: ItemConteiner[];
+  dataCriacao: string;
+  status: 'Em andamento' | 'Finalizado' | 'Cancelado';
+  caixasPapelao: number;
+  pesoBrutoKg: number;
+  pesoLiquidoKg: number;
+  cbm: number;
 }
 
 // ---- Funções auxiliares ----
@@ -82,17 +118,97 @@ function getMetaKey(comprador: string): string {
   return `asx_central_meta_${comprador.toLowerCase()}`;
 }
 
+const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
+
+/** Lê processos de contêiner do localStorage */
+function carregarProcessos(): ProcessoSR[] {
+  try {
+    const dados = localStorage.getItem(STORAGE_KEY_PROCESSOS);
+    if (dados) return JSON.parse(dados);
+  } catch (e) {
+    console.error('Erro ao carregar processos para vinculação:', e);
+  }
+  return [];
+}
+
+/** Mapeia código de produto para ID */
+function buildCodigoToIdMap(): Map<string, number> {
+  const map = new Map<string, number>();
+  produtos.forEach(p => {
+    map.set(p.codigo.toUpperCase(), p.id);
+  });
+  return map;
+}
+
+/**
+ * Agrega as quantidades em trânsito por produto e comprador.
+ * Retorna: { produtoId -> { quantidade, processos[] } }
+ */
+function calcularEmTransito(
+  comprador: 'sarom' | 'alexandre',
+  codigoMap: Map<string, number>
+): Map<number, { quantidade: number; processos: string[] }> {
+  const resultado = new Map<number, { quantidade: number; processos: string[] }>();
+  const processos = carregarProcessos();
+
+  // Apenas processos "Em andamento" = mercadoria em trânsito
+  const emAndamento = processos.filter(p => p.status === 'Em andamento');
+
+  for (const processo of emAndamento) {
+    for (const item of processo.itens) {
+      const codigoUpper = item.codigo.toUpperCase();
+      const produtoId = codigoMap.get(codigoUpper);
+      if (!produtoId) continue;
+
+      // Pegar a quantidade do comprador correto
+      const qtd = comprador === 'sarom' ? item.pedidoSarom : item.pedidoAlexandre;
+      if (qtd <= 0) continue;
+
+      const atual = resultado.get(produtoId) || { quantidade: 0, processos: [] };
+      atual.quantidade += qtd;
+      if (!atual.processos.includes(processo.numeroProcesso)) {
+        atual.processos.push(processo.numeroProcesso);
+      }
+      resultado.set(produtoId, atual);
+    }
+  }
+
+  return resultado;
+}
+
+// ---- Migração de dados antigos ----
+
+function migrarDadosAntigos(dados: Record<number, any>): Record<number, DadosEstoqueProduto> {
+  const migrado: Record<number, DadosEstoqueProduto> = {};
+  for (const [idStr, valor] of Object.entries(dados)) {
+    const id = parseInt(idStr, 10);
+    if (isNaN(id)) continue;
+
+    migrado[id] = {
+      produtoId: id,
+      estoqueInicial: valor.estoqueInicial || 0,
+      // Se tinha mercadoriaAChegar antigo, migrar para mercadoriaAChegarManual
+      mercadoriaAChegarManual: valor.mercadoriaAChegarManual ?? valor.mercadoriaAChegar ?? 0,
+      vendaMes1: valor.vendaMes1 || 0,
+      vendaMes2: valor.vendaMes2 || 0,
+      vendaMes3: valor.vendaMes3 || 0,
+    };
+  }
+  return migrado;
+}
+
 // ---- Hook Principal ----
 
 export function useEstoque(comprador: 'sarom' | 'alexandre') {
   const storageKey = getStorageKey(comprador);
   const metaKey = getMetaKey(comprador);
+  const codigoMap = useMemo(() => buildCodigoToIdMap(), []);
 
   // Estado: dados de estoque por produto (Map: produtoId -> DadosEstoqueProduto)
   const [dadosEstoque, setDadosEstoque] = useState<Record<number, DadosEstoqueProduto>>(() => {
     try {
       const stored = localStorage.getItem(storageKey);
-      return stored ? JSON.parse(stored) : {};
+      return stored ? migrarDadosAntigos(JSON.parse(stored)) : {};
     } catch {
       return {};
     }
@@ -117,6 +233,11 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
       return {};
     }
   });
+
+  // Dados de contêineres em trânsito (atualizado periodicamente)
+  const [emTransito, setEmTransito] = useState<Map<number, { quantidade: number; processos: string[] }>>(() =>
+    calcularEmTransito(comprador, codigoMap)
+  );
 
   // Persistir dados de estoque
   useEffect(() => {
@@ -143,26 +264,52 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     return () => clearInterval(interval);
   }, []);
 
+  // Recarregar dados de contêineres periodicamente (caso o Contêiner atualize)
+  useEffect(() => {
+    const atualizarTransito = () => {
+      setEmTransito(calcularEmTransito(comprador, codigoMap));
+    };
+
+    // Atualizar a cada 3 segundos para captar mudanças no Contêiner
+    const interval = setInterval(atualizarTransito, 3000);
+
+    // Também escutar eventos de storage (caso outra aba mude os dados)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_PROCESSOS) {
+        atualizarTransito();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [comprador, codigoMap]);
+
   // ---- Funções de atualização ----
 
-  const atualizarDados = useCallback((produtoId: number, campo: keyof DadosEstoqueProduto, valor: number) => {
+  const atualizarDados = useCallback((produtoId: number, campo: string, valor: number) => {
+    // Mapear campo legado "mercadoriaAChegar" para "mercadoriaAChegarManual"
+    const campoReal = campo === 'mercadoriaAChegar' ? 'mercadoriaAChegarManual' : campo;
+
     setDadosEstoque(prev => {
       const atual = prev[produtoId] || {
         produtoId,
         estoqueInicial: 0,
-        mercadoriaAChegar: 0,
+        mercadoriaAChegarManual: 0,
         vendaMes1: 0,
         vendaMes2: 0,
         vendaMes3: 0,
       };
       return {
         ...prev,
-        [produtoId]: { ...atual, [campo]: valor },
+        [produtoId]: { ...atual, [campoReal]: valor },
       };
     });
   }, []);
 
-  const atualizarDadosEmMassa = useCallback((dados: Record<number, Partial<DadosEstoqueProduto>>) => {
+  const atualizarDadosEmMassa = useCallback((dados: Record<number, Partial<DadosEstoqueProduto & { mercadoriaAChegar?: number }>>) => {
     setDadosEstoque(prev => {
       const novo = { ...prev };
       Object.entries(dados).forEach(([idStr, parcial]) => {
@@ -170,12 +317,18 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         const atual = novo[id] || {
           produtoId: id,
           estoqueInicial: 0,
-          mercadoriaAChegar: 0,
+          mercadoriaAChegarManual: 0,
           vendaMes1: 0,
           vendaMes2: 0,
           vendaMes3: 0,
         };
-        novo[id] = { ...atual, ...parcial, produtoId: id };
+        // Mapear campo legado
+        const { mercadoriaAChegar, ...rest } = parcial as any;
+        const merged = { ...atual, ...rest, produtoId: id };
+        if (mercadoriaAChegar !== undefined && rest.mercadoriaAChegarManual === undefined) {
+          merged.mercadoriaAChegarManual = mercadoriaAChegar;
+        }
+        novo[id] = merged;
       });
       return novo;
     });
@@ -188,7 +341,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
       const dados = dadosEstoque[p.id] || {
         produtoId: p.id,
         estoqueInicial: 0,
-        mercadoriaAChegar: 0,
+        mercadoriaAChegarManual: 0,
         vendaMes1: 0,
         vendaMes2: 0,
         vendaMes3: 0,
@@ -197,8 +350,15 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
       const custoUsd = custosUsd[p.id] || p.custo_usd || 0;
       const custoBrl = custoUsd * TAXA_CAMBIO;
 
+      // Dados de contêiner em trânsito
+      const transitoInfo = emTransito.get(p.id);
+      const mercadoriaAChegarConteiner = transitoInfo?.quantidade || 0;
+      const processosVinculados = transitoInfo?.processos || [];
+
       // Bloco 2 — Posição de Estoque
-      const estoqueProjetado = dados.estoqueInicial + dados.mercadoriaAChegar;
+      const mercadoriaAChegarManual = dados.mercadoriaAChegarManual || 0;
+      const mercadoriaAChegar = mercadoriaAChegarManual + mercadoriaAChegarConteiner;
+      const estoqueProjetado = dados.estoqueInicial + mercadoriaAChegar;
 
       // Bloco 3 — Métricas de Venda
       const mesesComVenda = [dados.vendaMes1, dados.vendaMes2, dados.vendaMes3].filter(v => v > 0);
@@ -225,7 +385,9 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         custoUsd,
         custoBrl,
         estoqueInicial: dados.estoqueInicial,
-        mercadoriaAChegar: dados.mercadoriaAChegar,
+        mercadoriaAChegarManual,
+        mercadoriaAChegarConteiner,
+        mercadoriaAChegar,
         estoqueProjetado,
         vendaMes1: dados.vendaMes1,
         vendaMes2: dados.vendaMes2,
@@ -237,9 +399,10 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         valorCompraUsd,
         valorCompraBrl,
         status,
+        processosVinculados,
       };
     });
-  }, [dadosEstoque, custosUsd, metaCobertura]);
+  }, [dadosEstoque, custosUsd, metaCobertura, emTransito]);
 
   // ---- KPIs ----
 
