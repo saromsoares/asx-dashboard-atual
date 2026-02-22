@@ -337,65 +337,186 @@ export default function Conteiner() {
   const handleExportarPlanilhaCompra = () => {
     if (!processoSelecionado) return;
 
+    // Planilha de compra interna com pedidos Sarom/Alexandre
     const ws = XLSX.utils.aoa_to_sheet([
       ['PLANILHA DE COMPRA - CONTÊINER', processoSelecionado.numeroProcesso],
       ['Invoice', processoSelecionado.nomeInvoice],
       ['Data', processoSelecionado.dataProcesso],
       ['Status', processoSelecionado.status],
+      ['NCM', processoSelecionado.ncm],
+      ['Observações', processoSelecionado.observacoes],
       [],
-      ['CÓDIGO', 'DESCRIÇÃO', 'UNIDADE', 'QUANTIDADE', 'PREÇO UNITÁRIO USD', 'TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'],
-      ...processoSelecionado.itens.map(item => [
+      ['ITEM', 'CÓDIGO', 'DESCRIÇÃO DOS ITENS', 'UND', 'QUANT', 'PRICE USD', 'TOTAL PRICE USD', 'PEDIDO COMPRA SAROM', 'QUANTIDADE', 'PEDIDO COMPRA ALEXANDRE', 'QUANTIDADE'],
+      ...processoSelecionado.itens.map((item, idx) => [
+        idx + 1,
         item.codigo,
         item.descricao,
         item.unidade,
         item.quantidade,
-        item.precoUnitarioDolar.toFixed(2),
-        item.precoTotalDolar.toFixed(2),
+        Number(item.precoUnitarioDolar.toFixed(2)),
+        Number(item.precoTotalDolar.toFixed(2)),
+        item.pedidoSarom > 0 ? `Pedido ${item.pedidoSarom}` : '',
         item.pedidoSarom,
+        item.pedidoAlexandre > 0 ? `Pedido ${item.pedidoAlexandre}` : '',
         item.pedidoAlexandre,
       ]),
       [],
-      ['TOTAIS'],
-      ['Total Itens', processoSelecionado.itens.length],
-      ['Total USD', processoSelecionado.itens.reduce((sum, item) => sum + item.precoTotalDolar, 0).toFixed(2)],
-      ['Total Sarom', processoSelecionado.itens.reduce((sum, item) => sum + item.pedidoSarom, 0)],
-      ['Total Alexandre', processoSelecionado.itens.reduce((sum, item) => sum + item.pedidoAlexandre, 0)],
+      ['', '', 'TOTAIS', '', processoSelecionado.itens.reduce((s, i) => s + i.quantidade, 0), '', Number(processoSelecionado.itens.reduce((s, i) => s + i.precoTotalDolar, 0).toFixed(2)), '', processoSelecionado.itens.reduce((s, i) => s + i.pedidoSarom, 0), '', processoSelecionado.itens.reduce((s, i) => s + i.pedidoAlexandre, 0)],
     ]);
+
+    ws['!cols'] = [
+      { wch: 6 }, { wch: 12 }, { wch: 45 }, { wch: 6 }, { wch: 8 },
+      { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 22 }, { wch: 12 },
+    ];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Compra');
     const fileName = `ASX_Planilha_Compra_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    const wbout2 = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob2 = new Blob([wbout2], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url2 = URL.createObjectURL(blob2);
+    const a2 = document.createElement('a');
+    a2.href = url2;
+    a2.download = fileName;
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    URL.revokeObjectURL(url2);
   };
 
   const handleExportarExcel = () => {
     if (!processoSelecionado) return;
     const wb = XLSX.utils.book_new();
-    const processoDados = [
-      ['PROCESSO SR', processoSelecionado.numeroProcesso],
-      ['INVOICE', processoSelecionado.nomeInvoice],
-      ['DATA', processoSelecionado.dataProcesso],
-      ['NCM', processoSelecionado.ncm],
-      ['OBSERVACOES', processoSelecionado.observacoes],
+
+    const totalUSD = Number(processoSelecionado.itens.reduce((s, i) => s + i.precoTotalDolar, 0).toFixed(2));
+    const totalQtd = processoSelecionado.itens.reduce((s, i) => s + i.quantidade, 0);
+
+    // === COMMERCIAL INVOICE ===
+    const dados: (string | number | null)[][] = [
+      // Linha 1: Cabeçalho MIC TRADE
+      ['', '', '', '', '', 'MIC TRADE SERVICE LIMITED', '', '', '', '', ''],
+      ['', '', '', '', '', 'RM 502C 5/F', '', '', '', '', ''],
+      ['', '', '', '', '', 'HO KING COMM CTR', '', '', '', '', ''],
+      ['', '', '', '', '', '2-16 FAYUEN ST MONGKOK KL HONGKONG CHINA', '', '', '', '', ''],
+      // Linha 2: COMERCIAL INVOICE
+      ['', '', '', '', '', 'COMERCIAL INVOICE', '', '', '', '', ''],
+      // Linha 3: Exportador + INVOICE
+      ['', 'SONRES & REZENDE INPORT. EXPORT LTDA', '', '', '', '', `INVOICE:`, `${processoSelecionado.nomeInvoice}`, '', processoSelecionado.numeroProcesso, ''],
+      ['', 'CNPJ: 23 113 383/0002-90', '', '', '', '', '', '', '', '', ''],
+      ['', 'RUA ALFREDO NERLO 560/ SALA 05', '', '', '', '', '', '', '', '', ''],
+      ['', 'MOMRIND MLA VELH ES', '', '', '', '', '', '', '', '', ''],
+      // Linha 4: TO - Importador
+      ['TO', '', '', '', '', '', '', '', '', '', ''],
+      ['', 'PROSPER INTELIGÊNCIA ADUANEIRA LTDA', '', '', '', '', `DATE:${processoSelecionado.dataProcesso}`, '', '', '', ''],
+      ['', 'ADDRESS: RUA GONCALVES DIAS, 110, SALA 17, CENTRO,', '', '', '', '', '', '', '', `NCM:`, ''],
+      ['', 'PORTO VELHO, RO, CEP 76.801-076', '', '', '', '', '', '', '', processoSelecionado.ncm, ''],
+      ['', 'CNPJ: 59.574.729/0001-14', '', '', '', '', `OBS:`, '', '', '', ''],
+      ['', '', '', '', '', '', processoSelecionado.observacoes, '', '', '', ''],
+      // Linha em branco
       [],
+      // Linha 6: Cabeçalho da tabela de itens
+      ['ITEM', '', 'CODIGO -    DESCRICAO DOS ITENS', '', '', '', 'UND', 'QUANT', '', 'PRICE USD', 'TOTAL PRICE USD'],
     ];
-    const headers = ['CODIGO', 'DESCRICAO', 'UNIDADE', 'QUANTIDADE', 'PRECO UNITARIO USD', 'PRECO TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'];
-    const itensDados = processoSelecionado.itens.map(item => [
-      item.codigo,
-      item.descricao,
-      item.unidade,
-      item.quantidade,
-      item.precoUnitarioDolar.toFixed(2),
-      item.precoTotalDolar.toFixed(2),
-      item.pedidoSarom,
-      item.pedidoAlexandre,
-    ]);
-    const totais = [[], ['TOTAIS', '', stats.totalItens, '', `$${stats.totalDolar.toFixed(2)}`, stats.totalSarom, stats.totalAlexandre]];
-    const wsData = [...processoDados, headers, ...itensDados, ...totais];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    ws['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 15 }];
-    XLSX.utils.book_append_sheet(wb, ws, 'Processo SR');
-    const fileName = `ASX_Processo_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+    // Itens
+    processoSelecionado.itens.forEach((item, idx) => {
+      dados.push([
+        idx + 1,
+        '',
+        `${item.codigo} - ${item.descricao}`,
+        '', '', '',
+        item.unidade,
+        item.quantidade,
+        '',
+        Number(item.precoUnitarioDolar.toFixed(2)),
+        Number(item.precoTotalDolar.toFixed(2)),
+      ]);
+    });
+
+    // Linha de totais
+    dados.push([]);
+    dados.push(['', '', 'TOTAL', '', '', '', '', totalQtd, '', '', totalUSD]);
+
+    // Linha em branco
+    dados.push([]);
+
+    // CAIXAS PAPELAO / PESO BRUTO / PESO LIQUIDO / CBM
+    dados.push(['', '', '', '', '', 'CAIXAS PAPELAO  /  PESO BRUTO KG  /  PESO LIQUIDO KG  /  CBM', '', '', '', '', '']);
+
+    // Linha em branco
+    dados.push([]);
+
+    // Factories
+    dados.push(['.', '', 'Factory', '', '', '', '', 'Address', '', '', '']);
+    dados.push(['1-15', '', '"FOSHAN ZHISHUO ILLUMINATION ELECTRICS CO., LTD"', '', '', '', '', 'NO.3, HONGXING 2 ROAD, YINGDE, CHINA', '', '', '']);
+    dados.push(['16-61', '', 'GUANGZHOU YUEKAI PHOTOELECTRIC TECHNOLOGY CO., LTD.', '', '', '', '', 'ADD: GB033,B1 FLOOR(WEST GATE),YIYOU(INTERNATIONAL)AUTO PARTS COMMODITIES TRADING CENTER,NO.155 HENGFU ROAD,YUEXIU DISTRICT, GUANGZHOU,CHINA', '', '', '']);
+    dados.push(['62', '', 'Shuyang Deruifa Auto Parts Co., Ltd.', '', '', '', '', 'Shuyang Software Park, Suqian City, Jiangsu Province', '', '', '']);
+
+    // Linha em branco
+    dados.push([]);
+
+    // CONDITIONS OF TERM AND PAYMENT / TRANSPORTATION METHOD
+    dados.push(['CONDITIONS OF TERM AND PAYMENT', '', '', '', '', 'TRANSPORTATION METHOD', '', '', '', '', '']);
+    dados.push(['PRICE:', '', 'FOB', '', '', 'VIA:', '', '', '', '', 'SHIP']);
+    dados.push(['TERM OF PAYMENT:', '', 'FINANCED UNTIL 90 DAYS AFTER RECEIPT', '', '', 'PORT TO LOADING:', '', '', '', '', 'GUANGZHOU, China']);
+    dados.push(['PREVISAO DE EMBARQUE', '', '', '', '', 'PORT OF DESTINATION:', '', '', '', '', 'SALVADOR / BAHIA / BRASIL.']);
+    dados.push(['', '', '', '', '', 'TIME OF DELIVERY:', '', '', '', '', '']);
+
+    // Linha em branco
+    dados.push([]);
+
+    // BANK INFORMATION
+    dados.push(['BANK INFORMATION', '', '', '', '', '', '', '', '', '', '']);
+    dados.push(['Beneficiary Name:  MIC TRADE SERVICE LIMITED', '', '', '', '', '', '', '', '', '', '']);
+    dados.push(['Account No.:  NRA30006829988 (please also input "NRA")', '', '', '', '', '', '', '', '', '', '']);
+    dados.push(['ADDRESS: RM 502C 5/F, HO KING COMM CTR,2-16 FAYUEN ST MONGKOK,KL', '', '', '', '', '', '', '', '', '', '']);
+    dados.push([]);
+    dados.push(['Beneficiary Bank: DBS Bank (China) Ltd Guangzhou Branch', '', '', '', '', '', '', '', '', '', '']);
+    dados.push(['Swift Code : DBSSCNSHGZU', '', '', '', '', '', '', '', '', '', '']);
+    dados.push(['Beneficiary Bank Address: One-link Center, 18/F Onelink Centre, No.230-232, Tianhe Road, Tianhe District, Guangzhou', '', '', '', '', '', '', '', '', '', '']);
+
+    const ws = XLSX.utils.aoa_to_sheet(dados);
+
+    // Larguras das colunas
+    ws['!cols'] = [
+      { wch: 8 },   // A - ITEM
+      { wch: 6 },   // B
+      { wch: 18 },  // C - CODIGO
+      { wch: 12 },  // D - DESCRICAO
+      { wch: 12 },  // E
+      { wch: 18 },  // F
+      { wch: 8 },   // G - UND
+      { wch: 10 },  // H - QUANT
+      { wch: 6 },   // I
+      { wch: 14 },  // J - PRICE USD
+      { wch: 16 },  // K - TOTAL PRICE USD
+    ];
+
+    // Merges para o cabeçalho
+    ws['!merges'] = [
+      // MIC TRADE header (linhas 0-3, colunas E-K)
+      { s: { r: 0, c: 5 }, e: { r: 0, c: 10 } },
+      { s: { r: 1, c: 5 }, e: { r: 1, c: 10 } },
+      { s: { r: 2, c: 5 }, e: { r: 2, c: 10 } },
+      { s: { r: 3, c: 5 }, e: { r: 3, c: 10 } },
+      // COMERCIAL INVOICE
+      { s: { r: 4, c: 5 }, e: { r: 4, c: 10 } },
+      // Exportador
+      { s: { r: 5, c: 1 }, e: { r: 5, c: 5 } },
+      { s: { r: 6, c: 1 }, e: { r: 6, c: 5 } },
+      { s: { r: 7, c: 1 }, e: { r: 7, c: 5 } },
+      { s: { r: 8, c: 1 }, e: { r: 8, c: 5 } },
+      // Importador
+      { s: { r: 10, c: 1 }, e: { r: 10, c: 5 } },
+      { s: { r: 11, c: 1 }, e: { r: 11, c: 5 } },
+      { s: { r: 12, c: 1 }, e: { r: 12, c: 5 } },
+      { s: { r: 13, c: 1 }, e: { r: 13, c: 5 } },
+      // Descricao dos itens header
+      { s: { r: 16, c: 2 }, e: { r: 16, c: 5 } },
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Commercial Invoice');
+    const fileName = `ASX_Commercial_Invoice_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
   const handleConfirmarProcesso = () => {
