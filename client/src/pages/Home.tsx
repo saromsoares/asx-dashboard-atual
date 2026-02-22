@@ -15,6 +15,7 @@ import {
   Download,
   Settings,
   ArrowLeft,
+  AlertTriangle,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
@@ -38,6 +39,7 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false);
   const [voltFilter, setVoltFilter] = useState<string>('TODOS');
   const [unidFilter, setUnidFilter] = useState<string>('TODOS');
+  const [showOnlySemCusto, setShowOnlySemCusto] = useState(false);
 
   const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct } = useCustos();
 
@@ -64,6 +66,9 @@ export default function Home() {
         p.cod_barras.toLowerCase().includes(q)
       );
     }
+    if (showOnlySemCusto) {
+      list = list.filter(p => getCusto(p.id) <= 0);
+    }
 
     return [...list].sort((a, b) => {
       let va: number | string = 0;
@@ -79,16 +84,17 @@ export default function Home() {
       }
       return sortDir === 'asc' ? (va as number) - (vb as number) : (vb as number) - (va as number);
     });
-  }, [search, categoriaAtiva, voltFilter, unidFilter, sortField, sortDir, custos, taxaCambio]);
+  }, [search, categoriaAtiva, voltFilter, unidFilter, sortField, sortDir, custos, taxaCambio, showOnlySemCusto]);
 
   const stats = useMemo(() => {
     const comCusto = filtered.filter(p => getCusto(p.id) > 0);
+    const semCusto = filtered.filter(p => getCusto(p.id) <= 0);
     const totalVenda = filtered.reduce((s, p) => s + p.preco_venda, 0);
     const totalLucro = comCusto.reduce((s, p) => s + getLucro(p.id, p.preco_venda), 0);
     const avgLucroPct = comCusto.length > 0
       ? comCusto.reduce((s, p) => s + getLucroPct(p.id, p.preco_venda), 0) / comCusto.length
       : 0;
-    return { total: filtered.length, comCusto: comCusto.length, totalVenda, totalLucro, avgLucroPct };
+    return { total: filtered.length, comCusto: comCusto.length, semCusto: semCusto.length, totalVenda, totalLucro, avgLucroPct };
   }, [filtered, custos, taxaCambio]);
 
   const toggleSort = useCallback((field: SortField) => {
@@ -277,7 +283,7 @@ export default function Home() {
         {/* Main Content */}
         <main className="flex-1 overflow-auto flex flex-col">
           {/* Stats Bar */}
-          <div className="border-b px-6 py-3 grid grid-cols-5 gap-4"
+          <div className="border-b px-6 py-3 grid grid-cols-6 gap-4"
             style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Produtos</p>
@@ -285,7 +291,22 @@ export default function Home() {
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Com Custo</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.85 0.005 65)' }}>{stats.comCusto}</p>
+              <p className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.72 0.17 145)' }}>{stats.comCusto}</p>
+            </div>
+            <div>
+              <button
+                onClick={() => setShowOnlySemCusto(!showOnlySemCusto)}
+                className="text-left w-full group"
+                title={showOnlySemCusto ? 'Clique para mostrar todos' : 'Clique para filtrar sem custo'}
+              >
+                <p className="text-[10px] uppercase tracking-wider flex items-center gap-1" style={{ color: stats.semCusto > 0 ? 'oklch(0.65 0.22 25)' : 'oklch(0.45 0.010 285)' }}>
+                  <AlertTriangle className="w-3 h-3" /> Sem Custo
+                </p>
+                <p className="font-rajdhani font-bold text-xl" style={{ color: stats.semCusto > 0 ? 'oklch(0.65 0.22 25)' : 'oklch(0.85 0.005 65)' }}>
+                  {stats.semCusto}
+                  {showOnlySemCusto && <span className="text-xs font-normal ml-1" style={{ color: 'oklch(0.65 0.22 25)' }}>(filtrado)</span>}
+                </p>
+              </button>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Venda</p>
@@ -304,6 +325,56 @@ export default function Home() {
               </p>
             </div>
           </div>
+
+          {/* Alerta visual para produtos sem custo USD */}
+          {stats.semCusto > 0 && !showOnlySemCusto && (
+            <div
+              className="mx-6 mt-3 px-4 py-3 rounded-lg border flex items-center gap-3 cursor-pointer transition-all hover:brightness-110"
+              style={{
+                background: 'oklch(0.18 0.08 25 / 0.3)',
+                borderColor: 'oklch(0.50 0.22 25 / 0.5)',
+              }}
+              onClick={() => setShowOnlySemCusto(true)}
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'oklch(0.30 0.18 25)' }}>
+                <AlertTriangle className="w-5 h-5" style={{ color: 'oklch(0.90 0.15 65)' }} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{ color: 'oklch(0.90 0.15 65)' }}>
+                  {stats.semCusto} produtos sem preço de custo em dólar
+                </p>
+                <p className="text-xs" style={{ color: 'oklch(0.65 0.08 65)' }}>
+                  Clique para filtrar e preencher os custos USD pendentes
+                </p>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'oklch(0.50 0.22 25)', color: 'white' }}>
+                Filtrar
+              </span>
+            </div>
+          )}
+
+          {/* Banner ativo quando filtro sem custo está ligado */}
+          {showOnlySemCusto && (
+            <div
+              className="mx-6 mt-3 px-4 py-2 rounded-lg border flex items-center gap-3"
+              style={{
+                background: 'oklch(0.20 0.15 25 / 0.4)',
+                borderColor: 'oklch(0.55 0.22 25)',
+              }}
+            >
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.90 0.15 65)' }} />
+              <p className="text-xs flex-1" style={{ color: 'oklch(0.90 0.10 65)' }}>
+                Mostrando apenas <strong>{stats.total} produtos sem custo USD</strong>. Preencha os valores na coluna "Custo (USD)".
+              </p>
+              <button
+                onClick={() => setShowOnlySemCusto(false)}
+                className="text-xs px-3 py-1 rounded-full font-semibold transition-colors hover:brightness-110"
+                style={{ background: 'oklch(0.35 0.010 285)', color: 'oklch(0.85 0.005 65)' }}
+              >
+                Mostrar Todos
+              </button>
+            </div>
+          )}
 
           {/* Products */}
           <div className="flex-1 flex flex-col p-4" style={{ minHeight: 0 }}>
@@ -367,10 +438,14 @@ export default function Home() {
                       return (
                         <tr
                           key={p.id}
-                          style={{ borderColor: 'oklch(0.18 0.005 285)' }}
+                          style={{
+                            borderColor: 'oklch(0.18 0.005 285)',
+                            borderLeft: custo <= 0 ? '3px solid oklch(0.55 0.22 25)' : '3px solid transparent',
+                            background: custo <= 0 ? 'oklch(0.14 0.03 25 / 0.15)' : 'transparent',
+                          }}
                           className="border-b transition-colors"
-                          onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.16 0.005 285)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          onMouseEnter={e => (e.currentTarget.style.background = custo <= 0 ? 'oklch(0.16 0.05 25 / 0.25)' : 'oklch(0.16 0.005 285)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = custo <= 0 ? 'oklch(0.14 0.03 25 / 0.15)' : 'transparent')}
                         >
                           <td className="px-3 py-2 sticky left-0 z-10" style={{ background: 'inherit' }}>
                             {p.imagem_url ? (
