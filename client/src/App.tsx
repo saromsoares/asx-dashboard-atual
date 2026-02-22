@@ -10,6 +10,7 @@ import Compras from "./pages/Compras";
 import Configuracoes from "./pages/Configuracoes";
 import Desenvolvimento from "./pages/Desenvolvimento";
 import Conteiner from "./pages/Conteiner";
+import Rastreamento from "./pages/Rastreamento";
 
 function Router() {
   const [location] = useLocation();
@@ -17,6 +18,7 @@ function Router() {
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
     if (location === "/conteiner") return "conteiner";
+    if (location === "/rastreamento") return "rastreamento";
     if (location === "/desenvolvimento") return "desenvolvimento";
     if (location === "/configuracoes") return "configuracoes";
     return "dashboard";
@@ -30,6 +32,7 @@ function Router() {
           <Route path={"/"} component={Home} />
           <Route path={"/compras"} component={Compras} />
           <Route path={"/conteiner"} component={Conteiner} />
+          <Route path={"/rastreamento"} component={Rastreamento} />
           <Route path={"/desenvolvimento"} component={Desenvolvimento} />
           <Route path={"/configuracoes"} component={Configuracoes} />
           <Route path={"/404"} component={NotFound} />

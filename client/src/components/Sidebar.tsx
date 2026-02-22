@@ -40,6 +40,13 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       description: "Processos de importacao SR",
     },
     {
+      id: "rastreamento",
+      label: "Rastreamento",
+      icon: ShoppingCart,
+      href: "/rastreamento",
+      description: "Vincular contêineres aos pedidos",
+    },
+    {
       id: "desenvolvimento",
       label: "Desenvolvimento",
       icon: Lightbulb,
