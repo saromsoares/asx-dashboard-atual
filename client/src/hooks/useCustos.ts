@@ -1,8 +1,17 @@
 // Hook para gerenciar custos USD dos produtos com persistência em localStorage
+// Prioridade: localStorage (edição manual) > custo_usd do catálogo (planilha)
 import { useState, useCallback, useEffect } from 'react';
-import { TAXA_CAMBIO } from '@/data/produtos';
+import { TAXA_CAMBIO, produtos } from '@/data/produtos';
 
 const STORAGE_KEY = 'asx_custos_usd';
+
+// Criar mapa de custo_usd padrão do catálogo (planilha)
+const catalogCustos: Record<number, number> = {};
+for (const p of produtos) {
+  if (p.custo_usd > 0) {
+    catalogCustos[p.id] = p.custo_usd;
+  }
+}
 
 export function useCustos() {
   const [custos, setCustos] = useState<Record<number, number>>(() => {
@@ -35,14 +44,18 @@ export function useCustos() {
     setCustos(prev => ({ ...prev, [produtoId]: valor }));
   }, []);
 
+  // Prioridade: localStorage > catálogo > 0
   const getCusto = useCallback((produtoId: number): number => {
-    return custos[produtoId] ?? 0;
+    if (custos[produtoId] !== undefined && custos[produtoId] > 0) {
+      return custos[produtoId];
+    }
+    return catalogCustos[produtoId] ?? 0;
   }, [custos]);
 
   const getCustoReal = useCallback((produtoId: number): number => {
-    const usd = custos[produtoId] ?? 0;
+    const usd = getCusto(produtoId);
     return usd * taxaCambio;
-  }, [custos, taxaCambio]);
+  }, [getCusto, taxaCambio]);
 
   const getLucro = useCallback((produtoId: number, precoVenda: number): number => {
     const custoReal = getCustoReal(produtoId);
