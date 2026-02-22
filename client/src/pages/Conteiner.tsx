@@ -75,53 +75,6 @@ export default function Conteiner() {
     }
   };
 
-  // Importar itens via CSV
-  const handleImportarCSV = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !processoSelecionado) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target?.result as string;
-        const linhas = text.split('\n').filter(l => l.trim());
-        
-        const novosItens: ItemConteiner[] = [];
-        for (let i = 1; i < linhas.length; i++) {
-          const [codigo, quantidade, preco] = linhas[i].split(',').map(v => v.trim());
-          if (codigo && quantidade && preco) {
-            const produto = produtos.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
-            const qtd = parseFloat(quantidade) || 1;
-            const precoUnit = parseFloat(preco) || 0;
-            
-            novosItens.push({
-              id: Math.random().toString(36).substr(2, 9),
-              descricao: codigo,
-              unidade: produto?.descricao || '',
-              quantidade: qtd,
-              precoUnitarioDolar: precoUnit,
-              precoTotalDolar: qtd * precoUnit,
-              pedidoSarom: 0,
-              pedidoAlexandre: 0,
-            });
-          }
-        }
-
-        if (novosItens.length > 0) {
-          setProcessos(prev => prev.map(p => 
-            p.id === processoSelecionado.id 
-              ? { ...p, itens: [...p.itens, ...novosItens] }
-              : p
-          ));
-          setProcessoSelecionado(prev => prev ? { ...prev, itens: [...prev.itens, ...novosItens] } : null);
-        }
-      } catch (error) {
-        console.error('Erro ao importar CSV:', error);
-      }
-    };
-    reader.readAsText(file);
-  };
-
   const handleAdicionarProcesso = () => {
     if (!formProcesso.numeroProcesso.trim()) {
       alert('Preencha o número do processo');
@@ -589,23 +542,12 @@ export default function Conteiner() {
               <h3 className="font-rajdhani font-bold text-sm mb-3" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 Adicionar Item
               </h3>
-              <div className="mb-3 flex gap-2">
-                <label className="flex-1 px-3 py-2 rounded-md border text-sm cursor-pointer transition-colors flex items-center justify-center gap-2" 
-                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.22 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
-                  title="Importar itens de arquivo CSV (código, quantidade, preço)">
-                  <input type="file" accept=".csv" onChange={handleImportarCSV} className="hidden" />
-                  📥 Importar CSV
-                </label>
-              </div>
-              <div className="grid grid-cols-5 gap-2">
+<div className="grid grid-cols-5 gap-2">
                 <input
                   type="text"
                   placeholder="Código do Produto"
                   value={formItem.descricao}
-                  onChange={e => {
-                    setFormItem({ ...formItem, descricao: e.target.value });
-                    handleBuscarProduto(e.target.value);
-                  }}
+                  onChange={e => setFormItem({ ...formItem, descricao: e.target.value })}
                   className="col-span-1 px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
