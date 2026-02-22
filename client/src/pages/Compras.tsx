@@ -1,0 +1,533 @@
+import { useState, useMemo } from 'react';
+import { Link } from 'wouter';
+import { produtos } from '@/data/produtos';
+import { usePedidos, type ItemPedido } from '@/hooks/usePedidos';
+import {
+  Plus,
+  Trash2,
+  CheckCircle2,
+  Circle,
+  Edit2,
+  X,
+  Download,
+  FileText,
+} from 'lucide-react';
+
+const formatUSD = (v: number) =>
+  v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+export default function Compras() {
+  const {
+    pedidos,
+    criarPedido,
+    deletarPedido,
+    atualizarNomePedido,
+    adicionarItem,
+    removerItem,
+    toggleConfirmacao,
+    calcularTotais,
+  } = usePedidos();
+
+  const [pedidoAtivo, setPedidoAtivo] = useState<string | null>(null);
+  const [novoNomePedido, setNovoNomePedido] = useState('');
+  const [editandoNome, setEditandoNome] = useState<string | null>(null);
+  const [buscaProduto, setBuscaProduto] = useState('');
+  const [produtoSelecionado, setProdutoSelecionado] = useState<number | null>(null);
+  const [qtdSarom, setQtdSarom] = useState(0);
+  const [qtdAlexandre, setQtdAlexandre] = useState(0);
+
+  const pedidoAtualAtual = pedidos.find(p => p.id === pedidoAtivo);
+
+  const produtosFiltrados = useMemo(() => {
+    if (!buscaProduto.trim()) return [];
+    const q = buscaProduto.toLowerCase();
+    return produtos
+      .filter(p =>
+        p.codigo.toLowerCase().includes(q) ||
+        p.descricao.toLowerCase().includes(q)
+      )
+      .slice(0, 10);
+  }, [buscaProduto]);
+
+  const handleCriarPedido = () => {
+    if (novoNomePedido.trim()) {
+      const novo = criarPedido(novoNomePedido);
+      setPedidoAtivo(novo.id);
+      setNovoNomePedido('');
+    }
+  };
+
+  const handleAdicionarItem = () => {
+    if (!pedidoAtivo || !produtoSelecionado || (qtdSarom === 0 && qtdAlexandre === 0)) {
+      return;
+    }
+
+    const prod = produtos.find(p => p.id === produtoSelecionado);
+    if (!prod) return;
+
+    const item: ItemPedido = {
+      produtoId: prod.id,
+      codigo: prod.codigo,
+      nome: prod.descricao,
+      precoUSD: prod.custo_usd || 0, // Usando preço de custo USD
+      qtdSarom,
+      qtdAlexandre,
+    };
+
+    adicionarItem(pedidoAtivo, item);
+    setProdutoSelecionado(null);
+    setQtdSarom(0);
+    setQtdAlexandre(0);
+    setBuscaProduto('');
+  };
+
+  const exportarPDF = (pedido: any) => {
+    // Implementar exportação PDF
+    alert('Exportação PDF em desenvolvimento');
+  };
+
+  const exportarExcel = (pedido: any) => {
+    // Implementar exportação Excel
+    alert('Exportação Excel em desenvolvimento');
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+        <div className="flex items-center justify-between">
+          <h1 className="font-rajdhani font-bold text-2xl" style={{ color: 'oklch(0.80 0.005 65)' }}>
+            GERENCIADOR DE PEDIDOS DE COMPRA
+          </h1>
+          <Link href="/">
+            <button
+              className="px-3 py-2 rounded-md border transition-colors text-sm"
+              style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+            >
+              ← Voltar
+            </button>
+          </Link>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Lista de pedidos */}
+        <aside className="w-72 border-r flex flex-col" style={{ borderColor: 'oklch(0.22 0.005 285)', background: 'oklch(0.13 0.005 285)' }}>
+          <div className="p-4 border-b" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'oklch(0.50 0.010 285)' }}>Gerar Novo Pedido</p>
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                placeholder="Nome do pedido..."
+                value={novoNomePedido}
+                onChange={e => setNovoNomePedido(e.target.value)}
+                onKeyPress={e => e.key === 'Enter' && handleCriarPedido()}
+                className="flex-1 px-3 py-2 text-sm rounded-md border"
+                style={{
+                  background: 'oklch(0.18 0.005 285)',
+                  borderColor: 'oklch(0.28 0.005 285)',
+                  color: 'oklch(0.90 0.005 65)',
+                }}
+              />
+              <button
+                onClick={handleCriarPedido}
+                className="px-3 py-2 rounded-md transition-colors flex items-center gap-1 hover:opacity-80"
+                style={{
+                  background: 'oklch(0.48 0.22 25)',
+                  color: 'white',
+                }}
+                title="Criar novo pedido"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {pedidos.length === 0 ? (
+              <div className="p-4 text-center text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                Nenhum pedido criado
+              </div>
+            ) : (
+              pedidos.map(pedido => (
+                <button
+                  key={pedido.id}
+                  onClick={() => setPedidoAtivo(pedido.id)}
+                  className="w-full text-left px-4 py-3 border-b transition-colors flex items-center gap-2"
+                  style={{
+                    background: pedidoAtivo === pedido.id ? 'oklch(0.18 0.005 285)' : 'transparent',
+                    borderColor: 'oklch(0.22 0.005 285)',
+                  }}
+                >
+                  {pedido.confirmado ? (
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.72 0.17 145)' }} />
+                  ) : (
+                    <Circle className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.50 0.010 285)' }} />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{pedido.nome}</p>
+                    <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      {pedido.items.length} itens
+                    </p>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </aside>
+
+        {/* Conteúdo do pedido */}
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {!pedidoAtivo ? (
+            <div className="flex-1 flex items-center justify-center" style={{ color: 'oklch(0.50 0.010 285)' }}>
+              <p>Selecione ou crie um pedido</p>
+            </div>
+          ) : pedidoAtualAtual ? (
+            <>
+              {/* Header do pedido */}
+              <div className="border-b px-6 py-4 flex items-center justify-between" style={{ borderColor: 'oklch(0.22 0.005 285)', background: 'oklch(0.13 0.005 285)' }}>
+                <div className="flex items-center gap-3 flex-1">
+                  {editandoNome === pedidoAtivo ? (
+                    <input
+                      type="text"
+                      value={pedidoAtualAtual.nome}
+                      onChange={e => atualizarNomePedido(pedidoAtivo, e.target.value)}
+                      onBlur={() => setEditandoNome(null)}
+                      onKeyPress={e => e.key === 'Enter' && setEditandoNome(null)}
+                      autoFocus
+                      className="px-3 py-2 rounded-md border flex-1"
+                      style={{
+                        background: 'oklch(0.18 0.005 285)',
+                        borderColor: 'oklch(0.28 0.005 285)',
+                        color: 'oklch(0.90 0.005 65)',
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <h2 className="font-rajdhani font-bold text-lg">{pedidoAtualAtual.nome}</h2>
+                      <button
+                        onClick={() => setEditandoNome(pedidoAtivo)}
+                        className="p-1 rounded hover:opacity-75"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleConfirmacao(pedidoAtivo)}
+                    className="px-3 py-2 rounded-md transition-colors flex items-center gap-2 text-sm"
+                    style={{
+                      background: pedidoAtualAtual.confirmado ? 'oklch(0.72 0.17 145 / 0.2)' : 'oklch(0.48 0.22 25 / 0.2)',
+                      color: pedidoAtualAtual.confirmado ? 'oklch(0.72 0.17 145)' : 'oklch(0.48 0.22 25)',
+                    }}
+                  >
+                    {pedidoAtualAtual.confirmado ? (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Confirmado
+                      </>
+                    ) : (
+                      <>
+                        <Circle className="w-4 h-4" />
+                        Pendente
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => exportarPDF(pedidoAtualAtual)}
+                    className="p-2 rounded-md transition-colors"
+                    style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+                  >
+                    <FileText className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => exportarExcel(pedidoAtualAtual)}
+                    className="p-2 rounded-md transition-colors"
+                    style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      deletarPedido(pedidoAtivo);
+                      setPedidoAtivo(null);
+                    }}
+                    className="p-2 rounded-md transition-colors"
+                    style={{ background: 'oklch(0.65 0.22 25 / 0.2)', color: 'oklch(0.65 0.22 25)' }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Adicionar item */}
+              <div className="border-b px-6 py-4" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      Buscar Produto
+                    </label>
+                    <div className="relative mt-1">
+                      <input
+                        type="text"
+                        placeholder="Código ou nome..."
+                        value={buscaProduto}
+                        onChange={e => setBuscaProduto(e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border text-sm"
+                        style={{
+                          background: 'oklch(0.18 0.005 285)',
+                          borderColor: 'oklch(0.28 0.005 285)',
+                          color: 'oklch(0.90 0.005 65)',
+                        }}
+                      />
+                      {produtosFiltrados.length > 0 && (
+                        <div
+                          className="absolute top-full left-0 right-0 mt-1 rounded-md border max-h-40 overflow-y-auto z-10"
+                          style={{
+                            background: 'oklch(0.18 0.005 285)',
+                            borderColor: 'oklch(0.28 0.005 285)',
+                          }}
+                        >
+                          {produtosFiltrados.map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => {
+                                setProdutoSelecionado(p.id);
+                                setBuscaProduto(`${p.codigo} - ${p.descricao.substring(0, 30)}`);
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:opacity-75 transition-opacity"
+                              style={{ borderColor: 'oklch(0.22 0.005 285)' }}
+                            >
+                              <div className="font-medium">{p.codigo}</div>
+                              <div className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                                {p.descricao.substring(0, 50)}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {produtoSelecionado && (
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <label className="text-xs font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                          Preço USD
+                        </label>
+                        <input
+                          type="text"
+                          disabled
+                          value={formatUSD(produtos.find(p => p.id === produtoSelecionado)?.preco_venda || 0)}
+                          className="w-full px-2 py-1 rounded text-sm mt-1"
+                          style={{
+                            background: 'oklch(0.18 0.005 285)',
+                            borderColor: 'oklch(0.28 0.005 285)',
+                            color: 'oklch(0.70 0.010 285)',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                          Qtd Sarom
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={qtdSarom}
+                          onChange={e => setQtdSarom(parseInt(e.target.value) || 0)}
+                          className="w-full px-2 py-1 rounded text-sm mt-1"
+                          style={{
+                            background: 'oklch(0.18 0.005 285)',
+                            borderColor: 'oklch(0.28 0.005 285)',
+                            color: 'oklch(0.90 0.005 65)',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                          Qtd Alexandre
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={qtdAlexandre}
+                          onChange={e => setQtdAlexandre(parseInt(e.target.value) || 0)}
+                          className="w-full px-2 py-1 rounded text-sm mt-1"
+                          style={{
+                            background: 'oklch(0.18 0.005 285)',
+                            borderColor: 'oklch(0.28 0.005 285)',
+                            color: 'oklch(0.90 0.005 65)',
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-end gap-1">
+                        <button
+                          onClick={handleAdicionarItem}
+                          className="flex-1 px-3 py-1 rounded text-sm transition-colors"
+                          style={{
+                            background: 'oklch(0.48 0.22 25)',
+                            color: 'white',
+                          }}
+                        >
+                          Adicionar
+                        </button>
+                        <button
+                          onClick={() => {
+                            setProdutoSelecionado(null);
+                            setBuscaProduto('');
+                            setQtdSarom(0);
+                            setQtdAlexandre(0);
+                          }}
+                          className="px-2 py-1 rounded text-sm"
+                          style={{
+                            background: 'oklch(0.18 0.005 285)',
+                            color: 'oklch(0.70 0.010 285)',
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tabela de itens */}
+              <div className="flex-1 overflow-auto">
+                {pedidoAtualAtual.items.length === 0 ? (
+                  <div className="p-6 text-center" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                    Nenhum item adicionado
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead style={{ background: 'oklch(0.14 0.005 285)', borderBottom: '1px solid oklch(0.22 0.005 285)' }}>
+                      <tr>
+                        <th className="px-4 py-2 text-left font-semibold">Código</th>
+                        <th className="px-4 py-2 text-left font-semibold">Produto</th>
+                        <th className="px-4 py-2 text-center font-semibold">Preço USD</th>
+                        <th className="px-4 py-2 text-center font-semibold">Qtd Sarom</th>
+                        <th className="px-4 py-2 text-center font-semibold">Valor Sarom</th>
+                        <th className="px-4 py-2 text-center font-semibold">Qtd Alexandre</th>
+                        <th className="px-4 py-2 text-center font-semibold">Valor Alexandre</th>
+                        <th className="px-4 py-2 text-center font-semibold">Qtd Total</th>
+                        <th className="px-4 py-2 text-center font-semibold">Valor Total</th>
+                        <th className="px-4 py-2 text-center font-semibold"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pedidoAtualAtual.items.map(item => {
+                        const subtotalSarom = item.precoUSD * item.qtdSarom;
+                        const subtotalAlexandre = item.precoUSD * item.qtdAlexandre;
+                        const qtdTotal = item.qtdSarom + item.qtdAlexandre;
+                        const valorTotal = subtotalSarom + subtotalAlexandre;
+
+                        return (
+                          <tr
+                            key={item.produtoId}
+                            style={{ borderBottom: '1px solid oklch(0.22 0.005 285)' }}
+                          >
+                            <td className="px-4 py-3 font-mono text-xs">{item.codigo}</td>
+                            <td className="px-4 py-3 text-xs">{item.nome.substring(0, 40)}</td>
+                            <td className="px-4 py-3 text-center">{formatUSD(item.precoUSD)}</td>
+                            <td className="px-4 py-3 text-center">{item.qtdSarom}</td>
+                            <td className="px-4 py-3 text-center">{formatUSD(subtotalSarom)}</td>
+                            <td className="px-4 py-3 text-center">{item.qtdAlexandre}</td>
+                            <td className="px-4 py-3 text-center">{formatUSD(subtotalAlexandre)}</td>
+                            <td className="px-4 py-3 text-center font-semibold">{qtdTotal}</td>
+                            <td className="px-4 py-3 text-center font-semibold" style={{ color: 'oklch(0.75 0.15 25)' }}>
+                              {formatUSD(valorTotal)}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                onClick={() => removerItem(pedidoAtivo, item.produtoId)}
+                                className="p-1 rounded hover:opacity-75"
+                                style={{ color: 'oklch(0.65 0.22 25)' }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* Rodapé com totais */}
+              {pedidoAtualAtual.items.length > 0 && (() => {
+                const totais = calcularTotais(pedidoAtualAtual);
+                const qtdSarom = pedidoAtualAtual.items.reduce((sum, item) => sum + item.qtdSarom, 0);
+                const qtdAlexandre = pedidoAtualAtual.items.reduce((sum, item) => sum + item.qtdAlexandre, 0);
+                const qtdTotal = qtdSarom + qtdAlexandre;
+
+                return (
+                  <div
+                    className="border-t px-6 py-4"
+                    style={{ borderColor: 'oklch(0.22 0.005 285)', background: 'oklch(0.13 0.005 285)' }}
+                  >
+                    <div className="grid grid-cols-2 gap-8">
+                      {/* Coluna Sarom */}
+                      <div className="border-r" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+                        <h3 className="font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>PEDIDO SAROM</h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span style={{ color: 'oklch(0.50 0.010 285)' }}>Total de Itens:</span>
+                            <span className="font-semibold">{qtdSarom}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span style={{ color: 'oklch(0.50 0.010 285)' }}>Valor Total:</span>
+                            <span className="font-semibold" style={{ color: 'oklch(0.75 0.15 25)' }}>
+                              {formatUSD(totais.totalSarom)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Coluna Alexandre */}
+                      <div>
+                        <h3 className="font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>PEDIDO ALEXANDRE</h3>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span style={{ color: 'oklch(0.50 0.010 285)' }}>Total de Itens:</span>
+                            <span className="font-semibold">{qtdAlexandre}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span style={{ color: 'oklch(0.50 0.010 285)' }}>Valor Total:</span>
+                            <span className="font-semibold" style={{ color: 'oklch(0.75 0.15 25)' }}>
+                              {formatUSD(totais.totalAlexandre)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Totais Gerais */}
+                    <div className="mt-4 pt-4 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>TOTAL GERAL DO PEDIDO</p>
+                          <p className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>Itens: {qtdTotal}</p>
+                        </div>
+                        <p className="text-2xl font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                          {formatUSD(totais.totalGeral)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          ) : null}
+        </main>
+      </div>
+    </div>
+  );
+}
