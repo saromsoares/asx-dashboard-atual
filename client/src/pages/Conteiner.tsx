@@ -9,6 +9,7 @@ import { produtos } from '../data/produtos';
 
 interface ItemConteiner {
   id: string;
+  codigo: string;
   descricao: string;
   unidade: string;
   quantidade: number;
@@ -73,16 +74,20 @@ export default function Conteiner() {
   });
 
   // Buscar produto por código e preencher nome e unidade automaticamente
+  const [nomeProdutoEncontrado, setNomeProdutoEncontrado] = useState('');
   const handleBuscarProduto = (codigo: string) => {
+    setFormItem(prev => ({ ...prev, descricao: codigo }));
     const produto = produtos.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
     if (produto) {
+      setNomeProdutoEncontrado(produto.descricao);
       setFormItem(prev => ({
         ...prev,
         descricao: codigo,
-        unidade: produto.descricao,
+        unidade: produto.unid,
       }));
     } else {
-      setFormItem(prev => ({ ...prev, descricao: codigo }));
+      setNomeProdutoEncontrado('');
+      setFormItem(prev => ({ ...prev, descricao: codigo, unidade: '' }));
     }
   };
 
@@ -125,7 +130,8 @@ export default function Conteiner() {
 
     const novoItem: ItemConteiner = {
       id: `item-${Date.now()}`,
-      descricao: formItem.descricao,
+      codigo: formItem.descricao,
+      descricao: nomeProdutoEncontrado || formItem.descricao,
       unidade: formItem.unidade,
       quantidade: formItem.quantidade,
       precoUnitarioDolar: formItem.precoUnitarioDolar,
@@ -151,6 +157,7 @@ export default function Conteiner() {
       pedidoSarom: 0,
       pedidoAlexandre: 0,
     });
+    setNomeProdutoEncontrado('');
   };
 
   const handleRemoverItem = (itemId: string) => {
@@ -248,9 +255,9 @@ export default function Conteiner() {
       ['Data', processoSelecionado.dataProcesso],
       ['Status', processoSelecionado.status],
       [],
-      ['ITEM', 'DESCRIÇÃO', 'UNIDADE', 'QUANTIDADE', 'PREÇO UNITÁRIO USD', 'TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'],
+      ['CÓDIGO', 'DESCRIÇÃO', 'UNIDADE', 'QUANTIDADE', 'PREÇO UNITÁRIO USD', 'TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'],
       ...processoSelecionado.itens.map(item => [
-        item.id.substring(0, 8),
+        item.codigo,
         item.descricao,
         item.unidade,
         item.quantidade,
@@ -284,8 +291,9 @@ export default function Conteiner() {
       ['OBSERVACOES', processoSelecionado.observacoes],
       [],
     ];
-    const headers = ['DESCRICAO', 'UNIDADE', 'QUANTIDADE', 'PRECO UNITARIO USD', 'PRECO TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'];
+    const headers = ['CODIGO', 'DESCRICAO', 'UNIDADE', 'QUANTIDADE', 'PRECO UNITARIO USD', 'PRECO TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'];
     const itensDados = processoSelecionado.itens.map(item => [
+      item.codigo,
       item.descricao,
       item.unidade,
       item.quantidade,
@@ -567,22 +575,13 @@ export default function Conteiner() {
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       <td className="px-3 py-2">
-                        <input
-                          type="text"
-                          value={item.descricao}
-                          onChange={e => handleAtualizarItem(item.id, 'descricao', e.target.value)}
-                          className="w-full px-2 py-1 rounded text-xs bg-transparent border"
-                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
-                        />
+                        <span className="text-xs font-mono" style={{ color: 'oklch(0.48 0.22 25)' }}>{item.codigo}</span>
                       </td>
                       <td className="px-3 py-2">
-                        <input
-                          type="text"
-                          value={item.unidade}
-                          onChange={e => handleAtualizarItem(item.id, 'unidade', e.target.value)}
-                          className="w-20 px-2 py-1 rounded text-xs bg-transparent border"
-                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
-                        />
+                        <span className="text-xs" style={{ color: 'oklch(0.85 0.005 65)' }}>{item.descricao}</span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="text-xs text-center block" style={{ color: 'oklch(0.85 0.005 65)' }}>{item.unidade}</span>
                       </td>
                       <td className="px-3 py-2 text-right">
                         <input
@@ -625,13 +624,13 @@ export default function Conteiner() {
               <h3 className="font-rajdhani font-bold text-sm mb-3" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 Adicionar Item
               </h3>
-<div className="grid grid-cols-5 gap-2">
+<div className="grid grid-cols-6 gap-2">
                 <input
                   type="text"
-                  placeholder="Código do Produto"
+                  placeholder="Código"
                   value={formItem.descricao}
                   onChange={e => handleBuscarProduto(e.target.value)}
-                  className="col-span-1 px-3 py-2 rounded-md border text-sm"
+                  className="px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
                     borderColor: 'oklch(0.26 0.005 285)',
@@ -640,13 +639,25 @@ export default function Conteiner() {
                 />
                 <input
                   type="text"
-                  placeholder="Nome (preenchido automaticamente)"
-                  value={formItem.unidade}
+                  placeholder="Nome (automático)"
+                  value={nomeProdutoEncontrado}
                   readOnly
                   className="col-span-2 px-3 py-2 rounded-md border text-sm"
                   style={{
-                    background: 'oklch(0.18 0.005 285)',
-                    borderColor: 'oklch(0.26 0.005 285)',
+                    background: 'oklch(0.15 0.005 285)',
+                    borderColor: nomeProdutoEncontrado ? 'oklch(0.40 0.18 145)' : 'oklch(0.26 0.005 285)',
+                    color: 'oklch(0.90 0.005 65)',
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Unid"
+                  value={formItem.unidade}
+                  readOnly
+                  className="px-3 py-2 rounded-md border text-sm text-center"
+                  style={{
+                    background: 'oklch(0.15 0.005 285)',
+                    borderColor: formItem.unidade ? 'oklch(0.40 0.18 145)' : 'oklch(0.26 0.005 285)',
                     color: 'oklch(0.90 0.005 65)',
                   }}
                 />
@@ -675,15 +686,15 @@ export default function Conteiner() {
                     color: 'oklch(0.90 0.005 65)',
                   }}
                 />
-                <button
-                  onClick={handleAdicionarItem}
-                  className="px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-1"
-                  style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
-                >
-                  <Plus className="w-4 h-4" />
-                  Adicionar
-                </button>
               </div>
+              <button
+                onClick={handleAdicionarItem}
+                className="mt-2 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-1"
+                style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+              >
+                <Plus className="w-4 h-4" />
+                Adicionar
+              </button>
             </div>
 
             {/* Botões de Ação */}
