@@ -1,7 +1,7 @@
 // Design: Dark Command Center — Contêiner SR
 // Gerenciamento de processos de importação com invoice, NCM e itens
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { X, Plus, Trash2, Copy, ArrowLeft, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -31,14 +31,55 @@ interface ProcessoSR {
   status: 'Em andamento' | 'Finalizado' | 'Cancelado';
 }
 
+const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
+const STORAGE_KEY_CONFIRMADOS = 'asx_processos_confirmados';
+
+function carregarProcessos(): ProcessoSR[] {
+  try {
+    const dados = localStorage.getItem(STORAGE_KEY_PROCESSOS);
+    if (dados) return JSON.parse(dados);
+  } catch (e) {
+    console.error('Erro ao carregar processos:', e);
+  }
+  return [];
+}
+
+function carregarConfirmados(): Set<string> {
+  try {
+    const dados = localStorage.getItem(STORAGE_KEY_CONFIRMADOS);
+    if (dados) return new Set(JSON.parse(dados));
+  } catch (e) {
+    console.error('Erro ao carregar confirmados:', e);
+  }
+  return new Set();
+}
+
 export default function Conteiner() {
   const [, setLocation] = useLocation();
-  const [processos, setProcessos] = useState<ProcessoSR[]>([]);
+  const [processos, setProcessos] = useState<ProcessoSR[]>(() => carregarProcessos());
   const [showNovoProcesso, setShowNovoProcesso] = useState(false);
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
-  const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(new Set());
+  const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(() => carregarConfirmados());
   const [filtroConfirmados, setFiltroConfirmados] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Em andamento' | 'Finalizado' | 'Cancelado'>('Todos');
+
+  // Persistir processos no localStorage sempre que mudar
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_PROCESSOS, JSON.stringify(processos));
+    } catch (e) {
+      console.error('Erro ao salvar processos:', e);
+    }
+  }, [processos]);
+
+  // Persistir confirmados no localStorage sempre que mudar
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CONFIRMADOS, JSON.stringify(Array.from(processosConfirmados)));
+    } catch (e) {
+      console.error('Erro ao salvar confirmados:', e);
+    }
+  }, [processosConfirmados]);
 
   const processosFiltrados = useMemo(() => {
     let resultado = processos;
