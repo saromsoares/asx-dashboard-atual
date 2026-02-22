@@ -37,11 +37,21 @@ export default function Conteiner() {
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
   const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(new Set());
   const [filtroConfirmados, setFiltroConfirmados] = useState(false);
+  const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Em andamento' | 'Finalizado' | 'Cancelado'>('Todos');
 
   const processosFiltrados = useMemo(() => {
-    if (!filtroConfirmados) return processos;
-    return processos.filter(p => processosConfirmados.has(p.id));
-  }, [processos, processosConfirmados, filtroConfirmados]);
+    let resultado = processos;
+    
+    if (filtroConfirmados) {
+      resultado = resultado.filter(p => processosConfirmados.has(p.id));
+    }
+    
+    if (filtroStatus !== 'Todos') {
+      resultado = resultado.filter(p => p.status === filtroStatus);
+    }
+    
+    return resultado;
+  }, [processos, processosConfirmados, filtroConfirmados, filtroStatus]);
 
   // Form para novo processo
   const [formProcesso, setFormProcesso] = useState({
@@ -229,6 +239,40 @@ export default function Conteiner() {
     });
   };
 
+  const handleExportarPlanilhaCompra = () => {
+    if (!processoSelecionado) return;
+
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['PLANILHA DE COMPRA - CONTÊINER', processoSelecionado.numeroProcesso],
+      ['Invoice', processoSelecionado.nomeInvoice],
+      ['Data', processoSelecionado.dataProcesso],
+      ['Status', processoSelecionado.status],
+      [],
+      ['ITEM', 'DESCRIÇÃO', 'UNIDADE', 'QUANTIDADE', 'PREÇO UNITÁRIO USD', 'TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'],
+      ...processoSelecionado.itens.map(item => [
+        item.id.substring(0, 8),
+        item.descricao,
+        item.unidade,
+        item.quantidade,
+        item.precoUnitarioDolar.toFixed(2),
+        item.precoTotalDolar.toFixed(2),
+        item.pedidoSarom,
+        item.pedidoAlexandre,
+      ]),
+      [],
+      ['TOTAIS'],
+      ['Total Itens', processoSelecionado.itens.length],
+      ['Total USD', processoSelecionado.itens.reduce((sum, item) => sum + item.precoTotalDolar, 0).toFixed(2)],
+      ['Total Sarom', processoSelecionado.itens.reduce((sum, item) => sum + item.pedidoSarom, 0)],
+      ['Total Alexandre', processoSelecionado.itens.reduce((sum, item) => sum + item.pedidoAlexandre, 0)],
+    ]);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Compra');
+    const fileName = `ASX_Planilha_Compra_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
   const handleExportarExcel = () => {
     if (!processoSelecionado) return;
     const wb = XLSX.utils.book_new();
@@ -299,10 +343,25 @@ export default function Conteiner() {
         <aside className="w-72 flex-shrink-0 border rounded-lg overflow-y-auto"
           style={{ background: 'oklch(0.13 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
           <div className="p-4 border-b sticky top-0" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'oklch(0.45 0.010 285)' }}>
-                Processos SR ({processosFiltrados.length})
-              </p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'oklch(0.45 0.010 285)' }}>
+              Processos SR ({processosFiltrados.length})
+            </p>
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-1">
+                {(['Todos', 'Em andamento', 'Finalizado', 'Cancelado'] as const).map(status => (
+                  <button
+                    key={status}
+                    onClick={() => setFiltroStatus(status)}
+                    className="flex-1 px-2 py-1 rounded text-[9px] font-semibold transition-colors"
+                    style={{
+                      background: filtroStatus === status ? getStatusColor(status === 'Todos' ? 'Em andamento' : status).bg : 'oklch(0.20 0.005 285)',
+                      color: filtroStatus === status ? 'white' : 'oklch(0.60 0.005 65)'
+                    }}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
               <button
                 onClick={() => setFiltroConfirmados(!filtroConfirmados)}
                 className="px-2 py-1 rounded text-[10px] font-semibold transition-colors"
@@ -312,7 +371,7 @@ export default function Conteiner() {
                 }}
                 title={filtroConfirmados ? 'Mostrando confirmados' : 'Mostrar todos'}
               >
-                {filtroConfirmados ? '✓ Confirmados' : 'Todos'}
+                {filtroConfirmados ? '✓ Confirmados' : 'Mostrar Todos'}
               </button>
             </div>
           </div>
@@ -654,7 +713,16 @@ export default function Conteiner() {
                 title="Exportar processo para Excel"
               >
                 <Download className="w-4 h-4" />
-                Exportar Excel
+                Exportar Processo
+              </button>
+              <button
+                onClick={handleExportarPlanilhaCompra}
+                className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
+                style={{ background: 'oklch(0.50 0.15 142)', color: 'white' }}
+                title="Exportar planilha de compra com dados de Sarom e Alexandre"
+              >
+                <Download className="w-4 h-4" />
+                Exportar Compra
               </button>
               <button
                 onClick={handleConfirmarProcesso}
