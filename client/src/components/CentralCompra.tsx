@@ -195,14 +195,15 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
           if (row['A_CHEGAR'] !== undefined || row['MERCADORIA_A_CHEGAR'] !== undefined || row['a_chegar'] !== undefined) {
             dados.mercadoriaAChegar = parseFloat(row['A_CHEGAR'] ?? row['MERCADORIA_A_CHEGAR'] ?? row['a_chegar']) || 0;
           }
-          if (row['VENDA_MES1'] !== undefined || row['venda_mes1'] !== undefined || row['MES1'] !== undefined) {
-            dados.vendaMes1 = parseFloat(row['VENDA_MES1'] ?? row['venda_mes1'] ?? row['MES1']) || 0;
+          if (row['VENDA_TRIMESTRE'] !== undefined || row['venda_trimestre'] !== undefined || row['TRIMESTRE'] !== undefined) {
+            dados.vendaTrimestre = parseFloat(row['VENDA_TRIMESTRE'] ?? row['venda_trimestre'] ?? row['TRIMESTRE']) || 0;
           }
-          if (row['VENDA_MES2'] !== undefined || row['venda_mes2'] !== undefined || row['MES2'] !== undefined) {
-            dados.vendaMes2 = parseFloat(row['VENDA_MES2'] ?? row['venda_mes2'] ?? row['MES2']) || 0;
-          }
-          if (row['VENDA_MES3'] !== undefined || row['venda_mes3'] !== undefined || row['MES3'] !== undefined) {
-            dados.vendaMes3 = parseFloat(row['VENDA_MES3'] ?? row['venda_mes3'] ?? row['MES3']) || 0;
+          // Compatibilidade: se importar com MES1/2/3 antigos, somar
+          if (row['VENDA_MES1'] !== undefined || row['VENDA_MES2'] !== undefined || row['VENDA_MES3'] !== undefined) {
+            const m1 = parseFloat(row['VENDA_MES1'] ?? row['venda_mes1'] ?? row['MES1']) || 0;
+            const m2 = parseFloat(row['VENDA_MES2'] ?? row['venda_mes2'] ?? row['MES2']) || 0;
+            const m3 = parseFloat(row['VENDA_MES3'] ?? row['venda_mes3'] ?? row['MES3']) || 0;
+            dados.vendaTrimestre = m1 + m2 + m3;
           }
 
           dadosImport[produto.id] = dados;
@@ -292,9 +293,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
       'ESTOQUE ATUAL': p.estoqueInicial,
       'A CHEGAR': p.mercadoriaAChegar,
       'ESTOQUE PROJETADO': p.estoqueProjetado,
-      'VENDA MÊS 1': p.vendaMes1,
-      'VENDA MÊS 2': p.vendaMes2,
-      'VENDA MÊS 3': p.vendaMes3,
+      'VENDA TRIMESTRE': p.vendaTrimestre,
       'MÉDIA MENSAL': Math.round(p.mediaMensal * 10) / 10,
       'COBERTURA (MESES)': Math.round(p.coberturaMeses * 10) / 10,
       'ESTOQUE IDEAL': Math.round(p.estoqueIdeal),
@@ -328,9 +327,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
       'UNIDADE': p.unidade,
       'ESTOQUE': p.estoqueInicial || '',
       'A_CHEGAR': p.mercadoriaAChegar || '',
-      'VENDA_MES1': p.vendaMes1 || '',
-      'VENDA_MES2': p.vendaMes2 || '',
-      'VENDA_MES3': p.vendaMes3 || '',
+      'VENDA_TRIMESTRE': p.vendaTrimestre || '',
     }));
 
     const ws = XLSX.utils.json_to_sheet(dados);
@@ -742,17 +739,11 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
                   </th>
 
                   {/* Bloco 3 — Vendas */}
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.80 0.18 85)', width: '65px', borderLeft: '2px solid oklch(0.22 0.005 285)' }}>
-                    Mês 1
+                  <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.80 0.18 85)', width: '100px', borderLeft: '2px solid oklch(0.22 0.005 285)' }}>
+                    Venda Trim.
                   </th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.80 0.18 85)', width: '65px' }}>
-                    Mês 2
-                  </th>
-                  <th className="px-3 py-2.5 text-center font-semibold" style={{ color: 'oklch(0.80 0.18 85)', width: '65px' }}>
-                    Mês 3
-                  </th>
-                  <th className="px-3 py-2.5 text-center font-semibold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.18 85)', width: '75px' }} onClick={() => handleSort('mediaMensal')}>
-                    Média <SortIcon field="mediaMensal" />
+                  <th className="px-3 py-2.5 text-center font-semibold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.18 85)', width: '85px' }} onClick={() => handleSort('mediaMensal')}>
+                    Média/Mês <SortIcon field="mediaMensal" />
                   </th>
 
                   {/* Bloco 4 — Necessidade */}
@@ -808,15 +799,9 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
                       {p.estoqueProjetado > 0 ? formatNum(p.estoqueProjetado) : '—'}
                     </td>
 
-                    {/* Bloco 3 — Vendas (editável) */}
+                    {/* Bloco 3 — Vendas */}
                     <td className="px-2 py-1.5 text-center" style={{ borderLeft: '2px solid oklch(0.20 0.005 285)' }}>
-                      <EditableCell produtoId={p.id} field="vendaMes1" value={p.vendaMes1} width="w-12" />
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
-                      <EditableCell produtoId={p.id} field="vendaMes2" value={p.vendaMes2} width="w-12" />
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
-                      <EditableCell produtoId={p.id} field="vendaMes3" value={p.vendaMes3} width="w-12" />
+                      <EditableCell produtoId={p.id} field="vendaTrimestre" value={p.vendaTrimestre} width="w-16" />
                     </td>
                     <td className="px-3 py-2 text-center font-semibold" style={{ color: p.mediaMensal > 0 ? 'oklch(0.80 0.18 85)' : 'oklch(0.40 0.010 285)' }}>
                       {p.mediaMensal > 0 ? formatNum(p.mediaMensal, 1) : '—'}

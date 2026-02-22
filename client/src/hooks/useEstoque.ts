@@ -14,9 +14,7 @@ export interface DadosEstoqueProduto {
   produtoId: number;
   estoqueInicial: number;
   mercadoriaAChegarManual: number; // preenchido manualmente pelo usuário
-  vendaMes1: number;
-  vendaMes2: number;
-  vendaMes3: number;
+  vendaTrimestre: number; // total de vendas do último trimestre
 }
 
 export interface ProdutoComEstoque {
@@ -38,9 +36,7 @@ export interface ProdutoComEstoque {
   estoqueProjetado: number;
 
   // Bloco 3 — Métricas de Venda
-  vendaMes1: number;
-  vendaMes2: number;
-  vendaMes3: number;
+  vendaTrimestre: number;
   mediaMensal: number;
   coberturaMeses: number;
 
@@ -184,14 +180,13 @@ function migrarDadosAntigos(dados: Record<number, any>): Record<number, DadosEst
     const id = parseInt(idStr, 10);
     if (isNaN(id)) continue;
 
+    // Migrar dados antigos: se tinha vendaMes1/2/3, somar para vendaTrimestre
+    const vendaTrimestre = valor.vendaTrimestre ?? ((valor.vendaMes1 || 0) + (valor.vendaMes2 || 0) + (valor.vendaMes3 || 0));
     migrado[id] = {
       produtoId: id,
       estoqueInicial: valor.estoqueInicial || 0,
-      // Se tinha mercadoriaAChegar antigo, migrar para mercadoriaAChegarManual
       mercadoriaAChegarManual: valor.mercadoriaAChegarManual ?? valor.mercadoriaAChegar ?? 0,
-      vendaMes1: valor.vendaMes1 || 0,
-      vendaMes2: valor.vendaMes2 || 0,
-      vendaMes3: valor.vendaMes3 || 0,
+      vendaTrimestre,
     };
   }
   return migrado;
@@ -298,9 +293,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         produtoId,
         estoqueInicial: 0,
         mercadoriaAChegarManual: 0,
-        vendaMes1: 0,
-        vendaMes2: 0,
-        vendaMes3: 0,
+        vendaTrimestre: 0,
       };
       return {
         ...prev,
@@ -318,9 +311,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
           produtoId: id,
           estoqueInicial: 0,
           mercadoriaAChegarManual: 0,
-          vendaMes1: 0,
-          vendaMes2: 0,
-          vendaMes3: 0,
+          vendaTrimestre: 0,
         };
         // Mapear campo legado
         const { mercadoriaAChegar, ...rest } = parcial as any;
@@ -342,9 +333,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         produtoId: p.id,
         estoqueInicial: 0,
         mercadoriaAChegarManual: 0,
-        vendaMes1: 0,
-        vendaMes2: 0,
-        vendaMes3: 0,
+        vendaTrimestre: 0,
       };
 
       const custoUsd = custosUsd[p.id] || p.custo_usd || 0;
@@ -361,10 +350,8 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
       const estoqueProjetado = dados.estoqueInicial + mercadoriaAChegar;
 
       // Bloco 3 — Métricas de Venda
-      const mesesComVenda = [dados.vendaMes1, dados.vendaMes2, dados.vendaMes3].filter(v => v > 0);
-      const mediaMensal = mesesComVenda.length > 0
-        ? mesesComVenda.reduce((s, v) => s + v, 0) / mesesComVenda.length
-        : 0;
+      const vendaTrimestre = dados.vendaTrimestre || 0;
+      const mediaMensal = vendaTrimestre > 0 ? vendaTrimestre / 3 : 0;
       const coberturaMeses = mediaMensal > 0 ? estoqueProjetado / mediaMensal : 0;
 
       // Bloco 4 — Necessidade de Compra
@@ -389,9 +376,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         mercadoriaAChegarConteiner,
         mercadoriaAChegar,
         estoqueProjetado,
-        vendaMes1: dados.vendaMes1,
-        vendaMes2: dados.vendaMes2,
-        vendaMes3: dados.vendaMes3,
+        vendaTrimestre,
         mediaMensal,
         coberturaMeses,
         estoqueIdeal,
