@@ -17,6 +17,7 @@ interface ItemConteiner {
   precoTotalDolar: number;
   pedidoSarom: number;
   pedidoAlexandre: number;
+  ordemCompra: string;
 }
 
 interface ProcessoSR {
@@ -117,6 +118,7 @@ export default function Conteiner() {
     precoUnitarioDolar: 0,
     pedidoSarom: 0,
     pedidoAlexandre: 0,
+    ordemCompra: '',
   });
 
   // Autocomplete de produto por código
@@ -235,6 +237,7 @@ export default function Conteiner() {
       precoTotalDolar: formItem.quantidade * formItem.precoUnitarioDolar,
       pedidoSarom: formItem.pedidoSarom,
       pedidoAlexandre: formItem.pedidoAlexandre,
+      ordemCompra: formItem.ordemCompra,
     };
 
     const processoAtualizado = {
@@ -253,6 +256,7 @@ export default function Conteiner() {
       precoUnitarioDolar: 0,
       pedidoSarom: 0,
       pedidoAlexandre: 0,
+      ordemCompra: '',
     });
     setNomeProdutoEncontrado('');
   };
@@ -345,52 +349,296 @@ export default function Conteiner() {
 
   const handleExportarPlanilhaCompra = () => {
     if (!processoSelecionado) return;
+    const wb = XLSX.utils.book_new();
 
-    // Planilha de compra interna com pedidos Sarom/Alexandre
-    const ws = XLSX.utils.aoa_to_sheet([
-      ['PLANILHA DE COMPRA - CONTÊINER', processoSelecionado.numeroProcesso],
-      ['Invoice', processoSelecionado.nomeInvoice],
-      ['Data', processoSelecionado.dataProcesso],
-      ['Status', processoSelecionado.status],
-      ['NCM', processoSelecionado.ncm],
-      ['Observações', processoSelecionado.observacoes],
-      [],
-      ['ITEM', 'CÓDIGO', 'DESCRIÇÃO DOS ITENS', 'UND', 'QUANT', 'PRICE USD', 'TOTAL PRICE USD', 'PEDIDO COMPRA SAROM', 'QUANTIDADE', 'PEDIDO COMPRA ALEXANDRE', 'QUANTIDADE'],
-      ...processoSelecionado.itens.map((item, idx) => [
-        idx + 1,
-        item.codigo,
-        item.descricao,
-        item.unidade,
-        item.quantidade,
-        Number(item.precoUnitarioDolar.toFixed(2)),
-        Number(item.precoTotalDolar.toFixed(2)),
-        item.pedidoSarom > 0 ? `Pedido ${item.pedidoSarom}` : '',
-        item.pedidoSarom,
-        item.pedidoAlexandre > 0 ? `Pedido ${item.pedidoAlexandre}` : '',
-        item.pedidoAlexandre,
-      ]),
-      [],
-      ['', '', 'TOTAIS', '', processoSelecionado.itens.reduce((s, i) => s + i.quantidade, 0), '', Number(processoSelecionado.itens.reduce((s, i) => s + i.precoTotalDolar, 0).toFixed(2)), '', processoSelecionado.itens.reduce((s, i) => s + i.pedidoSarom, 0), '', processoSelecionado.itens.reduce((s, i) => s + i.pedidoAlexandre, 0)],
-    ]);
+    const FATOR_BRL = 8.5;
+    const totalQtd = processoSelecionado.itens.reduce((s, i) => s + i.quantidade, 0);
+    const totalUSD = Number(processoSelecionado.itens.reduce((s, i) => s + i.precoTotalDolar, 0).toFixed(2));
+    const totalSaromPreco = Number(processoSelecionado.itens.reduce((s, i) => s + (i.pedidoSarom * i.precoUnitarioDolar), 0).toFixed(2));
+    const totalAlexPreco = Number(processoSelecionado.itens.reduce((s, i) => s + (i.pedidoAlexandre * i.precoUnitarioDolar), 0).toFixed(2));
+    const numItens = processoSelecionado.itens.length;
 
-    ws['!cols'] = [
-      { wch: 6 }, { wch: 12 }, { wch: 45 }, { wch: 6 }, { wch: 8 },
-      { wch: 12 }, { wch: 14 }, { wch: 20 }, { wch: 12 }, { wch: 22 }, { wch: 12 },
+    // Estilos base
+    const fontBold12: any = { name: 'Times New Roman', sz: 12, bold: true };
+    const fontBold10: any = { name: 'Times New Roman', sz: 10, bold: true };
+    const fontBold9: any = { name: 'Times New Roman', sz: 9, bold: true };
+    const fontNormal9: any = { name: 'Times New Roman', sz: 9 };
+    const fontNormal10: any = { name: 'Times New Roman', sz: 10 };
+    const borderThin: any = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    const borderMediumLeft: any = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+    const alignCenter: any = { horizontal: 'center', vertical: 'center', wrapText: true };
+    const alignLeft: any = { horizontal: 'left', vertical: 'center', wrapText: true };
+
+    const ws: any = {};
+    const setCell = (ref: string, value: any, style: any = {}) => {
+      const cell: any = { v: value, t: typeof value === 'number' ? 'n' : 's' };
+      cell.s = style;
+      ws[ref] = cell;
+    };
+
+    // === ROW 1: Header MIC TRADE (merged A1:Q1) ===
+    setCell('A1', 'MIC TRADE SERVICE LIMITED\nRM 502C 5/F\nHO KING COMM CTR\n2-16 FAYUEN ST MONGKOK KL HONGKONG CHINA', {
+      font: fontBold12, alignment: alignCenter, border: borderMediumLeft
+    });
+
+    // === ROW 2: COMERCIAL INVOICE (merged A2:Q2) ===
+    setCell('A2', 'COMERCIAL INVOICE', {
+      font: fontBold12, alignment: alignCenter, border: borderMediumLeft
+    });
+
+    // === ROW 3: TO + Destinatário + INVOICE ===
+    setCell('A3', 'TO', { font: fontBold12, alignment: alignCenter, border: borderMediumLeft });
+    setCell('B3', 'SONRES & REZENDE INPORT. EXPORT LTDA\nCNPJ: 23 113 383/0002-90\nRUA ALFREDO NERLO 560/ SALA 05\nMOMRIND MLA VELH ES', {
+      font: fontBold10, alignment: alignCenter, border: borderThin
+    });
+    setCell('G3', 'INVOICE:', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I3', processoSelecionado.numeroProcesso || 'SR 201', { font: fontNormal10, alignment: alignCenter, border: borderThin });
+
+    // === ROW 4: Despachante + DATE + NCM ===
+    setCell('B4', 'PROSPER INTELIGÊNCIA ADUANEIRA LTDA\nADDRESS: RUA GONCALVES DIAS, 110, SALA 17, CENTRO, PORTO\nVELHO, RO, CEP 76.801-076\nCNPJ: 59.574.729/0001-14', {
+      font: fontBold10, alignment: alignCenter, border: borderThin
+    });
+    setCell('G4', `DATE: ${processoSelecionado.dataProcesso}`, { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I4', `NCM ${processoSelecionado.ncm || '8539'}`, { font: fontBold10, alignment: alignCenter, border: borderThin });
+
+    // === ROW 5: OBS ===
+    setCell('G5', 'OBS:', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I5', processoSelecionado.observacoes || '', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    // === ROW 6: Cabeçalho da tabela (primeira linha) ===
+    setCell('A6', 'ITEM', { font: fontBold9, alignment: alignCenter, border: borderMediumLeft });
+    setCell('B6', 'DESCRICAO DOS PRODUTOS MAIS CODIGO', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('J6', 'PRICE', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('K6', 'TOTAL PRICE', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('L6', 'preco BR', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('M6', 'SAROM QUANT', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('N6', 'SAROM PRECO', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('O6', 'ALEXANDR QUAN', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('P6', 'ALEXANDR PRECO', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('Q6', 'ORDEM DE COMPRA', { font: fontBold9, alignment: alignCenter, border: borderThin });
+
+    // === ROW 7: Sub-cabeçalho ===
+    setCell('A7', '', { font: fontBold9, alignment: alignCenter, border: borderMediumLeft });
+    setCell('B7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('H7', 'UND', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I7', 'QUANT', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('J7', 'USD', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('K7', 'USD', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('L7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('M7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('N7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('O7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('P7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('Q7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+
+    // === ROWS 8+: Itens ===
+    const itemStartRow = 8;
+    processoSelecionado.itens.forEach((item, idx) => {
+      const r = itemStartRow + idx;
+      const precoBR = Number((item.precoUnitarioDolar * FATOR_BRL).toFixed(2));
+      const saromPreco = Number((item.pedidoSarom * item.precoUnitarioDolar).toFixed(2));
+      const alexPreco = Number((item.pedidoAlexandre * item.precoUnitarioDolar).toFixed(2));
+
+      setCell(`A${r}`, idx + 1, { font: fontNormal9, alignment: alignCenter, border: borderMediumLeft });
+      setCell(`B${r}`, `${item.descricao}${item.codigo}`, { font: fontNormal9, alignment: alignLeft, border: borderThin });
+      setCell(`H${r}`, item.unidade || 'PIC', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`I${r}`, item.quantidade, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`J${r}`, Number(item.precoUnitarioDolar.toFixed(2)), { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`K${r}`, Number(item.precoTotalDolar.toFixed(2)), { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`L${r}`, precoBR, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`M${r}`, item.pedidoSarom, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`N${r}`, saromPreco, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`O${r}`, item.pedidoAlexandre, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`P${r}`, alexPreco, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`Q${r}`, item.ordemCompra || '', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+    });
+
+    // === ROW TOTAIS ===
+    const totalRow = itemStartRow + numItens;
+    setCell(`I${totalRow}`, totalQtd, { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`K${totalRow}`, totalUSD, { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`N${totalRow}`, totalSaromPreco, { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`P${totalRow}`, totalAlexPreco, { font: fontBold9, alignment: alignCenter, border: borderThin });
+
+    // === ROW EMBARQUE (merged A:Q) ===
+    const embarqueRow = totalRow + 2;
+    const cx = processoSelecionado.caixasPapelao || 0;
+    const pb = processoSelecionado.pesoBrutoKg || 0;
+    const pl = processoSelecionado.pesoLiquidoKg || 0;
+    const cbm = processoSelecionado.cbm || 0;
+    setCell(`A${embarqueRow}`, ` CAIXAS ${cx} PAPELAO   / PESO BRUTO ${pb} KG   /  PESO LIQUIDO ${pl} KG / CBM ${cbm}`, {
+      font: fontBold9, alignment: alignLeft, border: borderMediumLeft
+    });
+
+    // === ROW FACTORY ===
+    const factoryHeaderRow = embarqueRow + 1;
+    setCell(`A${factoryHeaderRow}`, '.', { font: fontBold9, alignment: alignCenter, border: borderMediumLeft });
+    setCell(`C${factoryHeaderRow}`, 'Factory', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`G${factoryHeaderRow}`, 'Address', { font: fontBold9, alignment: alignCenter, border: borderThin });
+
+    const f1Row = factoryHeaderRow + 1;
+    setCell(`A${f1Row}`, '1-11', { font: fontNormal9, alignment: alignCenter, border: borderMediumLeft });
+    setCell(`C${f1Row}`, 'HEBEI SHUANGQI AUTOMOBILE LIGHTING APPLIANCE CO., LTD.', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+    setCell(`G${f1Row}`, 'LIUFEN VILLAGE, WOFOTANG TOWN, HEJIAN CITY, HEBEI PROVINCE, CHINA', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    // === CONDITIONS ROW ===
+    const condRow = f1Row + 1;
+    setCell(`A${condRow}`, 'CONDITIONS OF TERM AND PAYMENT', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`F${condRow}`, 'TRANSPORTATION METHOD', { font: fontBold9, alignment: alignLeft, border: borderThin });
+
+    const priceRow = condRow + 1;
+    setCell(`A${priceRow}`, 'TERM OF PRICE:', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`C${priceRow}`, 'FOB', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`F${priceRow}`, 'VIA:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+    setCell(`I${priceRow}`, 'SHIP', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    const payRow = priceRow + 1;
+    setCell(`A${payRow}`, 'TERM OF PAYMENT:', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`C${payRow}`, '100% ADVANCED UNTIL 90 DAYS AFTER RECEIVE BL', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`F${payRow}`, 'PORT TO LOADING:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+    setCell(`I${payRow}`, 'GUANGZHOU, China', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    const embRow = payRow + 1;
+    setCell(`A${embRow}`, 'PREVISAO DE EMBARQUE', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`C${embRow}`, processoSelecionado.dataProcesso || '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`F${embRow}`, 'PORT OF DESTINATION:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+    setCell(`I${embRow}`, 'SALVADOR / BAHIA / BRASIL.', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    const delRow = embRow + 1;
+    setCell(`F${delRow}`, 'TIME OF DELIVERY:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+
+    // === BANK INFORMATION ===
+    const bankRow = delRow + 1;
+    setCell(`A${bankRow}`, 'BANK INFORMATION\nBeneficiary Name:  MIC TRADE SERVICE LIMITED\nAccount No.:  NRA30006829988 (please also input "NRA")\nADDRESS: RM 502C 5/F, HO KING COMM CTR,2-16 FAYUEN ST MONGKOK,KL\n\nBeneficiary Bank: DBS Bank (China) Ltd Guangzhou Branch\nSwift Code : DBSSCNSHGZU\nBeneficiary Bank Address: One-link Center, 18/F Onelink Centre, No.230-232, Tianhe Road, Tianhe District, Guangzhou', {
+      font: fontBold9, alignment: alignLeft, border: borderMediumLeft
+    });
+
+    // === MERGES (17 colunas A-Q, cols 0-16) ===
+    const merges: any[] = [
+      // Row 1: A1:Q1
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 16 } },
+      // Row 2: A2:Q2
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 16 } },
+      // Row 3: A3:A5 (TO), B3:F3 (destinatário), G3:H3 (INVOICE:), I3:Q3 (número)
+      { s: { r: 2, c: 0 }, e: { r: 4, c: 0 } },
+      { s: { r: 2, c: 1 }, e: { r: 2, c: 5 } },
+      { s: { r: 2, c: 6 }, e: { r: 2, c: 7 } },
+      { s: { r: 2, c: 8 }, e: { r: 2, c: 16 } },
+      // Row 4: B4:F5 (despachante), G4:H4 (DATE), I4:Q5 (NCM)
+      { s: { r: 3, c: 1 }, e: { r: 4, c: 5 } },
+      { s: { r: 3, c: 6 }, e: { r: 3, c: 7 } },
+      { s: { r: 3, c: 8 }, e: { r: 4, c: 16 } },
+      // Row 5: G5:H5 (OBS)
+      { s: { r: 4, c: 6 }, e: { r: 4, c: 7 } },
+      // Row 6-7: A6:A7 (ITEM), B6:G6 (descricao header)
+      { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
+      { s: { r: 5, c: 1 }, e: { r: 5, c: 6 } },
+      // Row 7: B7:G7 (sub-header vazio)
+      { s: { r: 6, c: 1 }, e: { r: 6, c: 6 } },
     ];
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Compra');
-    const fileName = `ASX_Planilha_Compra_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    const wbout2 = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-    const blob2 = new Blob([wbout2], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url2 = URL.createObjectURL(blob2);
-    const a2 = document.createElement('a');
-    a2.href = url2;
-    a2.download = fileName;
-    document.body.appendChild(a2);
-    a2.click();
-    document.body.removeChild(a2);
-    URL.revokeObjectURL(url2);
+    // Itens: B:G merged para cada item
+    for (let i = 0; i < numItens; i++) {
+      const r = itemStartRow - 1 + i; // 0-indexed
+      merges.push({ s: { r, c: 1 }, e: { r, c: 6 } });
+    }
+
+    // Embarque row merge A:Q
+    merges.push({ s: { r: embarqueRow - 1, c: 0 }, e: { r: embarqueRow - 1, c: 16 } });
+
+    // Factory header merges
+    merges.push({ s: { r: factoryHeaderRow - 1, c: 0 }, e: { r: factoryHeaderRow - 1, c: 1 } });
+    merges.push({ s: { r: factoryHeaderRow - 1, c: 2 }, e: { r: factoryHeaderRow - 1, c: 5 } });
+    merges.push({ s: { r: factoryHeaderRow - 1, c: 6 }, e: { r: factoryHeaderRow - 1, c: 16 } });
+
+    // Factory data merges
+    merges.push({ s: { r: f1Row - 1, c: 0 }, e: { r: f1Row - 1, c: 1 } });
+    merges.push({ s: { r: f1Row - 1, c: 2 }, e: { r: f1Row - 1, c: 5 } });
+    merges.push({ s: { r: f1Row - 1, c: 6 }, e: { r: f1Row - 1, c: 16 } });
+
+    // Conditions merges
+    merges.push({ s: { r: condRow - 1, c: 0 }, e: { r: condRow - 1, c: 4 } });
+    merges.push({ s: { r: condRow - 1, c: 5 }, e: { r: condRow - 1, c: 16 } });
+    // Price row
+    merges.push({ s: { r: priceRow - 1, c: 0 }, e: { r: priceRow - 1, c: 1 } });
+    merges.push({ s: { r: priceRow - 1, c: 2 }, e: { r: priceRow - 1, c: 4 } });
+    merges.push({ s: { r: priceRow - 1, c: 5 }, e: { r: priceRow - 1, c: 7 } });
+    merges.push({ s: { r: priceRow - 1, c: 8 }, e: { r: priceRow - 1, c: 16 } });
+    // Payment row
+    merges.push({ s: { r: payRow - 1, c: 0 }, e: { r: payRow - 1, c: 1 } });
+    merges.push({ s: { r: payRow - 1, c: 2 }, e: { r: payRow - 1, c: 4 } });
+    merges.push({ s: { r: payRow - 1, c: 5 }, e: { r: payRow - 1, c: 7 } });
+    merges.push({ s: { r: payRow - 1, c: 8 }, e: { r: payRow - 1, c: 16 } });
+    // Embarque previsao row
+    merges.push({ s: { r: embRow - 1, c: 0 }, e: { r: embRow - 1, c: 1 } });
+    merges.push({ s: { r: embRow - 1, c: 2 }, e: { r: embRow - 1, c: 4 } });
+    merges.push({ s: { r: embRow - 1, c: 5 }, e: { r: embRow - 1, c: 7 } });
+    merges.push({ s: { r: embRow - 1, c: 8 }, e: { r: embRow - 1, c: 16 } });
+    // Delivery row
+    merges.push({ s: { r: delRow - 1, c: 5 }, e: { r: delRow - 1, c: 7 } });
+    merges.push({ s: { r: delRow - 1, c: 8 }, e: { r: delRow - 1, c: 16 } });
+    // Bank info merge A:Q
+    merges.push({ s: { r: bankRow - 1, c: 0 }, e: { r: bankRow - 1, c: 16 } });
+
+    ws['!merges'] = merges;
+
+    // === COLUMN WIDTHS (17 colunas A-Q) ===
+    ws['!cols'] = [
+      { wch: 5.16 },   // A - ITEM
+      { wch: 6.16 },   // B - Desc start
+      { wch: 5.5 },    // C
+      { wch: 7.5 },    // D
+      { wch: 9.66 },   // E
+      { wch: 18.66 },  // F
+      { wch: 33.16 },  // G - Desc end
+      { wch: 6.16 },   // H - UND
+      { wch: 10 },     // I - QUANT
+      { wch: 10 },     // J - PRICE USD
+      { wch: 12 },     // K - TOTAL PRICE USD
+      { wch: 10 },     // L - preco BR
+      { wch: 12 },     // M - SAROM QUANT
+      { wch: 12 },     // N - SAROM PRECO
+      { wch: 12 },     // O - ALEXANDR QUAN
+      { wch: 14 },     // P - ALEXANDR PRECO
+      { wch: 16 },     // Q - ORDEM DE COMPRA
+    ];
+
+    // === ROW HEIGHTS ===
+    const rows: any = {};
+    rows[0] = { hpt: 63 }; // Row 1
+    rows[1] = { hpt: 16 }; // Row 2
+    rows[2] = { hpt: 65 }; // Row 3
+    rows[3] = { hpt: 27 }; // Row 4
+    rows[4] = { hpt: 43 }; // Row 5
+    rows[5] = { hpt: 25 }; // Row 6
+    rows[6] = { hpt: 29 }; // Row 7
+    for (let i = 0; i < numItens; i++) {
+      rows[itemStartRow - 1 + i] = { hpt: 20.25 };
+    }
+    rows[embarqueRow - 1] = { hpt: 16 };
+    rows[bankRow - 1] = { hpt: 133 };
+    const maxRowIdx = Math.max(...Object.keys(rows).map(Number));
+    const rowsArr: any[] = [];
+    for (let i = 0; i <= maxRowIdx; i++) {
+      rowsArr.push(rows[i] || {});
+    }
+    ws['!rows'] = rowsArr;
+
+    // Set ref range
+    ws['!ref'] = `A1:Q${bankRow}`;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'PI FINAL TOTAL');
+    const fileName = `${processoSelecionado.numeroProcesso || 'SR'}PI_Compra.xlsx`;
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const handleExportarExcel = () => {
@@ -903,7 +1151,7 @@ export default function Conteiner() {
             {/* Tabela de Itens */}
             <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: 0 }}>
               <div className="overflow-x-auto">
-              <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '900px' }}>
+              <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '1200px' }}>
                 <thead style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }} className="border-b sticky top-0">
                   <tr>
                     <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Código</th>
@@ -912,6 +1160,9 @@ export default function Conteiner() {
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Qtd</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Preço Unit USD</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Total USD</th>
+                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.40 0.15 200)' }}>Sarom</th>
+                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.40 0.15 145)' }}>Alexandre</th>
+                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Ordem</th>
                     <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Ações</th>
                   </tr>
                 </thead>
@@ -935,25 +1186,73 @@ export default function Conteiner() {
                       </td>
                       <td className="px-3 py-2 text-right">
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           value={item.quantidade}
-                          onChange={e => handleAtualizarItem(item.id, 'quantidade', parseFloat(e.target.value) || 0)}
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9.]/g, '');
+                            handleAtualizarItem(item.id, 'quantidade', parseFloat(val) || 0);
+                          }}
+                          onFocus={e => e.target.select()}
                           className="w-16 px-2 py-1 rounded text-xs bg-transparent border text-right"
                           style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
                         />
                       </td>
                       <td className="px-3 py-2 text-right">
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           value={item.precoUnitarioDolar}
-                          onChange={e => handleAtualizarItem(item.id, 'precoUnitarioDolar', parseFloat(e.target.value) || 0)}
-                          step="0.01"
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9.]/g, '');
+                            handleAtualizarItem(item.id, 'precoUnitarioDolar', parseFloat(val) || 0);
+                          }}
+                          onFocus={e => e.target.select()}
                           className="w-24 px-2 py-1 rounded text-xs bg-transparent border text-right"
                           style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
                         />
                       </td>
                       <td className="px-3 py-2 text-right font-rajdhani font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
                         ${item.precoTotalDolar.toFixed(2)}
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={item.pedidoSarom}
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            handleAtualizarItem(item.id, 'pedidoSarom', parseInt(val) || 0);
+                          }}
+                          onFocus={e => e.target.select()}
+                          className="w-16 px-2 py-1 rounded text-xs bg-transparent border text-right"
+                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.60 0.15 200)' }}
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={item.pedidoAlexandre}
+                          onChange={e => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            handleAtualizarItem(item.id, 'pedidoAlexandre', parseInt(val) || 0);
+                          }}
+                          onFocus={e => e.target.select()}
+                          className="w-16 px-2 py-1 rounded text-xs bg-transparent border text-right"
+                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.60 0.15 145)' }}
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          value={item.ordemCompra || ''}
+                          onChange={e => handleAtualizarItem(item.id, 'ordemCompra', e.target.value)}
+                          onFocus={e => e.target.select()}
+                          placeholder="Ex: TRUCK1225"
+                          className="w-24 px-2 py-1 rounded text-xs bg-transparent border"
+                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
+                        />
                       </td>
                       <td className="px-3 py-2 text-center">
                         <button
@@ -975,7 +1274,7 @@ export default function Conteiner() {
               <h3 className="font-rajdhani font-bold text-sm mb-3" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 Adicionar Item
               </h3>
-<div className="grid grid-cols-6 gap-2">
+<div className="grid grid-cols-9 gap-2">
                 <div className="relative">
                   <input
                     type="text"
@@ -1047,10 +1346,15 @@ export default function Conteiner() {
                   }}
                 />
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="Qtd"
                   value={formItem.quantidade}
-                  onChange={e => setFormItem({ ...formItem, quantidade: parseFloat(e.target.value) || 1 })}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setFormItem({ ...formItem, quantidade: parseFloat(val) || 0 });
+                  }}
+                  onFocus={e => e.target.select()}
                   className="px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
@@ -1059,11 +1363,62 @@ export default function Conteiner() {
                   }}
                 />
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   placeholder="Preço USD"
                   value={formItem.precoUnitarioDolar}
-                  onChange={e => setFormItem({ ...formItem, precoUnitarioDolar: parseFloat(e.target.value) || 0 })}
-                  step="0.01"
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9.]/g, '');
+                    setFormItem({ ...formItem, precoUnitarioDolar: parseFloat(val) || 0 });
+                  }}
+                  onFocus={e => e.target.select()}
+                  className="px-3 py-2 rounded-md border text-sm"
+                  style={{
+                    background: 'oklch(0.18 0.005 285)',
+                    borderColor: 'oklch(0.26 0.005 285)',
+                    color: 'oklch(0.90 0.005 65)',
+                  }}
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Sarom"
+                  value={formItem.pedidoSarom}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormItem({ ...formItem, pedidoSarom: parseInt(val) || 0 });
+                  }}
+                  onFocus={e => e.target.select()}
+                  className="px-3 py-2 rounded-md border text-sm"
+                  style={{
+                    background: 'oklch(0.18 0.005 285)',
+                    borderColor: 'oklch(0.26 0.005 285)',
+                    color: 'oklch(0.60 0.15 200)',
+                  }}
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Alexandre"
+                  value={formItem.pedidoAlexandre}
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    setFormItem({ ...formItem, pedidoAlexandre: parseInt(val) || 0 });
+                  }}
+                  onFocus={e => e.target.select()}
+                  className="px-3 py-2 rounded-md border text-sm"
+                  style={{
+                    background: 'oklch(0.18 0.005 285)',
+                    borderColor: 'oklch(0.26 0.005 285)',
+                    color: 'oklch(0.60 0.15 145)',
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Ordem"
+                  value={formItem.ordemCompra}
+                  onChange={e => setFormItem({ ...formItem, ordemCompra: e.target.value })}
+                  onFocus={e => e.target.select()}
                   className="px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
