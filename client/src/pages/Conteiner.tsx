@@ -27,6 +27,7 @@ interface ProcessoSR {
   ncm: string;
   itens: ItemConteiner[];
   dataCriacao: string;
+  status: 'Em andamento' | 'Finalizado' | 'Cancelado';
 }
 
 export default function Conteiner() {
@@ -90,6 +91,7 @@ export default function Conteiner() {
       ncm: formProcesso.ncm,
       itens: [],
       dataCriacao: new Date().toISOString(),
+      status: 'Em andamento',
     };
 
     setProcessos([...processos, novoProcesso]);
@@ -203,6 +205,22 @@ export default function Conteiner() {
     const totalAlexandre = processoSelecionado.itens.reduce((s, i) => s + i.pedidoAlexandre, 0);
     return { totalItens, totalDolar, totalSarom, totalAlexandre };
   }, [processoSelecionado]);
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'Em andamento': return { bg: 'oklch(0.48 0.22 25)', text: 'white' };
+      case 'Finalizado': return { bg: 'oklch(0.50 0.15 142)', text: 'white' };
+      case 'Cancelado': return { bg: 'oklch(0.40 0.10 0)', text: 'white' };
+      default: return { bg: 'oklch(0.20 0.005 285)', text: 'oklch(0.80 0.005 65)' };
+    }
+  };
+
+  const handleAlterarStatus = (id: string, novoStatus: 'Em andamento' | 'Finalizado' | 'Cancelado') => {
+    setProcessos(prev => prev.map(p => 
+      p.id === id ? { ...p, status: novoStatus } : p
+    ));
+    setProcessoSelecionado(prev => prev ? { ...prev, status: novoStatus } : null);
+  };
+
   const handleReabrirProcesso = (id: string) => {
     setProcessosConfirmados(prev => {
       const novo = new Set(prev);
@@ -318,7 +336,12 @@ export default function Conteiner() {
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 overflow-hidden">
-                      <p className="font-rajdhani font-semibold text-sm truncate">{p.numeroProcesso}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-rajdhani font-semibold text-sm truncate">{p.numeroProcesso}</p>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap" style={{ background: getStatusColor(p.status).bg, color: getStatusColor(p.status).text }}>
+                          {p.status}
+                        </span>
+                      </div>
                       <p className="text-[11px] truncate" style={{ opacity: 0.7 }}>{p.nomeInvoice || '—'}</p>
                       <p className="text-[10px] mt-1" style={{ opacity: 0.6 }}>
                         {p.itens.length} item{p.itens.length !== 1 ? 'ns' : ''}
@@ -350,7 +373,26 @@ export default function Conteiner() {
                 Processo {processoSelecionado.numeroProcesso}
               </h2>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="text-xs uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                    Status
+                  </label>
+                  <select
+                    value={processoSelecionado.status}
+                    onChange={e => handleAlterarStatus(processoSelecionado.id, e.target.value as 'Em andamento' | 'Finalizado' | 'Cancelado')}
+                    className="w-full mt-1 px-3 py-2 rounded-md border text-sm"
+                    style={{
+                      background: 'oklch(0.18 0.005 285)',
+                      borderColor: 'oklch(0.26 0.005 285)',
+                      color: 'oklch(0.90 0.005 65)',
+                    }}
+                  >
+                    <option value="Em andamento">Em andamento</option>
+                    <option value="Finalizado">Finalizado</option>
+                    <option value="Cancelado">Cancelado</option>
+                  </select>
+                </div>
                 <div>
                   <label className="text-xs uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
                     Nome da Invoice
