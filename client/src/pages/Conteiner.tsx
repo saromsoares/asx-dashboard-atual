@@ -424,7 +424,7 @@ export default function Conteiner() {
 
         {/* Detalhes do Processo */}
         {processoSelecionado ? (
-          <main className="flex-1 flex flex-col overflow-hidden">
+          <main className="flex-1 flex flex-col overflow-y-auto">
             {/* Formulário de Edição */}
             <div className="border rounded-lg p-4 flex-shrink-0 overflow-y-auto"
               style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
@@ -554,7 +554,7 @@ export default function Conteiner() {
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Qtd</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Preço Unit USD</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Total USD</th>
-                    <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Ação</th>
+                    <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -606,24 +606,6 @@ export default function Conteiner() {
                       <td className="px-3 py-2 text-right font-rajdhani font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
                         ${item.precoTotalDolar.toFixed(2)}
                       </td>
-                      <td className="px-3 py-2 text-right">
-                        <input
-                          type="number"
-                          value={item.pedidoSarom}
-                          onChange={e => handleAtualizarItem(item.id, 'pedidoSarom', parseFloat(e.target.value) || 0)}
-                          className="w-16 px-2 py-1 rounded text-xs bg-transparent border text-right"
-                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <input
-                          type="number"
-                          value={item.pedidoAlexandre}
-                          onChange={e => handleAtualizarItem(item.id, 'pedidoAlexandre', parseFloat(e.target.value) || 0)}
-                          className="w-16 px-2 py-1 rounded text-xs bg-transparent border text-right"
-                          style={{ borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.85 0.005 65)' }}
-                        />
-                      </td>
                       <td className="px-3 py-2 text-center">
                         <button
                           onClick={() => handleRemoverItem(item.id)}
@@ -648,7 +630,7 @@ export default function Conteiner() {
                   type="text"
                   placeholder="Código do Produto"
                   value={formItem.descricao}
-                  onChange={e => setFormItem({ ...formItem, descricao: e.target.value })}
+                  onChange={e => handleBuscarProduto(e.target.value)}
                   className="col-span-1 px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
@@ -705,7 +687,7 @@ export default function Conteiner() {
             </div>
 
             {/* Botões de Ação */}
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex gap-2 flex-shrink-0 pb-2">
               <button
                 onClick={handleExportarExcel}
                 className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
