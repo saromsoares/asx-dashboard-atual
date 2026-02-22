@@ -33,6 +33,7 @@ export default function Conteiner() {
   const [processos, setProcessos] = useState<ProcessoSR[]>([]);
   const [showNovoProcesso, setShowNovoProcesso] = useState(false);
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
+  const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(new Set());
 
   // Form para novo processo
   const [formProcesso, setFormProcesso] = useState({
@@ -210,6 +211,11 @@ export default function Conteiner() {
     const fileName = `ASX_Processo_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
+  const handleConfirmarProcesso = () => {
+    if (!processoSelecionado) return;
+    setProcessosConfirmados(prev => new Set(Array.from(prev).concat([processoSelecionado.id])));
+  };
+
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
@@ -399,13 +405,12 @@ export default function Conteiner() {
               <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 <thead style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }} className="border-b sticky top-0">
                   <tr>
-                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Descrição</th>
+                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Código</th>
+                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Nome</th>
                     <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Unid</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Qtd</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Preço Unit USD</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Total USD</th>
-                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Sarom</th>
-                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Alexandre</th>
                     <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Ação</th>
                   </tr>
                 </thead>
@@ -495,13 +500,13 @@ export default function Conteiner() {
               <h3 className="font-rajdhani font-bold text-sm mb-3" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 Adicionar Item
               </h3>
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-5 gap-2">
                 <input
                   type="text"
-                  placeholder="Descrição"
+                  placeholder="Código do Produto"
                   value={formItem.descricao}
                   onChange={e => setFormItem({ ...formItem, descricao: e.target.value })}
-                  className="col-span-2 px-3 py-2 rounded-md border text-sm"
+                  className="col-span-1 px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
                     borderColor: 'oklch(0.26 0.005 285)',
@@ -510,10 +515,10 @@ export default function Conteiner() {
                 />
                 <input
                   type="text"
-                  placeholder="Unid"
+                  placeholder="Nome (auto)"
                   value={formItem.unidade}
-                  onChange={e => setFormItem({ ...formItem, unidade: e.target.value })}
-                  className="px-3 py-2 rounded-md border text-sm"
+                  readOnly
+                  className="col-span-2 px-3 py-2 rounded-md border text-sm"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
                     borderColor: 'oklch(0.26 0.005 285)',
@@ -545,30 +550,6 @@ export default function Conteiner() {
                     color: 'oklch(0.90 0.005 65)',
                   }}
                 />
-                <input
-                  type="number"
-                  placeholder="Sarom"
-                  value={formItem.pedidoSarom}
-                  onChange={e => setFormItem({ ...formItem, pedidoSarom: parseFloat(e.target.value) || 0 })}
-                  className="px-3 py-2 rounded-md border text-sm"
-                  style={{
-                    background: 'oklch(0.18 0.005 285)',
-                    borderColor: 'oklch(0.26 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
-                  }}
-                />
-                <input
-                  type="number"
-                  placeholder="Alexandre"
-                  value={formItem.pedidoAlexandre}
-                  onChange={e => setFormItem({ ...formItem, pedidoAlexandre: parseFloat(e.target.value) || 0 })}
-                  className="px-3 py-2 rounded-md border text-sm"
-                  style={{
-                    background: 'oklch(0.18 0.005 285)',
-                    borderColor: 'oklch(0.26 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
-                  }}
-                />
                 <button
                   onClick={handleAdicionarItem}
                   className="px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-1"
@@ -580,7 +561,7 @@ export default function Conteiner() {
               </div>
             </div>
 
-            {/* Botão de Exportação */}
+            {/* Botões de Ação */}
             <div className="mt-4 flex gap-2">
               <button
                 onClick={handleExportarExcel}
@@ -590,6 +571,15 @@ export default function Conteiner() {
               >
                 <Download className="w-4 h-4" />
                 Exportar Excel
+              </button>
+              <button
+                onClick={handleConfirmarProcesso}
+                disabled={processosConfirmados.has(processoSelecionado?.id || '')}
+                className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                style={{ background: processosConfirmados.has(processoSelecionado?.id || '') ? 'oklch(0.30 0.005 285)' : 'oklch(0.48 0.22 25)', color: 'white' }}
+                title={processosConfirmados.has(processoSelecionado?.id || '') ? 'Processo já confirmado' : 'Confirmar e finalizar processo'}
+              >
+                ✓ Confirmar Processo
               </button>
             </div>
           </main>
