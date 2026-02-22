@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { X, Plus, Trash2, Copy, ArrowLeft, Download } from 'lucide-react';
+import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
 
@@ -316,12 +316,14 @@ export default function Conteiner() {
   };
 
   const stats = useMemo(() => {
-    if (!processoSelecionado) return { totalItens: 0, totalDolar: 0, totalSarom: 0, totalAlexandre: 0 };
+    if (!processoSelecionado) return { totalItens: 0, totalDolar: 0, totalSarom: 0, totalAlexandre: 0, totalQtd: 0, divergentes: 0 };
     const totalItens = processoSelecionado.itens.length;
     const totalDolar = processoSelecionado.itens.reduce((s, i) => s + i.precoTotalDolar, 0);
     const totalSarom = processoSelecionado.itens.reduce((s, i) => s + i.pedidoSarom, 0);
     const totalAlexandre = processoSelecionado.itens.reduce((s, i) => s + i.pedidoAlexandre, 0);
-    return { totalItens, totalDolar, totalSarom, totalAlexandre };
+    const totalQtd = processoSelecionado.itens.reduce((s, i) => s + i.quantidade, 0);
+    const divergentes = processoSelecionado.itens.filter(i => (i.pedidoSarom + i.pedidoAlexandre) !== i.quantidade).length;
+    return { totalItens, totalDolar, totalSarom, totalAlexandre, totalQtd, divergentes };
   }, [processoSelecionado]);
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -1129,7 +1131,7 @@ export default function Conteiner() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-4 gap-3 mt-4 flex-shrink-0">
+            <div className="grid grid-cols-5 gap-3 mt-4 flex-shrink-0">
               <div className="rounded-lg p-3 border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
                 <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Itens</p>
                 <p className="font-rajdhani font-bold text-xl mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{stats.totalItens}</p>
@@ -1146,7 +1148,37 @@ export default function Conteiner() {
                 <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Alexandre</p>
                 <p className="font-rajdhani font-bold text-xl mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{stats.totalAlexandre}</p>
               </div>
+              <div className="rounded-lg p-3 border" style={{
+                background: stats.divergentes > 0 ? 'oklch(0.20 0.08 30)' : 'oklch(0.14 0.005 285)',
+                borderColor: stats.divergentes > 0 ? 'oklch(0.50 0.20 30)' : 'oklch(0.22 0.005 285)',
+              }}>
+                <p className="text-[10px] uppercase tracking-wider flex items-center gap-1" style={{ color: stats.divergentes > 0 ? 'oklch(0.70 0.18 30)' : 'oklch(0.45 0.010 285)' }}>
+                  {stats.divergentes > 0 && <AlertTriangle className="w-3 h-3" />}
+                  Divergências
+                </p>
+                <p className="font-rajdhani font-bold text-xl mt-1" style={{ color: stats.divergentes > 0 ? 'oklch(0.75 0.20 30)' : 'oklch(0.50 0.15 142)' }}>
+                  {stats.divergentes > 0 ? stats.divergentes : '✓ OK'}
+                </p>
+              </div>
             </div>
+
+            {/* Banner de alerta de divergência */}
+            {stats.divergentes > 0 && (
+              <div className="mt-3 flex items-center gap-3 px-4 py-3 rounded-lg border" style={{
+                background: 'oklch(0.18 0.06 30)',
+                borderColor: 'oklch(0.45 0.18 30)',
+              }}>
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" style={{ color: 'oklch(0.75 0.20 40)' }} />
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'oklch(0.85 0.12 40)' }}>
+                    {stats.divergentes} {stats.divergentes === 1 ? 'item com' : 'itens com'} divergência na distribuição
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'oklch(0.65 0.08 40)' }}>
+                    A soma de Sarom + Alexandre não corresponde à quantidade total. Verifique os itens destacados em vermelho.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Tabela de Itens */}
             <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: 0 }}>
@@ -1167,13 +1199,21 @@ export default function Conteiner() {
                   </tr>
                 </thead>
                 <tbody>
-                  {processoSelecionado.itens.map(item => (
+                  {processoSelecionado.itens.map(item => {
+                    const somaDistrib = item.pedidoSarom + item.pedidoAlexandre;
+                    const isDivergente = somaDistrib !== item.quantidade;
+                    const diff = somaDistrib - item.quantidade;
+                    return (
                     <tr
                       key={item.id}
-                      style={{ borderColor: 'oklch(0.18 0.005 285)' }}
+                      style={{
+                        borderColor: isDivergente ? 'oklch(0.40 0.18 30)' : 'oklch(0.18 0.005 285)',
+                        background: isDivergente ? 'oklch(0.16 0.06 30)' : 'transparent',
+                      }}
                       className="border-b transition-colors"
-                      onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.16 0.005 285)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      onMouseEnter={e => (e.currentTarget.style.background = isDivergente ? 'oklch(0.19 0.08 30)' : 'oklch(0.16 0.005 285)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = isDivergente ? 'oklch(0.16 0.06 30)' : 'transparent')}
+                      title={isDivergente ? `⚠ Divergência: Sarom(${item.pedidoSarom}) + Alexandre(${item.pedidoAlexandre}) = ${somaDistrib} ≠ Qtd(${item.quantidade}). Diferença: ${diff > 0 ? '+' : ''}${diff}` : ''}
                     >
                       <td className="px-3 py-2">
                         <span className="text-xs font-mono" style={{ color: 'oklch(0.48 0.22 25)' }}>{item.codigo}</span>
@@ -1255,15 +1295,28 @@ export default function Conteiner() {
                         />
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <button
-                          onClick={() => handleRemoverItem(item.id)}
-                          className="p-1 rounded hover:bg-red-600/20 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" style={{ color: 'oklch(0.65 0.22 25)' }} />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          {isDivergente && (
+                            <span className="relative group">
+                              <AlertTriangle className="w-3.5 h-3.5 animate-pulse" style={{ color: 'oklch(0.75 0.20 40)' }} />
+                              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50" style={{ background: 'oklch(0.20 0.08 30)', color: 'oklch(0.90 0.10 40)', border: '1px solid oklch(0.45 0.18 30)' }}>
+                                S({item.pedidoSarom}) + A({item.pedidoAlexandre}) = {somaDistrib} ≠ {item.quantidade}
+                                <br />
+                                {diff > 0 ? `Excedente: +${diff}` : `Faltam: ${Math.abs(diff)}`}
+                              </span>
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleRemoverItem(item.id)}
+                            className="p-1 rounded hover:bg-red-600/20 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" style={{ color: 'oklch(0.65 0.22 25)' }} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
               </div>
