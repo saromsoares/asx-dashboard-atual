@@ -9,12 +9,14 @@ import Home from "./pages/Home";
 import Compras from "./pages/Compras";
 import Configuracoes from "./pages/Configuracoes";
 import Desenvolvimento from "./pages/Desenvolvimento";
+import Conteiner from "./pages/Conteiner";
 
 function Router() {
   const [location] = useLocation();
 
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
+    if (location === "/conteiner") return "conteiner";
     if (location === "/desenvolvimento") return "desenvolvimento";
     if (location === "/configuracoes") return "configuracoes";
     return "dashboard";
@@ -27,6 +29,7 @@ function Router() {
         <Switch>
           <Route path={"/"} component={Home} />
           <Route path={"/compras"} component={Compras} />
+          <Route path={"/conteiner"} component={Conteiner} />
           <Route path={"/desenvolvimento"} component={Desenvolvimento} />
           <Route path={"/configuracoes"} component={Configuracoes} />
           <Route path={"/404"} component={NotFound} />

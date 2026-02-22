@@ -33,6 +33,13 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       description: "Pedidos de compra",
     },
     {
+      id: "conteiner",
+      label: "Conteiner",
+      icon: ShoppingCart,
+      href: "/conteiner",
+      description: "Processos de importacao SR",
+    },
+    {
       id: "desenvolvimento",
       label: "Desenvolvimento",
       icon: Lightbulb,
@@ -62,12 +69,12 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         <img
           src={LOGO_URL}
           alt="ASX Logo"
-          className="w-10 h-10 object-contain flex-shrink-0"
+          className={collapsed ? "w-12 h-12 object-contain flex-shrink-0" : "w-14 h-14 object-contain flex-shrink-0"}
           style={{ filter: 'brightness(1.1)' }}
         />
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>
+            <h1 className="font-rajdhani font-bold text-xl tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>
               ASX
             </h1>
             <p className="text-[10px] uppercase tracking-widest" style={{ color: 'oklch(0.50 0.010 285)' }}>
