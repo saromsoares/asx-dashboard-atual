@@ -3,11 +3,13 @@
   Design: Painel lateral escuro com navegação por ícones e labels
   Cores: fundo oklch(0.14), acento vermelho ASX oklch(0.48 0.22 25)
   Cotação USD/BRL: API oficial do Banco Central do Brasil (PTAX)
+  Alertas: Badges de estoque crítico nas Centrais de Compra
 */
 
 import { Link } from "wouter";
-import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useEstoque } from "@/hooks/useEstoque";
 
 const LOGO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663371351265/eZWmpvJzWGYwKZuO.png';
 
@@ -21,18 +23,7 @@ interface CotacaoPTAX {
   dataHoraCotacao: string;
 }
 
-function getDateForAPI(): string {
-  // Retorna a data no formato MM-DD-YYYY para a API do BCB
-  // Tenta hoje primeiro, se não houver cotação (fim de semana), tenta dias anteriores
-  const now = new Date();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const yyyy = now.getFullYear();
-  return `${mm}-${dd}-${yyyy}`;
-}
-
 function getRecentDates(): string[] {
-  // Retorna as últimas 5 datas úteis para tentar buscar cotação
   const dates: string[] = [];
   const now = new Date();
   for (let i = 0; i < 7; i++) {
@@ -53,6 +44,10 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [error, setError] = useState(false);
 
+  // Dados de estoque para alertas
+  const { kpis: kpisSarom } = useEstoque('sarom');
+  const { kpis: kpisAlexandre } = useEstoque('alexandre');
+
   const fetchCotacao = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -70,19 +65,16 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           const ptax = data.value[0] as CotacaoPTAX;
           setCotacao(ptax);
           setLastUpdate(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-          // Salvar no localStorage para uso offline
           localStorage.setItem('asx_cotacao_ptax', JSON.stringify(ptax));
           localStorage.setItem('asx_cotacao_timestamp', new Date().toISOString());
           setLoading(false);
           return;
         }
       } catch (err) {
-        // Tentar próxima data
         continue;
       }
     }
     
-    // Se nenhuma data funcionou, tentar cache
     setError(true);
     try {
       const cached = localStorage.getItem('asx_cotacao_ptax');
@@ -100,10 +92,17 @@ export default function Sidebar({ currentPage }: SidebarProps) {
 
   useEffect(() => {
     fetchCotacao();
-    // Atualizar a cada 10 minutos
     const interval = setInterval(fetchCotacao, 10 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchCotacao]);
+
+  // Mapa de alertas por item de menu
+  const alertas = useMemo(() => {
+    const map: Record<string, { criticos: number; atencao: number }> = {};
+    map['central-sarom'] = { criticos: kpisSarom.skusCriticos, atencao: kpisSarom.skusAtencao };
+    map['central-alexandre'] = { criticos: kpisAlexandre.skusCriticos, atencao: kpisAlexandre.skusAtencao };
+    return map;
+  }, [kpisSarom, kpisAlexandre]);
 
   const menuItems = [
     {
@@ -169,7 +168,6 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   };
 
   const formatDataCotacao = (dataHora: string) => {
-    // dataHoraCotacao vem no formato "2026-02-20 13:02:26.431"
     try {
       const [datePart] = dataHora.split(' ');
       const [yyyy, mm, dd] = datePart.split('-');
@@ -290,11 +288,14 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
+          const alerta = alertas[item.id];
+          const temCriticos = alerta && alerta.criticos > 0;
+          const temAtencao = alerta && alerta.atencao > 0;
 
           return (
             <Link key={item.id} href={item.href}>
               <div
-                className="flex items-center gap-3 rounded-lg transition-all duration-200"
+                className="flex items-center gap-3 rounded-lg transition-all duration-200 relative"
                 style={{
                   padding: collapsed ? '10px' : '10px 14px',
                   justifyContent: collapsed ? 'center' : 'flex-start',
@@ -314,12 +315,69 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                   }
                 }}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <div className="relative flex-shrink-0">
+                  <Icon className="w-5 h-5" />
+                  {/* Badge compacto no ícone quando colapsado */}
+                  {collapsed && temCriticos && (
+                    <span
+                      className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[9px] font-bold px-1 animate-pulse"
+                      style={{
+                        background: 'oklch(0.55 0.25 30)',
+                        color: 'white',
+                        boxShadow: '0 0 6px oklch(0.55 0.25 30 / 0.6)',
+                      }}
+                    >
+                      {alerta.criticos}
+                    </span>
+                  )}
+                </div>
                 {!collapsed && (
-                  <div className="overflow-hidden">
-                    <div className="font-medium text-sm truncate">{item.label}</div>
+                  <div className="overflow-hidden flex-1">
+                    <div className="font-medium text-sm truncate flex items-center gap-2">
+                      {item.label}
+                      {/* Badge de críticos */}
+                      {temCriticos && (
+                        <span
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold animate-pulse"
+                          style={{
+                            background: 'oklch(0.55 0.25 30)',
+                            color: 'white',
+                            boxShadow: '0 0 6px oklch(0.55 0.25 30 / 0.5)',
+                          }}
+                          title={`${alerta.criticos} produto(s) com estoque crítico (< 3 meses)`}
+                        >
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          {alerta.criticos}
+                        </span>
+                      )}
+                      {/* Badge de atenção (só se não tem críticos para não poluir) */}
+                      {!temCriticos && temAtencao && (
+                        <span
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+                          style={{
+                            background: 'oklch(0.65 0.18 85)',
+                            color: 'oklch(0.15 0.005 285)',
+                          }}
+                          title={`${alerta.atencao} produto(s) com estoque em atenção (3-6 meses)`}
+                        >
+                          {alerta.atencao}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[11px] truncate" style={{ opacity: 0.6 }}>
-                      {item.description}
+                      {/* Descrição dinâmica com alerta */}
+                      {temCriticos ? (
+                        <span style={{ color: 'oklch(0.70 0.20 30)', opacity: 1 }}>
+                          {alerta.criticos} crítico{alerta.criticos > 1 ? 's' : ''}
+                          {temAtencao ? ` · ${alerta.atencao} atenção` : ''}
+                        </span>
+                      ) : temAtencao ? (
+                        <span style={{ color: 'oklch(0.70 0.15 85)', opacity: 1 }}>
+                          {alerta.atencao} em atenção
+                        </span>
+                      ) : (
+                        item.description
+                      )}
                     </div>
                   </div>
                 )}
@@ -328,6 +386,43 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           );
         })}
       </nav>
+
+      {/* Resumo de alertas quando expandido */}
+      {!collapsed && (kpisSarom.skusCriticos > 0 || kpisAlexandre.skusCriticos > 0) && (
+        <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg border" style={{
+          background: 'oklch(0.14 0.06 30 / 0.3)',
+          borderColor: 'oklch(0.40 0.18 30 / 0.5)',
+        }}>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'oklch(0.75 0.20 30)' }} />
+            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.75 0.20 30)' }}>
+              Estoque Crítico
+            </span>
+          </div>
+          <div className="space-y-1">
+            {kpisSarom.skusCriticos > 0 && (
+              <Link href="/central-sarom">
+                <div className="flex items-center justify-between text-[11px] px-2 py-1 rounded transition-colors hover:bg-white/5 cursor-pointer">
+                  <span style={{ color: 'oklch(0.80 0.005 65)' }}>Sarom</span>
+                  <span className="font-rajdhani font-bold" style={{ color: 'oklch(0.65 0.22 30)' }}>
+                    {kpisSarom.skusCriticos} SKU{kpisSarom.skusCriticos > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </Link>
+            )}
+            {kpisAlexandre.skusCriticos > 0 && (
+              <Link href="/central-alexandre">
+                <div className="flex items-center justify-between text-[11px] px-2 py-1 rounded transition-colors hover:bg-white/5 cursor-pointer">
+                  <span style={{ color: 'oklch(0.80 0.005 65)' }}>Alexandre</span>
+                  <span className="font-rajdhani font-bold" style={{ color: 'oklch(0.65 0.22 30)' }}>
+                    {kpisAlexandre.skusCriticos} SKU{kpisAlexandre.skusCriticos > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Collapse Toggle */}
       <div className="p-3 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
