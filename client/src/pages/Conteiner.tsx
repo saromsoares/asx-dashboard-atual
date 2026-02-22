@@ -3,7 +3,8 @@
 
 import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
-import { X, Plus, Trash2, Copy, ArrowLeft } from 'lucide-react';
+import { X, Plus, Trash2, Copy, ArrowLeft, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface ItemConteiner {
   id: string;
@@ -180,6 +181,35 @@ export default function Conteiner() {
     const totalAlexandre = processoSelecionado.itens.reduce((s, i) => s + i.pedidoAlexandre, 0);
     return { totalItens, totalDolar, totalSarom, totalAlexandre };
   }, [processoSelecionado]);
+  const handleExportarExcel = () => {
+    if (!processoSelecionado) return;
+    const wb = XLSX.utils.book_new();
+    const processoDados = [
+      ['PROCESSO SR', processoSelecionado.numeroProcesso],
+      ['INVOICE', processoSelecionado.nomeInvoice],
+      ['DATA', processoSelecionado.dataProcesso],
+      ['NCM', processoSelecionado.ncm],
+      ['OBSERVACOES', processoSelecionado.observacoes],
+      [],
+    ];
+    const headers = ['DESCRICAO', 'UNIDADE', 'QUANTIDADE', 'PRECO UNITARIO USD', 'PRECO TOTAL USD', 'PEDIDO SAROM', 'PEDIDO ALEXANDRE'];
+    const itensDados = processoSelecionado.itens.map(item => [
+      item.descricao,
+      item.unidade,
+      item.quantidade,
+      item.precoUnitarioDolar.toFixed(2),
+      item.precoTotalDolar.toFixed(2),
+      item.pedidoSarom,
+      item.pedidoAlexandre,
+    ]);
+    const totais = [[], ['TOTAIS', '', stats.totalItens, '', `$${stats.totalDolar.toFixed(2)}`, stats.totalSarom, stats.totalAlexandre]];
+    const wsData = [...processoDados, headers, ...itensDados, ...totais];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [{ wch: 30 }, { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 18 }, { wch: 15 }, { wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Processo SR');
+    const fileName = `ASX_Processo_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
 
   return (
     <div className="h-screen flex flex-col overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
@@ -548,6 +578,19 @@ export default function Conteiner() {
                   Adicionar
                 </button>
               </div>
+            </div>
+
+            {/* Botão de Exportação */}
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={handleExportarExcel}
+                className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
+                style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', border: '1px solid', color: 'oklch(0.80 0.005 65)' }}
+                title="Exportar processo para Excel"
+              >
+                <Download className="w-4 h-4" />
+                Exportar Excel
+              </button>
             </div>
           </main>
         ) : (
