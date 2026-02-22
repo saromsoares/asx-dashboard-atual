@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { X, Plus, Trash2, Copy, ArrowLeft, Download } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
 
 interface ItemConteiner {
@@ -399,142 +399,255 @@ export default function Conteiner() {
 
     const totalUSD = Number(processoSelecionado.itens.reduce((s, i) => s + i.precoTotalDolar, 0).toFixed(2));
     const totalQtd = processoSelecionado.itens.reduce((s, i) => s + i.quantidade, 0);
+    const numItens = processoSelecionado.itens.length;
 
-    // === COMMERCIAL INVOICE ===
-    const dados: (string | number | null)[][] = [
-      // Linha 1: Cabeçalho MIC TRADE
-      ['', '', '', '', '', 'MIC TRADE SERVICE LIMITED', '', '', '', '', ''],
-      ['', '', '', '', '', 'RM 502C 5/F', '', '', '', '', ''],
-      ['', '', '', '', '', 'HO KING COMM CTR', '', '', '', '', ''],
-      ['', '', '', '', '', '2-16 FAYUEN ST MONGKOK KL HONGKONG CHINA', '', '', '', '', ''],
-      // Linha 2: COMERCIAL INVOICE
-      ['', '', '', '', '', 'COMERCIAL INVOICE', '', '', '', '', ''],
-      // Linha 3: Exportador + INVOICE
-      ['', 'SONRES & REZENDE INPORT. EXPORT LTDA', '', '', '', '', `INVOICE:`, `${processoSelecionado.nomeInvoice}`, '', processoSelecionado.numeroProcesso, ''],
-      ['', 'CNPJ: 23 113 383/0002-90', '', '', '', '', '', '', '', '', ''],
-      ['', 'RUA ALFREDO NERLO 560/ SALA 05', '', '', '', '', '', '', '', '', ''],
-      ['', 'MOMRIND MLA VELH ES', '', '', '', '', '', '', '', '', ''],
-      // Linha 4: TO - Importador
-      ['TO', '', '', '', '', '', '', '', '', '', ''],
-      ['', 'PROSPER INTELIGÊNCIA ADUANEIRA LTDA', '', '', '', '', `DATE:${processoSelecionado.dataProcesso}`, '', '', '', ''],
-      ['', 'ADDRESS: RUA GONCALVES DIAS, 110, SALA 17, CENTRO,', '', '', '', '', '', '', '', `NCM:`, ''],
-      ['', 'PORTO VELHO, RO, CEP 76.801-076', '', '', '', '', '', '', '', processoSelecionado.ncm, ''],
-      ['', 'CNPJ: 59.574.729/0001-14', '', '', '', '', `OBS:`, '', '', '', ''],
-      ['', '', '', '', '', '', processoSelecionado.observacoes, '', '', '', ''],
-      // Linha em branco
-      [],
-      // Linha 6: Cabeçalho da tabela de itens
-      ['ITEM', '', 'CODIGO -    DESCRICAO DOS ITENS', '', '', '', 'UND', 'QUANT', '', 'PRICE USD', 'TOTAL PRICE USD'],
-    ];
+    // Estilos base
+    const fontBold12: any = { name: 'Times New Roman', sz: 12, bold: true };
+    const fontBold10: any = { name: 'Times New Roman', sz: 10, bold: true };
+    const fontBold9: any = { name: 'Times New Roman', sz: 9, bold: true };
+    const fontNormal9: any = { name: 'Times New Roman', sz: 9 };
+    const fontNormal10: any = { name: 'Times New Roman', sz: 10 };
+    const borderThin: any = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } };
+    const borderMediumLeft: any = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'medium' }, right: { style: 'thin' } };
+    const alignCenter: any = { horizontal: 'center', vertical: 'center', wrapText: true };
+    const alignLeft: any = { horizontal: 'left', vertical: 'center', wrapText: true };
 
-    // Itens
-    processoSelecionado.itens.forEach((item, idx) => {
-      dados.push([
-        idx + 1,
-        '',
-        `${item.codigo} - ${item.descricao}`,
-        '', '', '',
-        item.unidade,
-        item.quantidade,
-        '',
-        Number(item.precoUnitarioDolar.toFixed(2)),
-        Number(item.precoTotalDolar.toFixed(2)),
-      ]);
+    // Criar worksheet vazio
+    const ws: any = {};
+
+    // Helper para setar célula com estilo
+    const setCell = (ref: string, value: any, style: any = {}) => {
+      const cell: any = { v: value, t: typeof value === 'number' ? 'n' : 's' };
+      cell.s = style;
+      ws[ref] = cell;
+    };
+
+    // === ROW 1: Header MIC TRADE (merged A1:K1) ===
+    setCell('A1', 'MIC TRADE SERVICE LIMITED\nRM 502C 5/F\nHO KING COMM CTR\n2-16 FAYUEN ST MONGKOK KL HONGKONG CHINA', {
+      font: fontBold12, alignment: alignCenter, border: borderMediumLeft
     });
 
-    // Linha de totais
-    dados.push([]);
-    dados.push(['', '', 'TOTAL', '', '', '', '', totalQtd, '', '', totalUSD]);
+    // === ROW 2: COMERCIAL INVOICE (merged A2:K2) ===
+    setCell('A2', 'COMERCIAL INVOICE', {
+      font: fontBold12, alignment: alignCenter, border: borderMediumLeft
+    });
 
-    // Linha em branco
-    dados.push([]);
+    // === ROW 3: TO + Destinatário + INVOICE ===
+    setCell('A3', 'TO', { font: fontBold12, alignment: alignCenter, border: borderMediumLeft });
+    setCell('B3', 'SONRES & REZENDE INPORT. EXPORT LTDA\nCNPJ: 23 113 383/0002-90\nRUA ALFREDO NERLO 560/ SALA 05\nMOMRIND MLA VELH ES', {
+      font: fontBold10, alignment: alignCenter, border: borderThin
+    });
+    setCell('G3', 'INVOICE:', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I3', processoSelecionado.numeroProcesso || 'SR 201', { font: fontNormal10, alignment: alignCenter, border: borderThin });
 
-    // CAIXAS PAPELAO / PESO BRUTO / PESO LIQUIDO / CBM
-    dados.push([
-      `CAIXAS PAPELAO: ${processoSelecionado.caixasPapelao || 0}`,
-      '',
-      `PESO BRUTO KG: ${processoSelecionado.pesoBrutoKg || 0}`,
-      '',
-      `PESO LIQUIDO KG: ${processoSelecionado.pesoLiquidoKg || 0}`,
-      '',
-      `CBM: ${processoSelecionado.cbm || 0}`,
-      '', '', '', ''
-    ]);
+    // === ROW 4: Despachante + DATE + NCM ===
+    setCell('B4', 'PROSPER INTELIGÊNCIA ADUANEIRA LTDA\nADDRESS: RUA GONCALVES DIAS, 110, SALA 17, CENTRO, PORTO\nVELHO, RO, CEP 76.801-076\nCNPJ: 59.574.729/0001-14', {
+      font: fontBold10, alignment: alignCenter, border: borderThin
+    });
+    setCell('G4', `DATE: ${processoSelecionado.dataProcesso}`, { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I4', `NCM ${processoSelecionado.ncm || '8539'}`, { font: fontBold10, alignment: alignCenter, border: borderThin });
 
-    // Linha em branco
-    dados.push([]);
+    // === ROW 5: OBS ===
+    setCell('G5', 'OBS:', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I5', processoSelecionado.observacoes || '', { font: fontNormal9, alignment: alignCenter, border: borderThin });
 
-    // Factories
-    dados.push(['.', '', 'Factory', '', '', '', '', 'Address', '', '', '']);
-    dados.push(['1-15', '', '"FOSHAN ZHISHUO ILLUMINATION ELECTRICS CO., LTD"', '', '', '', '', 'NO.3, HONGXING 2 ROAD, YINGDE, CHINA', '', '', '']);
-    dados.push(['16-61', '', 'GUANGZHOU YUEKAI PHOTOELECTRIC TECHNOLOGY CO., LTD.', '', '', '', '', 'ADD: GB033,B1 FLOOR(WEST GATE),YIYOU(INTERNATIONAL)AUTO PARTS COMMODITIES TRADING CENTER,NO.155 HENGFU ROAD,YUEXIU DISTRICT, GUANGZHOU,CHINA', '', '', '']);
-    dados.push(['62', '', 'Shuyang Deruifa Auto Parts Co., Ltd.', '', '', '', '', 'Shuyang Software Park, Suqian City, Jiangsu Province', '', '', '']);
+    // === ROW 6-7: Cabeçalho da tabela (merged) ===
+    setCell('A6', 'ITEM', { font: fontBold9, alignment: alignCenter, border: borderMediumLeft });
+    setCell('B6', 'codigo e descricao do produto', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('H6', 'UND', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I6', 'QUANT', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('H7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('I7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('J7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('K7', '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('J6', 'PRICE\nUSD', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell('K6', 'TOTAL PRICE\nUSD', { font: fontBold9, alignment: alignCenter, border: borderThin });
 
-    // Linha em branco
-    dados.push([]);
+    // === ROWS 8+: Itens ===
+    const itemStartRow = 8;
+    processoSelecionado.itens.forEach((item, idx) => {
+      const r = itemStartRow + idx;
+      setCell(`A${r}`, idx + 1, { font: fontNormal9, alignment: alignCenter, border: borderMediumLeft });
+      setCell(`B${r}`, `${item.codigo} - ${item.descricao}`, { font: fontNormal9, alignment: alignLeft, border: borderThin });
+      setCell(`H${r}`, item.unidade || 'PIC', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`I${r}`, item.quantidade, { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`J${r}`, Number(item.precoUnitarioDolar.toFixed(2)), { font: fontNormal9, alignment: alignCenter, border: borderThin });
+      setCell(`K${r}`, Number(item.precoTotalDolar.toFixed(2)), { font: fontNormal9, alignment: alignCenter, border: borderThin });
+    });
 
-    // CONDITIONS OF TERM AND PAYMENT / TRANSPORTATION METHOD
-    dados.push(['CONDITIONS OF TERM AND PAYMENT', '', '', '', '', 'TRANSPORTATION METHOD', '', '', '', '', '']);
-    dados.push(['PRICE:', '', 'FOB', '', '', 'VIA:', '', '', '', '', 'SHIP']);
-    dados.push(['TERM OF PAYMENT:', '', 'FINANCED UNTIL 90 DAYS AFTER RECEIPT', '', '', 'PORT TO LOADING:', '', '', '', '', 'GUANGZHOU, China']);
-    dados.push(['PREVISAO DE EMBARQUE', '', '', '', '', 'PORT OF DESTINATION:', '', '', '', '', 'SALVADOR / BAHIA / BRASIL.']);
-    dados.push(['', '', '', '', '', 'TIME OF DELIVERY:', '', '', '', '', '']);
+    // === ROW TOTAIS ===
+    const totalRow = itemStartRow + numItens;
+    setCell(`I${totalRow}`, totalQtd, { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`K${totalRow}`, totalUSD, { font: fontBold9, alignment: alignCenter, border: borderThin });
 
-    // Linha em branco
-    dados.push([]);
+    // === ROW EMBARQUE (merged A:K) ===
+    const embarqueRow = totalRow + 2;
+    const cx = processoSelecionado.caixasPapelao || 0;
+    const pb = processoSelecionado.pesoBrutoKg || 0;
+    const pl = processoSelecionado.pesoLiquidoKg || 0;
+    const cbm = processoSelecionado.cbm || 0;
+    setCell(`A${embarqueRow}`, ` CAIXAS ${cx} PAPELAO   / PESO BRUTO ${pb} KG   /  PESO LIQUIDO ${pl} KG / CBM ${cbm}`, {
+      font: fontBold9, alignment: alignLeft, border: borderMediumLeft
+    });
 
-    // BANK INFORMATION
-    dados.push(['BANK INFORMATION', '', '', '', '', '', '', '', '', '', '']);
-    dados.push(['Beneficiary Name:  MIC TRADE SERVICE LIMITED', '', '', '', '', '', '', '', '', '', '']);
-    dados.push(['Account No.:  NRA30006829988 (please also input "NRA")', '', '', '', '', '', '', '', '', '', '']);
-    dados.push(['ADDRESS: RM 502C 5/F, HO KING COMM CTR,2-16 FAYUEN ST MONGKOK,KL', '', '', '', '', '', '', '', '', '', '']);
-    dados.push([]);
-    dados.push(['Beneficiary Bank: DBS Bank (China) Ltd Guangzhou Branch', '', '', '', '', '', '', '', '', '', '']);
-    dados.push(['Swift Code : DBSSCNSHGZU', '', '', '', '', '', '', '', '', '', '']);
-    dados.push(['Beneficiary Bank Address: One-link Center, 18/F Onelink Centre, No.230-232, Tianhe Road, Tianhe District, Guangzhou', '', '', '', '', '', '', '', '', '', '']);
+    // === ROW FACTORY ===
+    const factoryHeaderRow = embarqueRow + 1;
+    setCell(`A${factoryHeaderRow}`, '.', { font: fontBold9, alignment: alignCenter, border: borderMediumLeft });
+    setCell(`C${factoryHeaderRow}`, 'Factory', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`G${factoryHeaderRow}`, 'Address', { font: fontBold9, alignment: alignCenter, border: borderThin });
 
-    const ws = XLSX.utils.aoa_to_sheet(dados);
+    const f1Row = factoryHeaderRow + 1;
+    setCell(`A${f1Row}`, '1-11', { font: fontNormal9, alignment: alignCenter, border: borderMediumLeft });
+    setCell(`C${f1Row}`, 'HEBEI SHUANGQI AUTOMOBILE LIGHTING APPLIANCE CO., LTD.', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+    setCell(`G${f1Row}`, 'LIUFEN VILLAGE, WOFOTANG TOWN, HEJIAN CITY, HEBEI PROVINCE, CHINA', { font: fontNormal9, alignment: alignCenter, border: borderThin });
 
-    // Larguras das colunas
+    // === CONDITIONS ROW ===
+    const condRow = f1Row + 1;
+    setCell(`A${condRow}`, 'CONDITIONS OF TERM AND PAYMENT', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`F${condRow}`, 'TRANSPORTATION METHOD', { font: fontBold9, alignment: alignLeft, border: borderThin });
+
+    const priceRow = condRow + 1;
+    setCell(`A${priceRow}`, 'TERM OF PRICE:', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`C${priceRow}`, 'FOB', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`F${priceRow}`, 'VIA:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+    setCell(`I${priceRow}`, 'SHIP', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    const payRow = priceRow + 1;
+    setCell(`A${payRow}`, 'TERM OF PAYMENT:', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`C${payRow}`, '100% ADVANCED UNTIL 90 DAYS AFTER RECEIVE BL', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`F${payRow}`, 'PORT TO LOADING:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+    setCell(`I${payRow}`, 'GUANGZHOU, China', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    const embRow = payRow + 1;
+    setCell(`A${embRow}`, 'PREVISAO DE EMBARQUE', { font: fontBold9, alignment: alignLeft, border: borderMediumLeft });
+    setCell(`C${embRow}`, processoSelecionado.dataProcesso || '', { font: fontBold9, alignment: alignCenter, border: borderThin });
+    setCell(`F${embRow}`, 'PORT OF DESTINATION:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+    setCell(`I${embRow}`, 'SALVADOR / BAHIA / BRASIL.', { font: fontNormal9, alignment: alignCenter, border: borderThin });
+
+    const delRow = embRow + 1;
+    setCell(`F${delRow}`, 'TIME OF DELIVERY:', { font: fontBold9, alignment: alignLeft, border: borderThin });
+
+    // === BANK INFORMATION ===
+    const bankRow = delRow + 1;
+    setCell(`A${bankRow}`, 'BANK INFORMATION\nBeneficiary Name:  MIC TRADE SERVICE LIMITED\nAccount No.:  NRA30006829988 (please also input "NRA")\nADDRESS: RM 502C 5/F, HO KING COMM CTR,2-16 FAYUEN ST MONGKOK,KL\n\nBeneficiary Bank: DBS Bank (China) Ltd Guangzhou Branch\nSwift Code : DBSSCNSHGZU\nBeneficiary Bank Address: One-link Center, 18/F Onelink Centre, No.230-232, Tianhe Road, Tianhe District, Guangzhou', {
+      font: fontBold9, alignment: alignLeft, border: borderMediumLeft
+    });
+
+    // === MERGES ===
+    const merges: any[] = [
+      // Row 1: A1:K1
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
+      // Row 2: A2:K2
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
+      // Row 3: A3:A5 (TO), B3:F3 (destinatário), G3:H3 (INVOICE:), I3:K3 (número)
+      { s: { r: 2, c: 0 }, e: { r: 4, c: 0 } },
+      { s: { r: 2, c: 1 }, e: { r: 2, c: 5 } },
+      { s: { r: 2, c: 6 }, e: { r: 2, c: 7 } },
+      { s: { r: 2, c: 8 }, e: { r: 2, c: 10 } },
+      // Row 4: B4:F5 (despachante), G4:H4 (DATE), I4:K5 (NCM)
+      { s: { r: 3, c: 1 }, e: { r: 4, c: 5 } },
+      { s: { r: 3, c: 6 }, e: { r: 3, c: 7 } },
+      { s: { r: 3, c: 8 }, e: { r: 4, c: 10 } },
+      // Row 5: G5:H5 (OBS)
+      { s: { r: 4, c: 6 }, e: { r: 4, c: 7 } },
+      // Row 6-7: A6:A7 (ITEM), B6:G7 (descricao), H6:I6 (UND/QUANT header)
+      { s: { r: 5, c: 0 }, e: { r: 6, c: 0 } },
+      { s: { r: 5, c: 1 }, e: { r: 6, c: 6 } },
+    ];
+
+    // Itens: B:G merged para cada item
+    for (let i = 0; i < numItens; i++) {
+      const r = itemStartRow - 1 + i; // 0-indexed
+      merges.push({ s: { r, c: 1 }, e: { r, c: 6 } });
+    }
+
+    // Total row merge
+    // Embarque row merge A:K
+    merges.push({ s: { r: embarqueRow - 1, c: 0 }, e: { r: embarqueRow - 1, c: 10 } });
+
+    // Factory header merges
+    merges.push({ s: { r: factoryHeaderRow - 1, c: 0 }, e: { r: factoryHeaderRow - 1, c: 1 } });
+    merges.push({ s: { r: factoryHeaderRow - 1, c: 2 }, e: { r: factoryHeaderRow - 1, c: 5 } });
+    merges.push({ s: { r: factoryHeaderRow - 1, c: 6 }, e: { r: factoryHeaderRow - 1, c: 10 } });
+
+    // Factory data merges
+    merges.push({ s: { r: f1Row - 1, c: 0 }, e: { r: f1Row - 1, c: 1 } });
+    merges.push({ s: { r: f1Row - 1, c: 2 }, e: { r: f1Row - 1, c: 5 } });
+    merges.push({ s: { r: f1Row - 1, c: 6 }, e: { r: f1Row - 1, c: 10 } });
+
+    // Conditions merges
+    merges.push({ s: { r: condRow - 1, c: 0 }, e: { r: condRow - 1, c: 4 } });
+    merges.push({ s: { r: condRow - 1, c: 5 }, e: { r: condRow - 1, c: 10 } });
+    // Price row
+    merges.push({ s: { r: priceRow - 1, c: 0 }, e: { r: priceRow - 1, c: 1 } });
+    merges.push({ s: { r: priceRow - 1, c: 2 }, e: { r: priceRow - 1, c: 4 } });
+    merges.push({ s: { r: priceRow - 1, c: 5 }, e: { r: priceRow - 1, c: 6 } });
+    merges.push({ s: { r: priceRow - 1, c: 8 }, e: { r: priceRow - 1, c: 10 } });
+    // Payment row
+    merges.push({ s: { r: payRow - 1, c: 0 }, e: { r: payRow - 1, c: 1 } });
+    merges.push({ s: { r: payRow - 1, c: 2 }, e: { r: payRow - 1, c: 4 } });
+    merges.push({ s: { r: payRow - 1, c: 5 }, e: { r: payRow - 1, c: 6 } });
+    merges.push({ s: { r: payRow - 1, c: 8 }, e: { r: payRow - 1, c: 10 } });
+    // Embarque row
+    merges.push({ s: { r: embRow - 1, c: 0 }, e: { r: embRow - 1, c: 1 } });
+    merges.push({ s: { r: embRow - 1, c: 2 }, e: { r: embRow - 1, c: 4 } });
+    merges.push({ s: { r: embRow - 1, c: 5 }, e: { r: embRow - 1, c: 6 } });
+    merges.push({ s: { r: embRow - 1, c: 8 }, e: { r: embRow - 1, c: 10 } });
+    // Delivery row
+    merges.push({ s: { r: delRow - 1, c: 5 }, e: { r: delRow - 1, c: 6 } });
+    merges.push({ s: { r: delRow - 1, c: 8 }, e: { r: delRow - 1, c: 10 } });
+    // Bank info merge A:K
+    merges.push({ s: { r: bankRow - 1, c: 0 }, e: { r: bankRow - 1, c: 10 } });
+
+    ws['!merges'] = merges;
+
+    // === COLUMN WIDTHS (matching model) ===
     ws['!cols'] = [
-      { wch: 8 },   // A - ITEM
-      { wch: 6 },   // B
-      { wch: 18 },  // C - CODIGO
-      { wch: 12 },  // D - DESCRICAO
-      { wch: 12 },  // E
-      { wch: 18 },  // F
-      { wch: 8 },   // G - UND
-      { wch: 10 },  // H - QUANT
-      { wch: 6 },   // I
-      { wch: 14 },  // J - PRICE USD
-      { wch: 16 },  // K - TOTAL PRICE USD
+      { wch: 5.16 },   // A
+      { wch: 6.16 },   // B
+      { wch: 5.5 },    // C
+      { wch: 7.5 },    // D
+      { wch: 9.66 },   // E
+      { wch: 18.66 },  // F
+      { wch: 33.16 },  // G
+      { wch: 6.16 },   // H
+      { wch: 13.33 },  // I
+      { wch: 15.0 },   // J
+      { wch: 19.0 },   // K
     ];
 
-    // Merges para o cabeçalho
-    ws['!merges'] = [
-      // MIC TRADE header (linhas 0-3, colunas E-K)
-      { s: { r: 0, c: 5 }, e: { r: 0, c: 10 } },
-      { s: { r: 1, c: 5 }, e: { r: 1, c: 10 } },
-      { s: { r: 2, c: 5 }, e: { r: 2, c: 10 } },
-      { s: { r: 3, c: 5 }, e: { r: 3, c: 10 } },
-      // COMERCIAL INVOICE
-      { s: { r: 4, c: 5 }, e: { r: 4, c: 10 } },
-      // Exportador
-      { s: { r: 5, c: 1 }, e: { r: 5, c: 5 } },
-      { s: { r: 6, c: 1 }, e: { r: 6, c: 5 } },
-      { s: { r: 7, c: 1 }, e: { r: 7, c: 5 } },
-      { s: { r: 8, c: 1 }, e: { r: 8, c: 5 } },
-      // Importador
-      { s: { r: 10, c: 1 }, e: { r: 10, c: 5 } },
-      { s: { r: 11, c: 1 }, e: { r: 11, c: 5 } },
-      { s: { r: 12, c: 1 }, e: { r: 12, c: 5 } },
-      { s: { r: 13, c: 1 }, e: { r: 13, c: 5 } },
-      // Descricao dos itens header
-      { s: { r: 16, c: 2 }, e: { r: 16, c: 5 } },
-    ];
+    // === ROW HEIGHTS ===
+    const rows: any = {};
+    rows[0] = { hpt: 63 }; // Row 1
+    rows[1] = { hpt: 16 }; // Row 2
+    rows[2] = { hpt: 65 }; // Row 3
+    rows[3] = { hpt: 27 }; // Row 4
+    rows[4] = { hpt: 43 }; // Row 5
+    rows[5] = { hpt: 25 }; // Row 6
+    rows[6] = { hpt: 29 }; // Row 7
+    for (let i = 0; i < numItens; i++) {
+      rows[itemStartRow - 1 + i] = { hpt: 20.25 };
+    }
+    rows[embarqueRow - 1] = { hpt: 16 };
+    rows[bankRow - 1] = { hpt: 133 };
+    ws['!rows'] = Object.keys(rows).map((k) => {
+      const arr: any[] = [];
+      const maxIdx = Math.max(...Object.keys(rows).map(Number));
+      return arr;
+    });
+    // Build rows array properly
+    const maxRowIdx = Math.max(...Object.keys(rows).map(Number));
+    const rowsArr: any[] = [];
+    for (let i = 0; i <= maxRowIdx; i++) {
+      rowsArr.push(rows[i] || {});
+    }
+    ws['!rows'] = rowsArr;
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Commercial Invoice');
-    const fileName = `ASX_Commercial_Invoice_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    // Set ref range
+    ws['!ref'] = `A1:K${bankRow}`;
+
+    XLSX.utils.book_append_sheet(wb, ws, 'PI FINAL TOTAL');
+    const fileName = `${processoSelecionado.numeroProcesso || 'SR'}PI.xlsx`;
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
