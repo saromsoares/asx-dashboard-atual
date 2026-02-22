@@ -29,6 +29,11 @@ interface ProcessoSR {
   itens: ItemConteiner[];
   dataCriacao: string;
   status: 'Em andamento' | 'Finalizado' | 'Cancelado';
+  // Campos do rodapé da invoice
+  caixasPapelao: number;
+  pesoBrutoKg: number;
+  pesoLiquidoKg: number;
+  cbm: number;
 }
 
 const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
@@ -195,6 +200,10 @@ export default function Conteiner() {
       itens: [],
       dataCriacao: new Date().toISOString(),
       status: 'Em andamento',
+      caixasPapelao: 0,
+      pesoBrutoKg: 0,
+      pesoLiquidoKg: 0,
+      cbm: 0,
     };
 
     setProcessos([...processos, novoProcesso]);
@@ -441,7 +450,16 @@ export default function Conteiner() {
     dados.push([]);
 
     // CAIXAS PAPELAO / PESO BRUTO / PESO LIQUIDO / CBM
-    dados.push(['', '', '', '', '', 'CAIXAS PAPELAO  /  PESO BRUTO KG  /  PESO LIQUIDO KG  /  CBM', '', '', '', '', '']);
+    dados.push([
+      `CAIXAS PAPELAO: ${processoSelecionado.caixasPapelao || 0}`,
+      '',
+      `PESO BRUTO KG: ${processoSelecionado.pesoBrutoKg || 0}`,
+      '',
+      `PESO LIQUIDO KG: ${processoSelecionado.pesoLiquidoKg || 0}`,
+      '',
+      `CBM: ${processoSelecionado.cbm || 0}`,
+      '', '', '', ''
+    ]);
 
     // Linha em branco
     dados.push([]);
@@ -517,7 +535,16 @@ export default function Conteiner() {
 
     XLSX.utils.book_append_sheet(wb, ws, 'Commercial Invoice');
     const fileName = `ASX_Commercial_Invoice_${processoSelecionado.numeroProcesso}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
   const handleConfirmarProcesso = () => {
     if (!processoSelecionado) return;
@@ -938,6 +965,80 @@ export default function Conteiner() {
                 <Plus className="w-4 h-4" />
                 Adicionar
               </button>
+            </div>
+
+            {/* Dados de Embarque */}
+            <div className="mt-4 p-3 rounded-lg" style={{ background: 'oklch(0.18 0.005 285)', border: '1px solid oklch(0.26 0.005 285)' }}>
+              <h4 className="text-sm font-bold mb-3" style={{ color: 'oklch(0.75 0.005 65)' }}>DADOS DE EMBARQUE</h4>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: 'oklch(0.55 0.010 285)' }}>CAIXAS PAPELÃO</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={processoSelecionado?.caixasPapelao || 0}
+                    onChange={(e) => {
+                      if (!processoSelecionado) return;
+                      const atualizado = { ...processoSelecionado, caixasPapelao: Number(e.target.value) };
+                      setProcessoSelecionado(atualizado);
+                      setProcessos(processos.map(p => p.id === atualizado.id ? atualizado : p));
+                    }}
+                    className="w-full px-2 py-1.5 rounded text-sm"
+                    style={{ background: 'oklch(0.15 0.005 285)', border: '1px solid oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: 'oklch(0.55 0.010 285)' }}>PESO BRUTO (KG)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={processoSelecionado?.pesoBrutoKg || 0}
+                    onChange={(e) => {
+                      if (!processoSelecionado) return;
+                      const atualizado = { ...processoSelecionado, pesoBrutoKg: Number(e.target.value) };
+                      setProcessoSelecionado(atualizado);
+                      setProcessos(processos.map(p => p.id === atualizado.id ? atualizado : p));
+                    }}
+                    className="w-full px-2 py-1.5 rounded text-sm"
+                    style={{ background: 'oklch(0.15 0.005 285)', border: '1px solid oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: 'oklch(0.55 0.010 285)' }}>PESO LÍQUIDO (KG)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={processoSelecionado?.pesoLiquidoKg || 0}
+                    onChange={(e) => {
+                      if (!processoSelecionado) return;
+                      const atualizado = { ...processoSelecionado, pesoLiquidoKg: Number(e.target.value) };
+                      setProcessoSelecionado(atualizado);
+                      setProcessos(processos.map(p => p.id === atualizado.id ? atualizado : p));
+                    }}
+                    className="w-full px-2 py-1.5 rounded text-sm"
+                    style={{ background: 'oklch(0.15 0.005 285)', border: '1px solid oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs mb-1" style={{ color: 'oklch(0.55 0.010 285)' }}>CBM</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={processoSelecionado?.cbm || 0}
+                    onChange={(e) => {
+                      if (!processoSelecionado) return;
+                      const atualizado = { ...processoSelecionado, cbm: Number(e.target.value) };
+                      setProcessoSelecionado(atualizado);
+                      setProcessos(processos.map(p => p.id === atualizado.id ? atualizado : p));
+                    }}
+                    className="w-full px-2 py-1.5 rounded text-sm"
+                    style={{ background: 'oklch(0.15 0.005 285)', border: '1px solid oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Botões de Ação */}
