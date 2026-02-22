@@ -114,21 +114,68 @@ export default function Conteiner() {
     pedidoAlexandre: 0,
   });
 
-  // Buscar produto por código e preencher nome e unidade automaticamente
+  // Autocomplete de produto por código
   const [nomeProdutoEncontrado, setNomeProdutoEncontrado] = useState('');
+  const [showSugestoes, setShowSugestoes] = useState(false);
+  const [sugestoes, setSugestoes] = useState<typeof produtos>([]);
+  const [indiceSugestao, setIndiceSugestao] = useState(-1);
+
   const handleBuscarProduto = (codigo: string) => {
     setFormItem(prev => ({ ...prev, descricao: codigo }));
-    const produto = produtos.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
-    if (produto) {
-      setNomeProdutoEncontrado(produto.descricao);
-      setFormItem(prev => ({
-        ...prev,
-        descricao: codigo,
-        unidade: produto.unid,
-      }));
+    setIndiceSugestao(-1);
+
+    // Busca exata
+    const produtoExato = produtos.find(p => p.codigo.toLowerCase() === codigo.toLowerCase());
+    if (produtoExato) {
+      setNomeProdutoEncontrado(produtoExato.descricao);
+      setFormItem(prev => ({ ...prev, descricao: codigo, unidade: produtoExato.unid }));
+      setShowSugestoes(false);
+      setSugestoes([]);
+      return;
+    }
+
+    // Busca parcial para sugestões
+    if (codigo.length >= 2) {
+      const filtrados = produtos.filter(p =>
+        p.codigo.toLowerCase().includes(codigo.toLowerCase()) ||
+        p.descricao.toLowerCase().includes(codigo.toLowerCase())
+      ).slice(0, 8);
+      setSugestoes(filtrados);
+      setShowSugestoes(filtrados.length > 0);
     } else {
-      setNomeProdutoEncontrado('');
-      setFormItem(prev => ({ ...prev, descricao: codigo, unidade: '' }));
+      setSugestoes([]);
+      setShowSugestoes(false);
+    }
+
+    setNomeProdutoEncontrado('');
+    setFormItem(prev => ({ ...prev, descricao: codigo, unidade: '' }));
+  };
+
+  const handleSelecionarSugestao = (produto: typeof produtos[0]) => {
+    setFormItem(prev => ({
+      ...prev,
+      descricao: produto.codigo,
+      unidade: produto.unid,
+    }));
+    setNomeProdutoEncontrado(produto.descricao);
+    setShowSugestoes(false);
+    setSugestoes([]);
+    setIndiceSugestao(-1);
+  };
+
+  const handleKeyDownSugestao = (e: React.KeyboardEvent) => {
+    if (!showSugestoes || sugestoes.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setIndiceSugestao(prev => (prev < sugestoes.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setIndiceSugestao(prev => (prev > 0 ? prev - 1 : sugestoes.length - 1));
+    } else if (e.key === 'Enter' && indiceSugestao >= 0) {
+      e.preventDefault();
+      handleSelecionarSugestao(sugestoes[indiceSugestao]);
+    } else if (e.key === 'Escape') {
+      setShowSugestoes(false);
     }
   };
 
@@ -666,18 +713,52 @@ export default function Conteiner() {
                 Adicionar Item
               </h3>
 <div className="grid grid-cols-6 gap-2">
-                <input
-                  type="text"
-                  placeholder="Código"
-                  value={formItem.descricao}
-                  onChange={e => handleBuscarProduto(e.target.value)}
-                  className="px-3 py-2 rounded-md border text-sm"
-                  style={{
-                    background: 'oklch(0.18 0.005 285)',
-                    borderColor: 'oklch(0.26 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
-                  }}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Código"
+                    value={formItem.descricao}
+                    onChange={e => handleBuscarProduto(e.target.value)}
+                    onKeyDown={handleKeyDownSugestao}
+                    onFocus={() => { if (sugestoes.length > 0) setShowSugestoes(true); }}
+                    onBlur={() => setTimeout(() => setShowSugestoes(false), 200)}
+                    className="w-full px-3 py-2 rounded-md border text-sm"
+                    style={{
+                      background: 'oklch(0.18 0.005 285)',
+                      borderColor: 'oklch(0.26 0.005 285)',
+                      color: 'oklch(0.90 0.005 65)',
+                    }}
+                  />
+                  {showSugestoes && sugestoes.length > 0 && (
+                    <div
+                      className="absolute z-50 left-0 right-0 mt-1 rounded-md border overflow-hidden shadow-lg"
+                      style={{
+                        background: 'oklch(0.16 0.005 285)',
+                        borderColor: 'oklch(0.30 0.005 285)',
+                        maxHeight: '240px',
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {sugestoes.map((prod, idx) => (
+                        <div
+                          key={prod.id}
+                          onMouseDown={() => handleSelecionarSugestao(prod)}
+                          className="px-3 py-2 cursor-pointer transition-colors text-xs"
+                          style={{
+                            background: idx === indiceSugestao ? 'oklch(0.22 0.005 285)' : 'transparent',
+                            borderBottom: '1px solid oklch(0.20 0.005 285)',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'oklch(0.22 0.005 285)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = idx === indiceSugestao ? 'oklch(0.22 0.005 285)' : 'transparent')}
+                        >
+                          <span className="font-mono font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>{prod.codigo}</span>
+                          <span className="ml-2" style={{ color: 'oklch(0.70 0.005 65)' }}>{prod.descricao}</span>
+                          <span className="ml-2 opacity-60" style={{ color: 'oklch(0.55 0.005 65)' }}>({prod.unid})</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="Nome (automático)"
