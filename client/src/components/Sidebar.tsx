@@ -6,7 +6,7 @@
 */
 
 import { Link } from "wouter";
-import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
 const LOGO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663371351265/eZWmpvJzWGYwKZuO.png';
@@ -119,6 +119,20 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       icon: ShoppingCart,
       href: "/compras",
       description: "Pedidos de compra",
+    },
+    {
+      id: "central-sarom",
+      label: "Central Sarom",
+      icon: ClipboardList,
+      href: "/central-sarom",
+      description: "Estoque e compras Sarom",
+    },
+    {
+      id: "central-alexandre",
+      label: "Central Alexandre",
+      icon: ClipboardList,
+      href: "/central-alexandre",
+      description: "Estoque e compras Alexandre",
     },
     {
       id: "conteiner",

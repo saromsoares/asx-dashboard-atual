@@ -11,6 +11,8 @@ import Configuracoes from "./pages/Configuracoes";
 import Desenvolvimento from "./pages/Desenvolvimento";
 import Conteiner from "./pages/Conteiner";
 import Rastreamento from "./pages/Rastreamento";
+import CentralSarom from "./pages/CentralSarom";
+import CentralAlexandre from "./pages/CentralAlexandre";
 
 function Router() {
   const [location] = useLocation();
@@ -19,6 +21,8 @@ function Router() {
     if (location === "/compras") return "compras";
     if (location === "/conteiner") return "conteiner";
     if (location === "/rastreamento") return "rastreamento";
+    if (location === "/central-sarom") return "central-sarom";
+    if (location === "/central-alexandre") return "central-alexandre";
     if (location === "/desenvolvimento") return "desenvolvimento";
     if (location === "/configuracoes") return "configuracoes";
     return "dashboard";
@@ -29,13 +33,15 @@ function Router() {
       <Sidebar currentPage={getCurrentPage()} />
       <main className="flex-1 overflow-auto">
         <Switch>
-          <Route path={"/"} component={Home} />
-          <Route path={"/compras"} component={Compras} />
-          <Route path={"/conteiner"} component={Conteiner} />
-          <Route path={"/rastreamento"} component={Rastreamento} />
-          <Route path={"/desenvolvimento"} component={Desenvolvimento} />
-          <Route path={"/configuracoes"} component={Configuracoes} />
-          <Route path={"/404"} component={NotFound} />
+          <Route path="/" component={Home} />
+          <Route path="/compras" component={Compras} />
+          <Route path="/conteiner" component={Conteiner} />
+          <Route path="/rastreamento" component={Rastreamento} />
+          <Route path="/central-sarom" component={CentralSarom} />
+          <Route path="/central-alexandre" component={CentralAlexandre} />
+          <Route path="/desenvolvimento" component={Desenvolvimento} />
+          <Route path="/configuracoes" component={Configuracoes} />
+          <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
         </Switch>
       </main>
