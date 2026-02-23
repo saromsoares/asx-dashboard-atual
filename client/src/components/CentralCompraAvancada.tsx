@@ -1,17 +1,19 @@
 /*
-  CentralCompraAvancada — Gestão de Compras com Análise de Preço e Margem
-  Colunas: COD, DESCRIÇÃO, ESTOQUE, PEDIDOS, TOTAL, PREÇO CUSTO USD/BRL, PREÇO VENDA,
-           MARGEM UNITÁRIA, MARKUP %, INVESTIMENTO ESTOQUE
+  CentralCompraAvancada — Gestão de Estoque e Compras
+  Colunas conforme imagem de referência:
+  COD, DESCRIÇÃO, ESTOQUE EM (data), TOTAL ORDENS, ESTOQUE+PEDIDOS,
+  DURAÇÃO 6M, DURAÇÃO 3M, TOTAL EMBARCADO,
+  DURAÇÃO 6M EMBARC., DURAÇÃO 3M EMBARC.,
+  COMPRAS, DURAÇÃO 6M COMPRAS, DURAÇÃO 3M COMPRAS
 */
 
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
-import { useAnaliseEstoqueSimples } from '@/hooks/useAnaliseEstoqueSimples';
+import { useAnaliseEstoque } from '@/hooks/useAnaliseEstoque';
 import { useEstoque } from '@/hooks/useEstoque';
-import { useCustos } from '@/hooks/useCustos';
 import { useIdioma } from '@/hooks/useIdioma';
-import { ArrowLeft, Download, AlertTriangle, CheckCircle2, TrendingUp, ChevronUp, ChevronDown, Upload } from 'lucide-react';
+import { ArrowLeft, Download, Upload, ChevronUp, ChevronDown, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import ModalEstoque from '@/components/ModalEstoque';
 import * as XLSX from 'xlsx';
 
@@ -21,26 +23,26 @@ interface CentralCompraAvancadaProps {
   corAcento: string;
 }
 
-type SortField = 'codigo' | 'descricao' | 'estoque' | 'totalOrdens' | 'precoCustoUSD' | 'precoVenda' | 'margemUnitaria' | 'markupPct' | 'investimentoEstoque';
+type SortField = 'codigo' | 'descricao' | 'estoqueAtual' | 'totalOrdens' | 'estoquePlusPedidos' | 'duracao6meses' | 'duracao3meses' | 'totalEmbarcado' | 'duracao6mesesEmbarc' | 'duracao3mesesEmbarc' | 'sugestaoCompra' | 'duracao6mesesCompras' | 'duracao3mesesCompras';
 type SortDir = 'asc' | 'desc';
 
 const formatNum = (v: number, decimals = 0) =>
   v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-const formatCurrency = (v: number) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-const getMargemColor = (markup: number) => {
-  if (markup < 20) return 'oklch(0.65 0.22 25)'; // Vermelho - baixa margem
-  if (markup < 50) return 'oklch(0.60 0.18 85)'; // Amarelo - margem média
-  return 'oklch(0.72 0.17 145)'; // Verde - boa margem
+const getDuracaoColor = (duracao: number) => {
+  if (duracao <= 0) return { bg: 'oklch(0.55 0.25 30 / 0.25)', text: 'oklch(0.75 0.22 30)' };
+  if (duracao < 1) return { bg: 'oklch(0.55 0.25 30 / 0.25)', text: 'oklch(0.75 0.22 30)' };
+  if (duracao < 3) return { bg: 'oklch(0.70 0.18 85 / 0.25)', text: 'oklch(0.80 0.18 85)' };
+  if (duracao < 6) return { bg: 'oklch(0.60 0.17 145 / 0.15)', text: 'oklch(0.72 0.17 145)' };
+  return { bg: 'oklch(0.60 0.17 145 / 0.25)', text: 'oklch(0.80 0.17 145)' };
 };
+
+const LOGO_URL = 'https://files.manuscdn.com/forge/67bb6c0e-e6e3-4e6a-8230-1583c2b8e34e/logo-asx-black-white-stroke.png';
 
 export default function CentralCompraAvancada({ comprador, titulo, corAcento }: CentralCompraAvancadaProps) {
   const [, setLocation] = useLocation();
-  const { analisarProduto } = useAnaliseEstoqueSimples();
+  const { analisarProduto } = useAnaliseEstoque();
   const { produtosComEstoque } = useEstoque(comprador);
-  const { taxaCambio } = useCustos();
   const { t } = useIdioma();
 
   const [search, setSearch] = useState('');
@@ -48,90 +50,60 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [dataEstoque, setDataEstoque] = useState(new Date().toISOString().split('T')[0]);
   const [showModalEstoque, setShowModalEstoque] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSaveManualEstoque = useCallback((codigo: string, quantidade: number) => {
-    // Aqui você pode salvar o estoque manual
     console.log(`Estoque adicionado: ${codigo} = ${quantidade}`);
   }, []);
 
   const handleImportExcelEstoque = useCallback((dados: Array<{ codigo: string; quantidade: number }>) => {
-    // Aqui você pode importar o estoque do Excel
     console.log('Estoque importado:', dados);
   }, []);
 
-  // Análise de todos os produtos
   const analise = useMemo(() => {
     return produtos
       .map(p => {
         const estoque = produtosComEstoque.find(pe => pe.id === p.id)?.estoqueInicial || 0;
-        return analisarProduto(
-          p.id,
-          p.codigo,
-          p.descricao,
-          estoque,
-          dataEstoque,
-          p.custo_usd,
-          p.preco_venda,
-          comprador as 'sarom' | 'alexandre'
-        );
+        return analisarProduto(p.id, p.codigo, p.descricao, estoque, dataEstoque, comprador);
       })
       .filter(a => !search.trim() || a.codigo.toLowerCase().includes(search.toLowerCase()) || a.descricao.toLowerCase().includes(search.toLowerCase()));
   }, [produtosComEstoque, search, dataEstoque, comprador, analisarProduto]);
 
-  // KPIs
   const kpis = useMemo(() => {
     const totalProdutos = analise.length;
-    const totalEstoque = analise.reduce((sum, a) => sum + a.estoqueAtual, 0);
-    const totalPedidos = analise.reduce((sum, a) => sum + a.totalOrdens, 0);
-    const investimentoTotal = analise.reduce((sum, a) => sum + a.investimentoEstoque, 0);
-    const margemTotalBRL = analise.reduce((sum, a) => sum + (a.estoqueAtual * a.margemUnitaria), 0);
-    const markupMedio = analise.length > 0 ? analise.reduce((sum, a) => sum + a.markupPct, 0) / analise.length : 0;
-
-    return { totalProdutos, totalEstoque, totalPedidos, investimentoTotal, margemTotalBRL, markupMedio };
+    const totalEstoque = analise.reduce((s, a) => s + a.estoqueAtual, 0);
+    const totalOrdens = analise.reduce((s, a) => s + a.totalOrdens, 0);
+    const totalEmbarcado = analise.reduce((s, a) => s + a.totalEmbarcado, 0);
+    const skusCriticos = analise.filter(a => a.duracao6meses < 1).length;
+    const skusAtencao = analise.filter(a => a.duracao6meses >= 1 && a.duracao6meses < 6).length;
+    const skusOk = analise.filter(a => a.duracao6meses >= 6).length;
+    const totalSugestaoCompra = analise.reduce((s, a) => s + a.sugestaoCompra, 0);
+    return { totalProdutos, totalEstoque, totalOrdens, totalEmbarcado, skusCriticos, skusAtencao, skusOk, totalSugestaoCompra };
   }, [analise]);
 
-  // Ordenação
   const sorted = useMemo(() => {
     const copy = [...analise];
     copy.sort((a, b) => {
-      let aVal: any = a[sortField as keyof typeof a];
-      let bVal: any = b[sortField as keyof typeof b];
-      if (aVal === undefined || aVal === null) aVal = 0;
-      if (bVal === undefined || bVal === null) bVal = 0;
+      const aVal = (a as any)[sortField] ?? 0;
+      const bVal = (b as any)[sortField] ?? 0;
       const cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return copy;
   }, [analise, sortField, sortDir]);
 
-  // Exportar Excel
   const exportarExcel = useCallback(() => {
     const dados = sorted.map(item => ({
-      'COD': item.codigo,
-      'DESCRIÇÃO': item.descricao,
-      'ESTOQUE': item.estoqueAtual,
-      'PEDIDOS CONFIRMADOS': item.totalOrdens,
-      'TOTAL (EST+PED)': item.estoquePlusPedidos,
-      'TOTAL EMBARCADO': item.totalEmbarcado,
-      'PREÇO CUSTO USD': item.precoCustoUSD,
-      'PREÇO CUSTO BRL': item.precoCustoBRL,
-      'PREÇO VENDA': item.precoVenda,
-      'MARGEM UNITÁRIA': item.margemUnitaria,
-      'MARKUP %': item.markupPct,
-      'INVESTIMENTO ESTOQUE': item.investimentoEstoque,
+      'COD': item.codigo, 'DESCRIÇÃO': item.descricao, 'ESTOQUE': item.estoqueAtual,
+      'TOTAL ORDENS': item.totalOrdens, 'ESTOQUE+PEDIDOS': item.estoquePlusPedidos,
+      'DURAÇÃO 6M': item.duracao6meses, 'DURAÇÃO 3M': item.duracao3meses,
+      'TOTAL EMBARCADO': item.totalEmbarcado, 'DUR. 6M EMBARC.': item.duracao6mesesEmbarc,
+      'DUR. 3M EMBARC.': item.duracao3mesesEmbarc, 'COMPRAS': item.sugestaoCompra,
+      'DUR. 6M COMPRAS': item.duracao6mesesCompras, 'DUR. 3M COMPRAS': item.duracao3mesesCompras,
     }));
-
     const ws = XLSX.utils.json_to_sheet(dados);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `${comprador.toUpperCase()}`);
-
-    ws['!cols'] = [
-      { wch: 12 }, { wch: 40 }, { wch: 12 }, { wch: 16 }, { wch: 14 },
-      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
-      { wch: 12 }, { wch: 16 },
-    ];
-
+    XLSX.utils.book_append_sheet(wb, ws, comprador.toUpperCase());
+    ws['!cols'] = Array(13).fill({ wch: 14 });
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
@@ -145,12 +117,8 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   }, [sorted, comprador]);
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDir('asc');
-    }
+    if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -161,136 +129,81 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   return (
     <>
     <div className="h-full flex flex-col" style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
-      {/* KPIs Panel */}
-      <div className="px-6 py-4 border-b" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
-        <div className="grid grid-cols-6 gap-3">
-          {/* Total de Produtos */}
-          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
-            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('produtos')}</div>
-            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.80 0.005 65)' }}>{kpis.totalProdutos}</div>
-            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>no catálogo</div>
+      {/* KPIs */}
+      <div className="px-6 py-4 border-b" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.28 0.005 285)' }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+            <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('skusAtivos') || 'SKUs ATIVOS'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{kpis.totalProdutos}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>de {analise.length}</div>
           </div>
-
-          {/* Total Estoque */}
-          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.72 0.17 145 / 0.15)', borderColor: 'oklch(0.72 0.17 145)' }}>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4" style={{ color: 'oklch(0.72 0.17 145)' }} />
-              <span className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.72 0.17 145)' }}>Estoque</span>
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.55 0.25 30 / 0.12)', borderColor: 'oklch(0.55 0.25 30 / 0.4)' }}>
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'oklch(0.70 0.22 30)' }} />
+              <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.70 0.22 30)' }}>{t('criticos') || 'CRÍTICOS'}</span>
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.72 0.17 145)' }}>{formatNum(kpis.totalEstoque)}</div>
-            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>unidades</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.70 0.22 30)' }}>{kpis.skusCriticos}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{'< 1 '}{t('mes') || 'mês'}</div>
           </div>
-
-          {/* Pedidos Confirmados */}
-          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.60 0.18 85 / 0.15)', borderColor: 'oklch(0.60 0.18 85)' }}>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" style={{ color: 'oklch(0.60 0.18 85)' }} />
-              <span className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.60 0.18 85)' }}>Pedidos</span>
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.70 0.18 85 / 0.12)', borderColor: 'oklch(0.70 0.18 85 / 0.4)' }}>
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" style={{ color: 'oklch(0.75 0.18 85)' }} />
+              <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.75 0.18 85)' }}>{t('atencao') || 'ATENÇÃO'}</span>
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.60 0.18 85)' }}>{formatNum(kpis.totalPedidos)}</div>
-            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>confirmados</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.75 0.18 85)' }}>{kpis.skusAtencao}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>1-6 {t('meses') || 'meses'}</div>
           </div>
-
-          {/* Investimento Total */}
-          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.48 0.22 25 / 0.15)', borderColor: 'oklch(0.48 0.22 25)' }}>
-            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>Investimento</div>
-            <div className="text-lg font-bold mt-2" style={{ color: 'oklch(0.48 0.22 25)' }}>
-              {formatCurrency(kpis.investimentoTotal)}
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.60 0.17 145 / 0.12)', borderColor: 'oklch(0.60 0.17 145 / 0.4)' }}>
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'oklch(0.72 0.17 145)' }} />
+              <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.72 0.17 145)' }}>OK</span>
             </div>
-            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>em estoque</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.72 0.17 145)' }}>{kpis.skusOk}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{'>'}6 {t('meses') || 'meses'}</div>
           </div>
-
-          {/* Margem Total */}
-          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.72 0.17 145 / 0.15)', borderColor: 'oklch(0.72 0.17 145)' }}>
-            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>Margem Potencial</div>
-            <div className="text-lg font-bold mt-2" style={{ color: 'oklch(0.72 0.17 145)' }}>
-              {formatCurrency(kpis.margemTotalBRL)}
-            </div>
-            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>se vender tudo</div>
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+            <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('estoqueTotal') || 'ESTOQUE'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(kpis.totalEstoque)}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{t('unidades')}</div>
           </div>
-
-          {/* Markup Médio */}
-          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.60 0.18 85 / 0.15)', borderColor: 'oklch(0.60 0.18 85)' }}>
-            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>Markup Médio</div>
-            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.60 0.18 85)' }}>
-              {kpis.markupMedio.toFixed(1)}%
-            </div>
-            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>dos produtos</div>
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+            <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('pedidosConfirmados') || 'PEDIDOS'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(kpis.totalOrdens)}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{t('confirmados') || 'confirmados'}</div>
+          </div>
+          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.48 0.22 25 / 0.12)', borderColor: 'oklch(0.48 0.22 25 / 0.4)' }}>
+            <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.65 0.22 25)' }}>{t('sugestaoCompra') || 'COMPRAS'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.65 0.22 25)' }}>{formatNum(kpis.totalSugestaoCompra)}</div>
+            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{t('sugeridas') || 'sugeridas'}</div>
           </div>
         </div>
       </div>
 
-      {/* Header com Logo ASX */}
-      <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
-        <div className="flex items-center justify-between mb-4 gap-4">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b px-6 py-3" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.28 0.005 285)' }}>
+        <div className="flex items-center justify-between mb-3 gap-4">
           <div className="flex-1 flex items-center">
-            <img 
-              src="https://private-us-east-1.manuscdn.com/sessionFile/FG2NlBmjp3Wa0JwHMPnarr/sandbox/mh3OVtgJZkgUlDNT832z4V_1771881726879_na1fn_bG9nby1hc3gtYmxhY2std2hpdGUtc3Ryb2tl.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvRkcyTmxCbWpwM1dhMEp3SE1QbmFyci9zYW5kYm94L21oM09WdGdKWmtnVWxETlQ4MzJ6NFZfMTc3MTg4MTcyNjg3OV9uYTFmbl9iRzluYnkxaGMzZ3RZbXhoWTJzdGQyaHBkR1V0YzNSeWIydGwucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=YUTomiKwAU3zyzbTEEm7Bh8emjo3G9fmxndTieJCJ5rfh3vm9E~5zRDyUC9CzVG0lmCRrt2sN02t4oV8WvVLZ5MGczJOxJMWmQDvkdTOYhQ-0BRfpD~Kpd55avDCqUmHSx7ycDepIUvP8fqs43sKEECNLXZzy9Q2w8GQ573hlDfZW6nsVm0F034fa8uv5kcdK-RlAmQNA2UNlu4qOPSEzhYsPg4ysrEmAETgaRMzT8lg9UPa0TdQzaBORbDClrviEP0nKTHJUTutspZ-RFWD8erWQ~HN23C-qzIXwvVtcwvfcsqYk5jHLjwAs64HTg3nTP1JiWWEne~9wxesFb8Y8w__" 
-              alt="ASX" 
-              className="h-16 object-contain"
-            />
+            <img src={LOGO_URL} alt="ASX" className="h-14 object-contain" />
           </div>
-          <button
-            onClick={() => setLocation('/')}
-            className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-            style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
-          >
+          <button onClick={() => setLocation('/')} className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors" style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.70 0.010 285)' }}>
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">{t('menu')}</span>
           </button>
         </div>
-
-        {/* Controles */}
         <div className="flex gap-4 items-end">
           <div className="flex-1">
-            <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              {t('buscar')}
-            </label>
-            <input
-              type="text"
-              placeholder={t('codigo_ou_descricao')}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full px-3 py-2 rounded-md border text-sm mt-1"
-              style={{
-                background: 'oklch(0.22 0.005 285)',
-                borderColor: 'oklch(0.32 0.005 285)',
-                color: 'oklch(0.90 0.005 65)',
-              }}
-            />
+            <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('buscar')}</label>
+            <input type="text" placeholder={t('codigo_ou_descricao')} value={search} onChange={e => setSearch(e.target.value)} className="w-full px-3 py-2 rounded-md border text-sm mt-1" style={{ background: 'oklch(0.22 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }} />
           </div>
-
           <div>
-            <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              {t('data_estoque')}
-            </label>
+            <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('data_estoque')}</label>
             <div className="flex gap-2 mt-1">
-              <input
-                type="date"
-                value={dataEstoque}
-                onChange={e => setDataEstoque(e.target.value)}
-                className="px-3 py-2 rounded-md border text-sm"
-                style={{
-                  background: 'oklch(0.22 0.005 285)',
-                  borderColor: 'oklch(0.32 0.005 285)',
-                  color: 'oklch(0.90 0.005 65)',
-                }}
-              />
-              <button
-                onClick={() => setShowModalEstoque(true)}
-                className="px-4 py-2 rounded-md transition-colors flex items-center gap-2"
-                style={{ background: 'oklch(0.60 0.18 85)', color: 'white' }}
-              >
-                <Upload className="w-4 h-4" />
-                <span className="text-sm">{t('importar')}</span>
+              <input type="date" value={dataEstoque} onChange={e => setDataEstoque(e.target.value)} className="px-3 py-2 rounded-md border text-sm" style={{ background: 'oklch(0.22 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }} />
+              <button onClick={() => setShowModalEstoque(true)} className="px-4 py-2 rounded-md transition-colors flex items-center gap-2" style={{ background: 'oklch(0.60 0.18 85)', color: 'white' }}>
+                <Upload className="w-4 h-4" /><span className="text-sm">{t('importar')}</span>
               </button>
-              <button
-                onClick={exportarExcel}
-                className="px-4 py-2 rounded-md transition-colors flex items-center gap-2"
-                style={{ background: corAcento, color: 'white' }}
-              >
-                <Download className="w-4 h-4" />
-                <span className="text-sm">{t('exportar')}</span>
+              <button onClick={exportarExcel} className="px-4 py-2 rounded-md transition-colors flex items-center gap-2" style={{ background: corAcento, color: 'white' }}>
+                <Download className="w-4 h-4" /><span className="text-sm">{t('exportar')}</span>
               </button>
             </div>
           </div>
@@ -298,124 +211,80 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
       </header>
 
       {/* Tabela */}
-      <div className="flex-1 overflow-auto p-4">
-        <table className="w-full border-collapse text-sm">
-          <thead className="sticky top-0" style={{ background: 'oklch(0.16 0.005 285)' }}>
-            <tr style={{ borderBottom: '2px solid oklch(0.32 0.005 285)' }}>
-              <th className="px-3 py-2 text-left font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('codigo')} className="flex items-center gap-1 hover:opacity-75">
-                  COD <SortIcon field="codigo" />
-                </button>
+      <div className="flex-1 overflow-auto">
+        <table className="w-full border-collapse text-xs">
+          <thead className="sticky top-0 z-10" style={{ background: 'oklch(0.12 0.005 285)' }}>
+            <tr style={{ borderBottom: '2px solid oklch(0.30 0.005 285)' }}>
+              <th className="px-2 py-2.5 text-left font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                <button onClick={() => handleSort('codigo')} className="flex items-center gap-1 hover:opacity-75">COD <SortIcon field="codigo" /></button>
               </th>
-              <th className="px-3 py-2 text-left font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('descricao')} className="flex items-center gap-1 hover:opacity-75">
-                  DESCRIÇÃO <SortIcon field="descricao" />
-                </button>
+              <th className="px-2 py-2.5 text-left font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                <button onClick={() => handleSort('descricao')} className="flex items-center gap-1 hover:opacity-75">{t('descricao') || 'DESCRIÇÃO'} <SortIcon field="descricao" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('estoque')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  ESTOQUE <SortIcon field="estoque" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                <button onClick={() => handleSort('estoqueAtual')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('estoqueEm') || 'ESTOQUE'} <SortIcon field="estoqueAtual" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('totalOrdens')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  PEDIDOS <SortIcon field="totalOrdens" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                <button onClick={() => handleSort('totalOrdens')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('totalOrdens') || 'TOTAL ORDENS'} <SortIcon field="totalOrdens" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                TOTAL
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>{t('estoquePedidos') || 'EST.+PED.'}</th>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.80 0.18 85)' }}>
+                <button onClick={() => handleSort('duracao6meses')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6m') || 'DUR. 6M'} <SortIcon field="duracao6meses" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                EMBARQUE
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.80 0.18 85)' }}>
+                <button onClick={() => handleSort('duracao3meses')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3m') || 'DUR. 3M'} <SortIcon field="duracao3meses" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('precoCustoUSD')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  CUSTO USD <SortIcon field="precoCustoUSD" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                <button onClick={() => handleSort('totalEmbarcado')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('totalEmbarc') || 'TOTAL EMBARC.'} <SortIcon field="totalEmbarcado" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                CUSTO BRL
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.70 0.17 145)' }}>
+                <button onClick={() => handleSort('duracao6mesesEmbarc')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6mEmbarc') || 'DUR. 6M EMB.'} <SortIcon field="duracao6mesesEmbarc" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('precoVenda')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  VENDA <SortIcon field="precoVenda" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.70 0.17 145)' }}>
+                <button onClick={() => handleSort('duracao3mesesEmbarc')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3mEmbarc') || 'DUR. 3M EMB.'} <SortIcon field="duracao3mesesEmbarc" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('margemUnitaria')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  MARGEM <SortIcon field="margemUnitaria" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
+                <button onClick={() => handleSort('sugestaoCompra')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('compras') || 'COMPRAS'} <SortIcon field="sugestaoCompra" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('markupPct')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  MARKUP % <SortIcon field="markupPct" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
+                <button onClick={() => handleSort('duracao6mesesCompras')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6mCompras') || 'DUR. 6M COMP.'} <SortIcon field="duracao6mesesCompras" /></button>
               </th>
-              <th className="px-3 py-2 text-center font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <button onClick={() => handleSort('investimentoEstoque')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">
-                  INVESTIMENTO <SortIcon field="investimentoEstoque" />
-                </button>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
+                <button onClick={() => handleSort('duracao3mesesCompras')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3mCompras') || 'DUR. 3M COMP.'} <SortIcon field="duracao3mesesCompras" /></button>
               </th>
             </tr>
           </thead>
           <tbody>
-            {sorted.map((item, idx) => (
-              <tr
-                key={idx}
-                style={{
-                  borderBottom: '1px solid oklch(0.22 0.005 285)',
-                  background: idx % 2 === 0 ? 'transparent' : 'oklch(0.16 0.005 285 / 0.5)',
-                }}
-              >
-                <td className="px-3 py-2 font-mono text-xs" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                  {item.codigo}
-                </td>
-                <td className="px-3 py-2 text-xs" style={{ color: 'oklch(0.70 0.010 285)' }}>
-                  {item.descricao.substring(0, 40)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)', background: 'oklch(0.72 0.17 145 / 0.15)' }}>
-                  {formatNum(item.estoqueAtual)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)', background: 'oklch(0.60 0.18 85 / 0.15)' }}>
-                  {formatNum(item.totalOrdens)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                  {formatNum(item.estoquePlusPedidos)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)', background: 'oklch(0.48 0.22 25 / 0.15)' }}>
-                  {formatNum(item.totalEmbarcado)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                  ${item.precoCustoUSD.toFixed(2)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                  {formatCurrency(item.precoCustoBRL)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                  {formatCurrency(item.precoVenda)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.72 0.17 145)' }}>
-                  {formatCurrency(item.margemUnitaria)}
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: getMargemColor(item.markupPct) }}>
-                  {item.markupPct.toFixed(1)}%
-                </td>
-                <td className="px-3 py-2 text-center text-xs font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
-                  {formatCurrency(item.investimentoEstoque)}
-                </td>
-              </tr>
-            ))}
+            {sorted.map((item, idx) => {
+              const dur6 = getDuracaoColor(item.duracao6meses);
+              const dur3 = getDuracaoColor(item.duracao3meses);
+              const dur6e = getDuracaoColor(item.duracao6mesesEmbarc);
+              const dur3e = getDuracaoColor(item.duracao3mesesEmbarc);
+              const dur6c = getDuracaoColor(item.duracao6mesesCompras);
+              const dur3c = getDuracaoColor(item.duracao3mesesCompras);
+              return (
+                <tr key={idx} style={{ borderBottom: '1px solid oklch(0.22 0.005 285)', background: idx % 2 === 0 ? 'transparent' : 'oklch(0.15 0.005 285 / 0.5)' }}>
+                  <td className="px-2 py-2 font-mono text-xs font-semibold" style={{ color: 'oklch(0.85 0.005 65)' }}>{item.codigo}</td>
+                  <td className="px-2 py-2 text-xs max-w-[200px] truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>{item.descricao}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoqueAtual)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalOrdens)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoquePlusPedidos)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6.text, background: dur6.bg }}>{item.duracao6meses.toFixed(1)}m</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3.text, background: dur3.bg }}>{item.duracao3meses.toFixed(1)}m</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalEmbarcado)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6e.text, background: dur6e.bg }}>{item.duracao6mesesEmbarc.toFixed(1)}m</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3e.text, background: dur3e.bg }}>{item.duracao3mesesEmbarc.toFixed(1)}m</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: item.sugestaoCompra > 0 ? 'oklch(0.65 0.22 25)' : 'oklch(0.50 0.010 285)', background: item.sugestaoCompra > 0 ? 'oklch(0.48 0.22 25 / 0.15)' : 'transparent' }}>{formatNum(item.sugestaoCompra)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6c.text, background: dur6c.bg }}>{item.duracao6mesesCompras.toFixed(1)}m</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3c.text, background: dur3c.bg }}>{item.duracao3mesesCompras.toFixed(1)}m</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Modal Estoque */}
-      <ModalEstoque
-        isOpen={showModalEstoque}
-        onClose={() => setShowModalEstoque(false)}
-        onSaveManual={handleSaveManualEstoque}
-        onImportExcel={handleImportExcelEstoque}
-      />
+      <ModalEstoque isOpen={showModalEstoque} onClose={() => setShowModalEstoque(false)} onSaveManual={handleSaveManualEstoque} onImportExcel={handleImportExcelEstoque} />
     </div>
     </>
   );

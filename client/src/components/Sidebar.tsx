@@ -11,6 +11,7 @@ import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useEstoque } from "@/hooks/useEstoque";
 import { useAuth } from "@/hooks/useAuth";
+import { useIdioma } from "@/hooks/useIdioma";
 
 const LOGO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663371351265/eZWmpvJzWGYwKZuO.png';
 
@@ -44,6 +45,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<string>('');
   const [error, setError] = useState(false);
+  const { t } = useIdioma();
 
   // Dados de estoque para alertas
   const { kpis: kpisSarom } = useEstoque('sarom');
@@ -108,59 +110,59 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   const menuItems = [
     {
       id: "dashboard",
-      label: "Dashboard de Produtos",
+      label: t('dashboard'),
       icon: BarChart3,
       href: "/",
-      description: "Produtos, categorias e custos",
+      description: t('produtosCategoriasCustos'),
     },
     {
       id: "compras",
-      label: "Gerenciador de Compras",
+      label: t('gerenciadorCompras'),
       icon: ShoppingCart,
       href: "/compras",
-      description: "Pedidos de compra",
+      description: t('pedidosCompra'),
     },
     {
       id: "central-sarom",
-      label: "Central Sarom",
+      label: t('centralSarom'),
       icon: ClipboardList,
       href: "/central-sarom",
-      description: "Estoque e compras Sarom",
+      description: t('estoqueComprasSarom'),
     },
     {
       id: "central-alexandre",
-      label: "Central Alexandre",
+      label: t('centralAlexandre'),
       icon: ClipboardList,
       href: "/central-alexandre",
-      description: "Estoque e compras Alexandre",
+      description: t('estoqueComprasAlexandre'),
     },
     {
       id: "conteiner",
-      label: "Conteiner",
+      label: t('conteiner'),
       icon: ShoppingCart,
       href: "/conteiner",
-      description: "Processos de importacao SR",
+      description: t('processosImportacaoSR'),
     },
     {
       id: "rastreamento",
-      label: "Rastreamento",
+      label: t('rastreamento'),
       icon: ShoppingCart,
       href: "/rastreamento",
-      description: "Vincular contêineres aos pedidos",
+      description: t('vincularConteineresAosPedidos'),
     },
     {
       id: "desenvolvimento",
-      label: "Desenvolvimento",
+      label: t('desenvolvimento'),
       icon: Lightbulb,
       href: "/desenvolvimento",
-      description: "Produtos em desenvolvimento",
+      description: t('produtosEmDesenvolvimento'),
     },
     {
       id: "configuracoes",
-      label: "Configurações",
+      label: t('configuracoes'),
       icon: Settings,
       href: "/configuracoes",
-      description: "Câmbio e preferências",
+      description: t('cambioEPreferencias'),
     },
   ];
 
@@ -216,14 +218,14 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         <div className="px-4 py-3 border-b" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              USD / BRL (PTAX)
+              USD / BRL ({t('ptax')})
             </span>
             <button
               onClick={fetchCotacao}
               disabled={loading}
               className="p-1 rounded transition-colors"
               style={{ color: loading ? 'oklch(0.35 0.010 285)' : 'oklch(0.55 0.010 285)' }}
-              title="Atualizar cotação"
+              title={t('atualizarCotacao')}
             >
               <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -251,21 +253,21 @@ export default function Sidebar({ currentPage }: SidebarProps) {
               </div>
               <div className="mt-1.5">
                 <span className="text-[9px]" style={{ color: 'oklch(0.35 0.010 285)' }}>
-                  PTAX: {formatDataCotacao(cotacao.dataHoraCotacao)}
+                  {t('ptax')}: {formatDataCotacao(cotacao.dataHoraCotacao)}
                 </span>
               </div>
               {lastUpdate && (
                 <p className="text-[9px] mt-0.5" style={{ color: 'oklch(0.30 0.010 285)' }}>
-                  Atualizado: {lastUpdate}
+                  {t('atualizado')}: {lastUpdate}
                 </p>
               )}
             </div>
           ) : (
             <div className="flex items-center gap-2">
               {loading ? (
-                <span className="text-[11px]" style={{ color: 'oklch(0.50 0.010 285)' }}>Carregando...</span>
+                <span className="text-[11px]" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('carregando')}</span>
               ) : error ? (
-                <span className="text-[11px]" style={{ color: 'oklch(0.48 0.22 25)' }}>Sem cotação disponível</span>
+                <span className="text-[11px]" style={{ color: 'oklch(0.48 0.22 25)' }}>N/A</span>
               ) : (
                 <span className="text-[11px]" style={{ color: 'oklch(0.50 0.010 285)' }}>--</span>
               )}
@@ -279,7 +281,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
           <span className="text-[8px] uppercase block" style={{ color: 'oklch(0.40 0.010 285)' }}>USD</span>
           <span className="text-[11px] font-rajdhani font-bold block" style={{ color: 'oklch(0.48 0.22 25)' }}>
-            {cotacao.cotacaoVenda.toFixed(2)}
+            {formatCotacao(cotacao.cotacaoVenda).slice(0, 6)}
           </span>
         </div>
       )}
@@ -318,7 +320,6 @@ export default function Sidebar({ currentPage }: SidebarProps) {
               >
                 <div className="relative flex-shrink-0">
                   <Icon className="w-5 h-5" />
-                  {/* Badge compacto no ícone quando colapsado */}
                   {collapsed && temCriticos && (
                     <span
                       className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[9px] font-bold px-1 animate-pulse"
@@ -336,7 +337,6 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                   <div className="overflow-hidden flex-1">
                     <div className="font-medium text-sm truncate flex items-center gap-2">
                       {item.label}
-                      {/* Badge de críticos */}
                       {temCriticos && (
                         <span
                           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold animate-pulse"
@@ -345,13 +345,11 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                             color: 'white',
                             boxShadow: '0 0 6px oklch(0.55 0.25 30 / 0.5)',
                           }}
-                          title={`${alerta.criticos} produto(s) com estoque crítico (< 3 meses)`}
                         >
                           <AlertTriangle className="w-2.5 h-2.5" />
                           {alerta.criticos}
                         </span>
                       )}
-                      {/* Badge de atenção (só se não tem críticos para não poluir) */}
                       {!temCriticos && temAtencao && (
                         <span
                           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
@@ -359,22 +357,20 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                             background: 'oklch(0.65 0.18 85)',
                             color: 'oklch(0.15 0.005 285)',
                           }}
-                          title={`${alerta.atencao} produto(s) com estoque em atenção (3-6 meses)`}
                         >
                           {alerta.atencao}
                         </span>
                       )}
                     </div>
                     <div className="text-[11px] truncate" style={{ opacity: 0.6 }}>
-                      {/* Descrição dinâmica com alerta */}
                       {temCriticos ? (
                         <span style={{ color: 'oklch(0.70 0.20 30)', opacity: 1 }}>
-                          {alerta.criticos} crítico{alerta.criticos > 1 ? 's' : ''}
-                          {temAtencao ? ` · ${alerta.atencao} atenção` : ''}
+                          {alerta.criticos} {t('critico')}{alerta.criticos > 1 ? 's' : ''}
+                          {temAtencao ? ` · ${alerta.atencao} ${t('atencao').toLowerCase()}` : ''}
                         </span>
                       ) : temAtencao ? (
                         <span style={{ color: 'oklch(0.70 0.15 85)', opacity: 1 }}>
-                          {alerta.atencao} em atenção
+                          {alerta.atencao} {t('emAtencao')}
                         </span>
                       ) : (
                         item.description
@@ -397,7 +393,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           <div className="flex items-center gap-1.5 mb-1.5">
             <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'oklch(0.75 0.20 30)' }} />
             <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.75 0.20 30)' }}>
-              Estoque Crítico
+              {t('estoqueCritico')}
             </span>
           </div>
           <div className="space-y-1">
@@ -462,6 +458,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
 function LogoutButton({ collapsed }: { collapsed: boolean }) {
   const { logout } = useAuth();
   const [, setLocation] = useLocation();
+  const { t } = useIdioma();
 
   const handleLogout = () => {
     logout();
@@ -483,10 +480,10 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
         onMouseLeave={(e) => {
           e.currentTarget.style.color = 'oklch(0.55 0.010 285)';
         }}
-        title="Fazer logout"
+        title={t('sair')}
       >
         <LogOut className="w-4 h-4" />
-        {!collapsed && <span className="text-xs font-medium">Sair</span>}
+        {!collapsed && <span className="text-xs font-medium">{t('sair')}</span>}
       </button>
     </div>
   );
