@@ -3,10 +3,12 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle } from 'lucide-react';
+import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle, Link2 } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
 import { dispatchProcessosChange } from '../hooks/useEstoque';
+import { VinculadorEmbarques } from '../components/VinculadorEmbarques';
+import { useEmbarques } from '../hooks/useEmbarques';
 
 interface ItemConteiner {
   id: string;
@@ -69,6 +71,8 @@ export default function Conteiner() {
   const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(() => carregarConfirmados());
   const [filtroConfirmados, setFiltroConfirmados] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Em andamento' | 'Finalizado' | 'Cancelado'>('Todos');
+  const [showVinculador, setShowVinculador] = useState(false);
+  const { obterEmbarquesProcesso } = useEmbarques();
 
   // Persistir processos no localStorage sempre que mudar
   useEffect(() => {
@@ -1581,6 +1585,15 @@ export default function Conteiner() {
                 Exportar Compra
               </button>
               <button
+                onClick={() => setShowVinculador(true)}
+                className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
+                style={{ background: 'oklch(0.35 0.10 200)', color: 'white' }}
+                title="Vincular compras a este contêiner"
+              >
+                <Link2 className="w-4 h-4" />
+                Vincular Compras
+              </button>
+              <button
                 onClick={handleConfirmarProcesso}
                 disabled={processosConfirmados.has(processoSelecionado?.id || '')}
                 className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -1682,6 +1695,14 @@ export default function Conteiner() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Vinculador de Embarques */}
+      {showVinculador && processoSelecionado && (
+        <VinculadorEmbarques
+          processoId={processoSelecionado.id}
+          onClose={() => setShowVinculador(false)}
+        />
       )}
     </div>
   );
