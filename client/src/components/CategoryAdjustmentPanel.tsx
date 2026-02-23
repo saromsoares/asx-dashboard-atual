@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
-import { X, Search, Check } from 'lucide-react';
+import { X, Search, Check, CheckSquare, Square } from 'lucide-react';
 
 interface CategoryAdjustmentPanelProps {
   onClose: () => void;
@@ -11,6 +11,8 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<string>('');
+  const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set());
+  const [bulkNewCategory, setBulkNewCategory] = useState<string>('');
 
   // Filtrar produtos por busca
   const filteredProducts = useMemo(() => {
@@ -37,6 +39,26 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
       // Disparar evento para atualizar UI
       window.dispatchEvent(new Event('categoriasAtualizadas'));
       setEditingProductId(null);
+    }
+  };
+
+  const handleToggleProduct = (productId: number) => {
+    const newSet = new Set(selectedProducts);
+    if (newSet.has(productId)) {
+      newSet.delete(productId);
+    } else {
+      newSet.add(productId);
+    }
+    setSelectedProducts(newSet);
+  };
+
+  const handleBulkChangeCategory = () => {
+    if (bulkNewCategory && selectedProducts.size > 0) {
+      selectedProducts.forEach(productId => {
+        handleChangeCategory(productId, bulkNewCategory);
+      });
+      setSelectedProducts(new Set());
+      setBulkNewCategory('');
     }
   };
 
@@ -164,17 +186,34 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                     {productsByCategory.map(p => (
                       <div
                         key={p.id}
-                        className={`p-3 hover:bg-gray-800 cursor-pointer transition-colors ${
+                        className={`p-3 hover:bg-gray-800 cursor-pointer transition-colors flex items-start gap-2 ${
                           editingProductId === p.id ? 'bg-gray-800' : ''
                         }`}
-                        onClick={() => setEditingProductId(p.id)}
                       >
-                        <p className="text-xs font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
-                          {p.codigo}
-                        </p>
-                        <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'oklch(0.70 0.005 65)' }}>
-                          {p.descricao}
-                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleProduct(p.id);
+                          }}
+                          className="flex-shrink-0 mt-0.5"
+                        >
+                          {selectedProducts.has(p.id) ? (
+                            <CheckSquare className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 25)' }} />
+                          ) : (
+                            <Square className="w-4 h-4" style={{ color: 'oklch(0.40 0.010 285)' }} />
+                          )}
+                        </button>
+                        <div
+                          className="flex-1"
+                          onClick={() => setEditingProductId(p.id)}
+                        >
+                          <p className="text-xs font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                            {p.codigo}
+                          </p>
+                          <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'oklch(0.70 0.005 65)' }}>
+                            {p.descricao}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -184,6 +223,47 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                   </div>
                 )}
               </div>
+              
+              {/* Seção de mudança em lote */}
+              {selectedProducts.size > 0 && (
+                <div className="border-t p-3" style={{ borderColor: 'oklch(0.20 0.010 285)' }}>
+                  <p className="text-xs mb-2" style={{ color: 'oklch(0.45 0.010 285)' }}>
+                    {selectedProducts.size} produto(s) selecionado(s)
+                  </p>
+                  <select
+                    value={bulkNewCategory}
+                    onChange={(e) => setBulkNewCategory(e.target.value)}
+                    className="w-full p-2 rounded text-xs mb-2"
+                    style={{
+                      background: 'oklch(0.15 0.005 285)',
+                      color: 'oklch(0.85 0.005 65)',
+                      borderColor: 'oklch(0.25 0.010 285)',
+                      borderWidth: '1px',
+                    }}
+                  >
+                    <option value="">Selecione nova categoria...</option>
+                    {categorias.map(cat => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleBulkChangeCategory}
+                    disabled={!bulkNewCategory}
+                    className={`w-full py-2 rounded font-semibold text-xs flex items-center justify-center gap-2 transition-colors ${
+                      bulkNewCategory ? 'hover:opacity-90' : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    style={{
+                      background: 'oklch(0.48 0.22 25)',
+                      color: 'white',
+                    }}
+                  >
+                    <Check className="w-3 h-3" />
+                    Aplicar a {selectedProducts.size} produto(s)
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
