@@ -38,19 +38,35 @@ export default function Compras() {
   const [produtoSelecionado, setProdutoSelecionado] = useState<number | null>(null);
   const [qtdSarom, setQtdSarom] = useState(0);
   const [qtdAlexandre, setQtdAlexandre] = useState(0);
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>('Todas');
+
+  // Extrair categorias únicas dos produtos
+  const categorias = useMemo(() => {
+    const cats = new Set(produtos.map(p => p.categoria));
+    return ['Todas', ...Array.from(cats).sort()];
+  }, []);
 
   const pedidoAtualAtual = pedidos.find(p => p.id === pedidoAtivo);
 
   const produtosFiltrados = useMemo(() => {
-    if (!buscaProduto.trim()) return [];
-    const q = buscaProduto.toLowerCase();
-    return produtos
-      .filter(p =>
+    let resultado = produtos;
+    
+    // Filtrar por categoria
+    if (categoriaFiltro !== 'Todas') {
+      resultado = resultado.filter(p => p.categoria === categoriaFiltro);
+    }
+    
+    // Filtrar por busca
+    if (buscaProduto.trim()) {
+      const q = buscaProduto.toLowerCase();
+      resultado = resultado.filter(p =>
         p.codigo.toLowerCase().includes(q) ||
         p.descricao.toLowerCase().includes(q)
-      )
-      .slice(0, 10);
-  }, [buscaProduto]);
+      );
+    }
+    
+    return resultado.slice(0, 50);
+  }, [buscaProduto, categoriaFiltro]);
 
   const handleCriarPedido = () => {
     if (novoNomePedido.trim()) {
@@ -309,6 +325,25 @@ export default function Compras() {
               {/* Adicionar item */}
               <div className="border-b px-6 py-4" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
                 <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      Categoria
+                    </label>
+                    <select
+                      value={categoriaFiltro}
+                      onChange={e => setCategoriaFiltro(e.target.value)}
+                      className="w-full px-3 py-2 rounded-md border text-sm mt-1"
+                      style={{
+                        background: 'oklch(0.18 0.005 285)',
+                        borderColor: 'oklch(0.28 0.005 285)',
+                        color: 'oklch(0.90 0.005 65)',
+                      }}
+                    >
+                      {categorias.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div>
                     <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
                       Buscar Produto
