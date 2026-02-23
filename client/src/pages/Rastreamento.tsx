@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { ArrowLeft, Link as LinkIcon, Unlink, CheckCircle2, Circle } from 'lucide-react';
 import { usePedidos } from '@/hooks/usePedidos';
+import { useIdioma } from '@/hooks/useIdioma';
 
 interface VinculoConteiner {
   id: string;
@@ -19,6 +20,7 @@ interface VinculoConteiner {
 
 export default function Rastreamento() {
   const [, setLocation] = useLocation();
+  const { t } = useIdioma();
   const { pedidos } = usePedidos();
   const [vinculos, setVinculos] = useState<VinculoConteiner[]>([]);
   const [showNovoVinculo, setShowNovoVinculo] = useState(false);

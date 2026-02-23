@@ -10,7 +10,9 @@ import { produtos } from '@/data/produtos';
 import { useAnaliseEstoqueSimples } from '@/hooks/useAnaliseEstoqueSimples';
 import { useEstoque } from '@/hooks/useEstoque';
 import { useCustos } from '@/hooks/useCustos';
-import { ArrowLeft, Download, AlertTriangle, CheckCircle2, TrendingUp, ChevronUp, ChevronDown } from 'lucide-react';
+import { useIdioma } from '@/hooks/useIdioma';
+import { ArrowLeft, Download, AlertTriangle, CheckCircle2, TrendingUp, ChevronUp, ChevronDown, Upload } from 'lucide-react';
+import ModalEstoque from '@/components/ModalEstoque';
 import * as XLSX from 'xlsx';
 
 interface CentralCompraAvancadaProps {
@@ -39,12 +41,24 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const { analisarProduto } = useAnaliseEstoqueSimples();
   const { produtosComEstoque } = useEstoque(comprador);
   const { taxaCambio } = useCustos();
+  const { t } = useIdioma();
 
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('codigo');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [dataEstoque, setDataEstoque] = useState(new Date().toISOString().split('T')[0]);
+  const [showModalEstoque, setShowModalEstoque] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSaveManualEstoque = useCallback((codigo: string, quantidade: number) => {
+    // Aqui você pode salvar o estoque manual
+    console.log(`Estoque adicionado: ${codigo} = ${quantidade}`);
+  }, []);
+
+  const handleImportExcelEstoque = useCallback((dados: Array<{ codigo: string; quantidade: number }>) => {
+    // Aqui você pode importar o estoque do Excel
+    console.log('Estoque importado:', dados);
+  }, []);
 
   // Análise de todos os produtos
   const analise = useMemo(() => {
@@ -145,13 +159,14 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   };
 
   return (
+    <>
     <div className="h-full flex flex-col" style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* KPIs Panel */}
       <div className="px-6 py-4 border-b" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
         <div className="grid grid-cols-6 gap-3">
           {/* Total de Produtos */}
           <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
-            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>Produtos</div>
+            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('produtos')}</div>
             <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.80 0.005 65)' }}>{kpis.totalProdutos}</div>
             <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>no catálogo</div>
           </div>
@@ -205,17 +220,23 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
         </div>
       </div>
 
-      {/* Header */}
+      {/* Header com Logo ASX */}
       <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="font-rajdhani font-bold text-2xl">{titulo}</h1>
+        <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="flex-1 flex items-center">
+            <img 
+              src="https://private-us-east-1.manuscdn.com/sessionFile/FG2NlBmjp3Wa0JwHMPnarr/sandbox/mh3OVtgJZkgUlDNT832z4V_1771881726879_na1fn_bG9nby1hc3gtYmxhY2std2hpdGUtc3Ryb2tl.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvRkcyTmxCbWpwM1dhMEp3SE1QbmFyci9zYW5kYm94L21oM09WdGdKWmtnVWxETlQ4MzJ6NFZfMTc3MTg4MTcyNjg3OV9uYTFmbl9iRzluYnkxaGMzZ3RZbXhoWTJzdGQyaHBkR1V0YzNSeWIydGwucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=YUTomiKwAU3zyzbTEEm7Bh8emjo3G9fmxndTieJCJ5rfh3vm9E~5zRDyUC9CzVG0lmCRrt2sN02t4oV8WvVLZ5MGczJOxJMWmQDvkdTOYhQ-0BRfpD~Kpd55avDCqUmHSx7ycDepIUvP8fqs43sKEECNLXZzy9Q2w8GQ573hlDfZW6nsVm0F034fa8uv5kcdK-RlAmQNA2UNlu4qOPSEzhYsPg4ysrEmAETgaRMzT8lg9UPa0TdQzaBORbDClrviEP0nKTHJUTutspZ-RFWD8erWQ~HN23C-qzIXwvVtcwvfcsqYk5jHLjwAs64HTg3nTP1JiWWEne~9wxesFb8Y8w__" 
+              alt="ASX" 
+              className="h-16 object-contain"
+            />
+          </div>
           <button
             onClick={() => setLocation('/')}
             className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
             style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">Menu</span>
+            <span className="text-sm">{t('menu')}</span>
           </button>
         </div>
 
@@ -223,11 +244,11 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              Buscar
+              {t('buscar')}
             </label>
             <input
               type="text"
-              placeholder="Código ou descrição..."
+              placeholder={t('codigo_ou_descricao')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full px-3 py-2 rounded-md border text-sm mt-1"
@@ -241,7 +262,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
 
           <div>
             <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              Data Estoque
+              {t('data_estoque')}
             </label>
             <div className="flex gap-2 mt-1">
               <input
@@ -256,12 +277,20 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                 }}
               />
               <button
+                onClick={() => setShowModalEstoque(true)}
+                className="px-4 py-2 rounded-md transition-colors flex items-center gap-2"
+                style={{ background: 'oklch(0.60 0.18 85)', color: 'white' }}
+              >
+                <Upload className="w-4 h-4" />
+                <span className="text-sm">{t('importar')}</span>
+              </button>
+              <button
                 onClick={exportarExcel}
                 className="px-4 py-2 rounded-md transition-colors flex items-center gap-2"
                 style={{ background: corAcento, color: 'white' }}
               >
                 <Download className="w-4 h-4" />
-                <span className="text-sm">Exportar</span>
+                <span className="text-sm">{t('exportar')}</span>
               </button>
             </div>
           </div>
@@ -379,6 +408,15 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
           </tbody>
         </table>
       </div>
+
+      {/* Modal Estoque */}
+      <ModalEstoque
+        isOpen={showModalEstoque}
+        onClose={() => setShowModalEstoque(false)}
+        onSaveManual={handleSaveManualEstoque}
+        onImportExcel={handleImportExcelEstoque}
+      />
     </div>
+    </>
   );
 }

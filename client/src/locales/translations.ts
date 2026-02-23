@@ -98,6 +98,13 @@ export const translations = {
     clique: 'Clique em',
     paraComecar: 'para começar',
 
+    // Central de Compras
+    buscar: 'Buscar',
+    codigo_ou_descricao: 'Código ou descrição...',
+    data_estoque: 'Data Estoque',
+    importar: 'Importar',
+    exportar: 'Exportar',
+
     // Configurações
     cambioPreferencias: 'Câmbio e preferências',
     taxaCambio: 'Taxa de Câmbio (USD → R$)',
@@ -224,6 +231,13 @@ export const translations = {
     selecioneOuCrie: 'Select or create an SR process',
     clique: 'Click on',
     paraComecar: 'to get started',
+
+    // Purchase Central
+    buscar: 'Search',
+    codigo_ou_descricao: 'Code or description...',
+    data_estoque: 'Stock Date',
+    importar: 'Import',
+    exportar: 'Export',
 
     // Settings
     cambioPreferencias: 'Exchange and preferences',

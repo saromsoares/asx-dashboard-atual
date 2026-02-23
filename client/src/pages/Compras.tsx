@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
 import { usePedidos, type ItemPedido } from '@/hooks/usePedidos';
+import { useIdioma } from '@/hooks/useIdioma';
 import XLSX from 'xlsx-js-style';
 import {
   Plus,
@@ -21,6 +22,7 @@ const formatUSD = (v: number) =>
 
 export default function Compras() {
   const [, setLocation] = useLocation();
+  const { t } = useIdioma();
   const {
     pedidos,
     criarPedido,

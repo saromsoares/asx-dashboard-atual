@@ -9,6 +9,7 @@ import { produtos } from '../data/produtos';
 import { dispatchProcessosChange } from '../hooks/useEstoque';
 import { VinculadorEmbarques } from '../components/VinculadorEmbarques';
 import { useEmbarques } from '../hooks/useEmbarques';
+import { useIdioma } from '../hooks/useIdioma';
 
 interface ItemConteiner {
   id: string;
@@ -65,6 +66,8 @@ function carregarConfirmados(): Set<string> {
 
 export default function Conteiner() {
   const [, setLocation] = useLocation();
+  const { t } = useIdioma();
+  const { embarques } = useEmbarques();
   const [processos, setProcessos] = useState<ProcessoSR[]>(() => carregarProcessos());
   const [showNovoProcesso, setShowNovoProcesso] = useState(false);
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
