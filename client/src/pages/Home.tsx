@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
+import { useIdioma } from '@/hooks/useIdioma';
 import { ImageUploadButton } from '@/components/ImageUploadButton';
 import { CategoryAdjustmentPanel } from '@/components/CategoryAdjustmentPanel';
 import {
@@ -39,6 +40,7 @@ type SortDir = 'asc' | 'desc';
 
 export default function Home() {
   const [, setLocation] = useLocation();
+  const { t } = useIdioma();
   const [search, setSearch] = useState('');
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todas');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
