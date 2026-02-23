@@ -19,6 +19,11 @@ import {
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
+// Função para disparar evento de mudança de processos
+function dispatchProcessosChange() {
+  window.dispatchEvent(new Event('processosChange'));
+}
+
 const formatBRL = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -460,30 +465,72 @@ export default function Home() {
                           <td className="px-3 py-2 text-xs max-w-[280px] truncate sticky left-[156px] z-10" style={{ background: 'inherit', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>{p.descricao}</td>
                           <td className="px-3 py-2 font-mono text-[11px]" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.cod_barras}</td>
                           <td className="px-3 py-2 text-xs" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.unid}</td>
-                          <td className="px-3 py-2 text-right font-rajdhani font-semibold">{formatBRL(p.preco_venda)}</td>
+                          <td className="px-3 py-2 text-right">
+                            <InlinePrecoInput
+                              value={p.preco_venda}
+                              onChange={(v) => {
+                                const updatedProduto = { ...p, preco_venda: v, preco_venda_str: v.toFixed(2) };
+                                const idx = produtos.findIndex(prod => prod.id === p.id);
+                                if (idx >= 0) {
+                                  produtos[idx] = updatedProduto;
+                                  dispatchProcessosChange();
+                                }
+                              }}
+                              label="Venda"
+                            />
+                          </td>
                           <td className="px-3 py-2 text-right">
                             <InlineCustoInput
                               value={custo}
                               onChange={(v) => setCusto(p.id, v)}
                             />
                           </td>
-                          <td className="px-3 py-2 text-right font-mono text-xs" style={{ color: custoR > 0 ? 'oklch(0.70 0.010 285)' : 'oklch(0.40 0.010 285)' }}>
-                            {custoR > 0 ? formatBRL(custoR) : '—'}
+                          <td className="px-3 py-2 text-right">
+                            <InlinePrecoInput
+                              value={custoR}
+                              onChange={(v) => {
+                                const custoUSD = v / taxaCambio;
+                                setCusto(p.id, custoUSD);
+                              }}
+                              label="Custo R$"
+                              disabled={custo <= 0}
+                            />
                           </td>
                           <td className="px-3 py-2 text-right">
                             {custo > 0 ? (
-                              <span className={lucro >= 0 ? 'asx-badge-profit-pos' : 'asx-badge-profit-neg'}>
-                                {formatBRL(lucro)}
-                              </span>
+                              <InlinePrecoInput
+                                value={lucro}
+                                onChange={(v) => {
+                                  const novoPrecoVenda = v + custoR;
+                                  const updatedProduto = { ...p, preco_venda: novoPrecoVenda, preco_venda_str: novoPrecoVenda.toFixed(2) };
+                                  const idx = produtos.findIndex(prod => prod.id === p.id);
+                                  if (idx >= 0) {
+                                    produtos[idx] = updatedProduto;
+                                    dispatchProcessosChange();
+                                  }
+                                }}
+                                label="Lucro"
+                              />
                             ) : (
                               <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
                             )}
                           </td>
                           <td className="px-3 py-2 text-right">
                             {custo > 0 ? (
-                              <span className={lucroPct >= 0 ? 'asx-badge-profit-pos' : 'asx-badge-profit-neg'}>
-                                {lucroPct.toFixed(1)}%
-                              </span>
+                              <InlinePercentInput
+                                value={lucroPct}
+                                onChange={(pct) => {
+                                  const novoLucro = (p.preco_venda * pct) / 100;
+                                  const novoPrecoVenda = custoR + novoLucro;
+                                  const updatedProduto = { ...p, preco_venda: novoPrecoVenda, preco_venda_str: novoPrecoVenda.toFixed(2) };
+                                  const idx = produtos.findIndex(prod => prod.id === p.id);
+                                  if (idx >= 0) {
+                                    produtos[idx] = updatedProduto;
+                                    dispatchProcessosChange();
+                                  }
+                                }}
+                                label="Margem"
+                              />
                             ) : (
                               <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
                             )}
@@ -553,6 +600,115 @@ export default function Home() {
 }
 
 /* ---- Inline Cost Input ---- */
+/* ---- Inline Preço Input ---- */
+const InlinePrecoInput = React.memo(function InlinePrecoInput({
+  value,
+  onChange,
+  label = 'Preço',
+  disabled = false,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  label?: string;
+  disabled?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [inputVal, setInputVal] = useState(value.toFixed(2));
+
+  const handleSave = () => {
+    const v = parseFloat(inputVal);
+    if (!isNaN(v) && v >= 0) {
+      onChange(v);
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1 justify-end">
+        <span className="text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>R$</span>
+        <input
+          type="number"
+          value={inputVal}
+          onChange={e => setInputVal(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false); }}
+          autoFocus
+          step="0.01"
+          className="asx-input-usd w-24"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => { setInputVal(value.toFixed(2)); setEditing(true); }}
+      disabled={disabled}
+      className="font-rajdhani font-semibold text-sm px-2 py-0.5 rounded transition-colors"
+      style={{
+        color: value > 0 ? 'oklch(0.85 0.005 65)' : 'oklch(0.45 0.010 285)',
+        background: value > 0 ? 'oklch(0.20 0.005 285)' : 'oklch(0.16 0.005 285)',
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+    >
+      {formatBRL(value)}
+    </button>
+  );
+});
+
+/* ---- Inline Percent Input ---- */
+const InlinePercentInput = React.memo(function InlinePercentInput({
+  value,
+  onChange,
+  label = 'Percentual',
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  label?: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [inputVal, setInputVal] = useState(value.toFixed(1));
+
+  const handleSave = () => {
+    const v = parseFloat(inputVal);
+    if (!isNaN(v) && v >= 0) {
+      onChange(v);
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1 justify-end">
+        <input
+          type="number"
+          value={inputVal}
+          onChange={e => setInputVal(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false); }}
+          autoFocus
+          step="0.1"
+          className="asx-input-usd w-16"
+        />
+        <span className="text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>%</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => { setInputVal(value.toFixed(1)); setEditing(true); }}
+      className={`font-rajdhani font-semibold text-sm px-2 py-0.5 rounded transition-colors ${
+        value >= 0 ? 'asx-badge-profit-pos' : 'asx-badge-profit-neg'
+      }`}
+    >
+      {value.toFixed(1)}%
+    </button>
+  );
+});
+
 const InlineCustoInput = React.memo(function InlineCustoInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [editing, setEditing] = useState(false);
   const [inputVal, setInputVal] = useState(value.toString());
