@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
+import { ImageUploadButton } from '@/components/ImageUploadButton';
 import {
   Search,
   LayoutGrid,
@@ -431,6 +432,7 @@ export default function Home() {
                           Margem <SortIcon field="lucro_pct" />
                         </button>
                       </th>
+                      <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Foto</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -524,6 +526,9 @@ export default function Home() {
                             ) : (
                               <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
                             )}
+                          </td>
+                          <td className="px-3 py-2 text-center">
+                            <ImageUploadButton productId={p.id} size="sm" />
                           </td>
                         </tr>
                       );
@@ -773,10 +778,13 @@ const ProductCard = React.memo(function ProductCard({
   return (
     <div className="asx-card p-4">
       {/* Imagem */}
-      <div className="mb-3 h-28 rounded-md flex items-center justify-center overflow-hidden" style={{
+      <div className="mb-3 h-28 rounded-md flex items-center justify-center overflow-hidden relative group" style={{
         background: 'oklch(0.12 0.005 285)',
       }}>
-        <Package className="w-8 h-8" style={{ color: 'oklch(0.30 0.010 285)' }} />
+        <ImageUploadButton productId={produto.id} size="lg" showPreview={true} />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <Package className="w-8 h-8" style={{ color: 'oklch(0.30 0.010 285)' }} />
+        </div>
       </div>
 
       {/* Info */}
