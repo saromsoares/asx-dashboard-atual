@@ -13,6 +13,7 @@ import {
   Download,
   FileText,
   ArrowLeft,
+  Zap,
 } from 'lucide-react';
 
 const formatUSD = (v: number) =>
@@ -39,6 +40,8 @@ export default function Compras() {
   const [qtdSarom, setQtdSarom] = useState(0);
   const [qtdAlexandre, setQtdAlexandre] = useState(0);
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('Todas');
+  const [showAutoDistrib, setShowAutoDistrib] = useState(false);
+  const [proporcaoSarom, setProporcaoSarom] = useState(50);
 
   // Extrair categorias únicas dos produtos
   const categorias = useMemo(() => {
@@ -98,6 +101,20 @@ export default function Compras() {
     setQtdSarom(0);
     setQtdAlexandre(0);
     setBuscaProduto('');
+  };
+
+  const handleAutoDistribuir = () => {
+    if (!pedidoAtivo || !produtoSelecionado) return;
+
+    const qtdTotal = qtdSarom + qtdAlexandre;
+    if (qtdTotal === 0) return;
+
+    const qtdSaromAuto = Math.round((qtdTotal * proporcaoSarom) / 100);
+    const qtdAlexandreAuto = qtdTotal - qtdSaromAuto;
+
+    setQtdSarom(qtdSaromAuto);
+    setQtdAlexandre(qtdAlexandreAuto);
+    setShowAutoDistrib(false);
   };
 
   const exportarPDF = (pedido: any) => {
@@ -444,6 +461,18 @@ export default function Compras() {
                       </div>
                       <div className="flex items-end gap-1">
                         <button
+                          onClick={() => setShowAutoDistrib(true)}
+                          className="px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
+                          style={{
+                            background: 'oklch(0.48 0.22 145)',
+                            color: 'white',
+                          }}
+                          title="Auto-distribuir entre Sarom e Alexandre"
+                        >
+                          <Zap className="w-4 h-4" />
+                          Auto
+                        </button>
+                        <button
                           onClick={handleAdicionarItem}
                           className="flex-1 px-3 py-1 rounded text-sm transition-colors"
                           style={{
@@ -603,6 +632,57 @@ export default function Compras() {
           ) : null}
         </main>
       </div>
+
+      {/* Modal Auto-Distribuição */}
+      {showAutoDistrib && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 rounded-lg p-6 max-w-sm w-full mx-4" style={{ background: 'oklch(0.14 0.005 285)' }}>
+            <h2 className="text-lg font-bold mb-4">Auto-Distribuição</h2>
+            <p className="text-sm mb-4" style={{ color: 'oklch(0.70 0.010 285)' }}>
+              Distribuir {qtdSarom + qtdAlexandre} unidades entre Sarom e Alexandre
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold mb-2 block">Proporção Sarom: {proporcaoSarom}%</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={proporcaoSarom}
+                  onChange={e => setProporcaoSarom(parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs mt-2" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                  <span>Sarom: {Math.round(((qtdSarom + qtdAlexandre) * proporcaoSarom) / 100)}</span>
+                  <span>Alexandre: {(qtdSarom + qtdAlexandre) - Math.round(((qtdSarom + qtdAlexandre) * proporcaoSarom) / 100)}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAutoDistribuir}
+                  className="flex-1 px-4 py-2 rounded text-sm transition-colors"
+                  style={{
+                    background: 'oklch(0.48 0.22 145)',
+                    color: 'white',
+                  }}
+                >
+                  Aplicar
+                </button>
+                <button
+                  onClick={() => setShowAutoDistrib(false)}
+                  className="px-4 py-2 rounded text-sm"
+                  style={{
+                    background: 'oklch(0.18 0.005 285)',
+                    color: 'oklch(0.70 0.010 285)',
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
