@@ -6,10 +6,11 @@
   Alertas: Badges de estoque crítico nas Centrais de Compra
 */
 
-import { Link } from "wouter";
-import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle, LogOut } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useEstoque } from "@/hooks/useEstoque";
+import { useAuth } from "@/hooks/useAuth";
 
 const LOGO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663371351265/eZWmpvJzWGYwKZuO.png';
 
@@ -424,6 +425,9 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         </div>
       )}
 
+      {/* Logout Button */}
+      <LogoutButton collapsed={collapsed} />
+
       {/* Collapse Toggle */}
       <div className="p-3 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         <button
@@ -452,5 +456,38 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         </div>
       )}
     </aside>
+  );
+}
+
+function LogoutButton({ collapsed }: { collapsed: boolean }) {
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
+
+  const handleLogout = () => {
+    logout();
+    setLocation('/login');
+  };
+
+  return (
+    <div className="p-3 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center justify-center gap-2 p-2 rounded-lg transition-colors"
+        style={{
+          background: 'oklch(0.16 0.005 285)',
+          color: 'oklch(0.55 0.010 285)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = 'oklch(0.65 0.22 25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'oklch(0.55 0.010 285)';
+        }}
+        title="Fazer logout"
+      >
+        <LogOut className="w-4 h-4" />
+        {!collapsed && <span className="text-xs font-medium">Sair</span>}
+      </button>
+    </div>
   );
 }

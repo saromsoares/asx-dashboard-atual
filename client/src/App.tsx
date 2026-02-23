@@ -1,9 +1,11 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import Login from "@/pages/Login";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useAuth } from "./hooks/useAuth";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Compras from "./pages/Compras";
@@ -14,7 +16,26 @@ import Rastreamento from "./pages/Rastreamento";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
 
-function Router() {
+function ProtectedRouter() {
+  const { isAuthenticated, loading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
+        <div style={{ color: 'oklch(0.60 0.010 285)' }}>Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  return <AuthenticatedRouter />;
+}
+
+function AuthenticatedRouter() {
   const [location] = useLocation();
 
   const getCurrentPage = () => {
@@ -55,7 +76,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <ProtectedRouter />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
