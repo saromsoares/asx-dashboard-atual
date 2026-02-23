@@ -5,6 +5,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
 import { ImageUploadButton } from '@/components/ImageUploadButton';
+import { CategoryAdjustmentPanel } from '@/components/CategoryAdjustmentPanel';
 import {
   Search,
   LayoutGrid,
@@ -17,6 +18,7 @@ import {
   Settings,
   ArrowLeft,
   AlertTriangle,
+  Tag,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
@@ -46,6 +48,7 @@ export default function Home() {
   const [voltFilter, setVoltFilter] = useState<string>('TODOS');
   const [unidFilter, setUnidFilter] = useState<string>('TODOS');
   const [showOnlySemCusto, setShowOnlySemCusto] = useState(false);
+  const [showCategoryPanel, setShowCategoryPanel] = useState(false);
 
   const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct } = useCustos();
 
@@ -246,6 +249,16 @@ export default function Home() {
           title="Exportar CSV"
         >
           <Download className="w-4 h-4" />
+        </button>
+
+        {/* Ajustar Categorias */}
+        <button
+          onClick={() => setShowCategoryPanel(true)}
+          className="p-2 rounded-md border transition-colors hover:border-blue-500"
+          style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+          title="Ajustar categorias de produtos"
+        >
+          <Tag className="w-4 h-4" />
         </button>
 
         {/* Settings */}
@@ -548,6 +561,11 @@ export default function Home() {
           </div>
         </main>
       </div>
+
+      {/* Category Adjustment Panel */}
+      {showCategoryPanel && (
+        <CategoryAdjustmentPanel onClose={() => setShowCategoryPanel(false)} />
+      )}
 
       {/* Settings Modal */}
       {showSettings && (
