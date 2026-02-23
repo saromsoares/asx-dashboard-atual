@@ -4,15 +4,14 @@
   Cor de destaque: Vermelho ASX
 */
 
-import CentralCompra from '@/components/CentralCompra';
+import CentralCompraAvancada from '@/components/CentralCompraAvancada';
 
 export default function CentralSarom() {
   return (
-    <CentralCompra
+    <CentralCompraAvancada
       comprador="sarom"
       titulo="CENTRAL DE COMPRA — SAROM"
       corAcento="oklch(0.48 0.22 25)"
-      corAcentoHover="oklch(0.55 0.22 25)"
     />
   );
 }
