@@ -100,9 +100,9 @@ export function useAnaliseEstoque() {
     const duracao6mesesEmbarc = vendas6meses > 0 ? estoqueComEmbarque / (vendas6meses / 6) : 0;
     const duracao3mesesEmbarc = vendas3meses > 0 ? estoqueComEmbarque / (vendas3meses / 3) : 0;
 
-    // Sugestão de compra: manter 3 meses de estoque
-    const metaEstoque3meses = (vendas3meses / 3) * 3; // 3 meses de venda
-    const sugestaoCompra = Math.max(0, Math.ceil(metaEstoque3meses - estoquePlusPedidos));
+    // Sugestão de compra: manter 6 meses de estoque
+    const metaEstoque6meses = (vendas6meses / 6) * 6; // 6 meses de venda
+    const sugestaoCompra = Math.max(0, Math.ceil(metaEstoque6meses - estoquePlusPedidos));
 
     // Duração com compra sugerida
     const estoqueComCompra = estoquePlusPedidos + sugestaoCompra;

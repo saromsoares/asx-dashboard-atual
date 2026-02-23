@@ -9,7 +9,8 @@ import { useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
 import { useAnaliseEstoque } from '@/hooks/useAnaliseEstoque';
 import { useEstoque } from '@/hooks/useEstoque';
-import { ArrowLeft, Download, Search, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { useCustos } from '@/hooks/useCustos';
+import { ArrowLeft, Download, AlertTriangle, CheckCircle2, TrendingUp, ChevronUp, ChevronDown } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface CentralCompraAvancadaProps {
@@ -26,7 +27,7 @@ const formatNum = (v: number, decimals = 0) =>
 
 const getStatusColor = (duracao: number) => {
   if (duracao < 1) return 'oklch(0.65 0.22 25)'; // Vermelho - crítico
-  if (duracao < 3) return 'oklch(0.60 0.18 85)'; // Amarelo - atenção
+  if (duracao < 6) return 'oklch(0.60 0.18 85)'; // Amarelo - atenção
   return 'oklch(0.72 0.17 145)'; // Verde - ok
 };
 
@@ -34,6 +35,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const [, setLocation] = useLocation();
   const { analisarProduto } = useAnaliseEstoque();
   const { produtosComEstoque } = useEstoque(comprador);
+  const { taxaCambio } = useCustos();
 
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('codigo');
@@ -50,6 +52,24 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
       })
       .filter(a => !search.trim() || a.codigo.toLowerCase().includes(search.toLowerCase()) || a.descricao.toLowerCase().includes(search.toLowerCase()));
   }, [produtosComEstoque, search, dataEstoque, comprador, analisarProduto]);
+
+  // KPIs
+  const kpis = useMemo(() => {
+    const criticos = analise.filter(a => a.duracao6meses < 1).length;
+    const atencao = analise.filter(a => a.duracao6meses >= 1 && a.duracao6meses < 6).length;
+    const ok = analise.filter(a => a.duracao6meses >= 6).length;
+    const totalAtivos = analise.length;
+    
+    const investimentoUSD = analise.reduce((sum, a) => {
+      const produto = produtos.find(p => p.id === a.produtoId);
+      const custoPorUnidade = produto?.custo_usd || 0;
+      return sum + (a.sugestaoCompra * custoPorUnidade);
+    }, 0);
+    
+    const investimentoBRL = investimentoUSD * (taxaCambio || 8.5);
+
+    return { criticos, atencao, ok, totalAtivos, investimentoUSD, investimentoBRL };
+  }, [analise, taxaCambio]);
 
   // Ordenação
   const sorted = useMemo(() => {
@@ -123,6 +143,66 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+      {/* KPIs Panel */}
+      <div className="px-6 py-4 border-b" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
+        <div className="grid grid-cols-6 gap-3">
+          {/* SKUs Ativos */}
+          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
+            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>SKUs Ativos</div>
+            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.80 0.005 65)' }}>{kpis.totalAtivos}</div>
+            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>de {produtos.length}</div>
+          </div>
+
+          {/* Críticos */}
+          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.65 0.22 25 / 0.15)', borderColor: 'oklch(0.65 0.22 25)' }}>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" style={{ color: 'oklch(0.65 0.22 25)' }} />
+              <span className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.65 0.22 25)' }}>Críticos</span>
+            </div>
+            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.65 0.22 25)' }}>{kpis.criticos}</div>
+            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>{'<'} 1 mês</div>
+          </div>
+
+          {/* Atenção */}
+          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.60 0.18 85 / 0.15)', borderColor: 'oklch(0.60 0.18 85)' }}>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" style={{ color: 'oklch(0.60 0.18 85)' }} />
+              <span className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.60 0.18 85)' }}>Atenção</span>
+            </div>
+            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.60 0.18 85)' }}>{kpis.atencao}</div>
+            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>1-6 meses</div>
+          </div>
+
+          {/* OK */}
+          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.72 0.17 145 / 0.15)', borderColor: 'oklch(0.72 0.17 145)' }}>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4" style={{ color: 'oklch(0.72 0.17 145)' }} />
+              <span className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.72 0.17 145)' }}>OK</span>
+            </div>
+            <div className="text-2xl font-bold mt-2" style={{ color: 'oklch(0.72 0.17 145)' }}>{kpis.ok}</div>
+            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>{'>'} 6 meses</div>
+          </div>
+
+          {/* Investimento USD */}
+          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.48 0.22 25 / 0.15)', borderColor: 'oklch(0.48 0.22 25)' }}>
+            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>Investimento USD</div>
+            <div className="text-xl font-bold mt-2" style={{ color: 'oklch(0.48 0.22 25)' }}>
+              ${kpis.investimentoUSD.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>necessário</div>
+          </div>
+
+          {/* Investimento BRL */}
+          <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.48 0.22 25 / 0.15)', borderColor: 'oklch(0.48 0.22 25)' }}>
+            <div className="text-xs uppercase font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>Investimento BRL</div>
+            <div className="text-xl font-bold mt-2" style={{ color: 'oklch(0.48 0.22 25)' }}>
+              R${kpis.investimentoBRL.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
+            </div>
+            <div className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>necessário</div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="sticky top-0 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.32 0.005 285)' }}>
         <div className="flex items-center justify-between mb-4">
