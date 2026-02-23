@@ -119,7 +119,7 @@ export default function Desenvolvimento() {
         nome: prod.descricao,
         codigo: prod.codigo,
         codigoBarras: prod.cod_barras,
-        imagemUrl: prod.imagem_url,
+        imagemUrl: '',
         precoDolar: formData.precoDolar || 0,
         moq: formData.moq || 1,
       });

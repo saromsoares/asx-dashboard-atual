@@ -14,7 +14,6 @@ export interface Produto {
   preco_venda_str: string;
   ncm: string;
   cod_barras: string;
-  imagem_url: string | null;
   custo_usd: number;
 }
 
@@ -33,7 +32,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000021013",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -49,7 +47,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000009615",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -65,7 +62,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000009585",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 4.66,
   },
   {
@@ -81,7 +77,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000009592",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -97,7 +92,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "7891196758201",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -113,7 +107,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7890000349955",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 6.2,
   },
   {
@@ -129,7 +122,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "180.00",
     ncm: "85395200",
     cod_barras: "9000000004368",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 4.95,
   },
   {
@@ -145,7 +137,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000021082",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 5.2,
   },
   {
@@ -161,7 +152,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "7891196758218",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -177,7 +167,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "7891196758195",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -193,7 +182,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "7891196758546",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -209,7 +197,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000039858",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SRjwubdHyTrFrnLL.jpg",
     custo_usd: 3.4,
   },
   {
@@ -225,7 +212,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "9000000021136",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 2.4,
   },
   {
@@ -241,7 +227,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "9000000021143",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 2.4,
   },
   {
@@ -257,7 +242,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "68.00",
     ncm: "85395200",
     cod_barras: "9000000021150",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.55,
   },
   {
@@ -273,7 +257,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "7891196758416",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 2.4,
   },
   {
@@ -289,7 +272,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "7891196758447",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.62,
   },
   {
@@ -305,7 +287,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "9000000021167",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 2.4,
   },
   {
@@ -321,7 +302,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "7891196758379",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 2.4,
   },
   {
@@ -337,7 +317,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "58.00",
     ncm: "85395200",
     cod_barras: "7891196758430",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 2.4,
   },
   {
@@ -353,7 +332,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025257",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 8.22,
   },
   {
@@ -369,7 +347,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025288",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 8.22,
   },
   {
@@ -385,7 +362,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025240",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 10.2,
   },
   {
@@ -401,7 +377,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025226",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 8.22,
   },
   {
@@ -417,7 +392,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025233",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 8.22,
   },
   {
@@ -433,7 +407,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025271",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 8.22,
   },
   {
@@ -449,7 +422,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "9000000025264",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/XhyHqYYJDGBPPyEb.jpg",
     custo_usd: 8.22,
   },
   {
@@ -465,7 +437,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "325.00",
     ncm: "85395200",
     cod_barras: "7892790012515",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qALTGkJQvZNJVlVI.jpg",
     custo_usd: 12.25,
   },
   {
@@ -481,7 +452,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "325.00",
     ncm: "85395200",
     cod_barras: "7892790012539",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qALTGkJQvZNJVlVI.jpg",
     custo_usd: 12.25,
   },
   {
@@ -497,7 +467,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "325.00",
     ncm: "85395200",
     cod_barras: "7892790012577",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qALTGkJQvZNJVlVI.jpg",
     custo_usd: 12.25,
   },
   {
@@ -513,7 +482,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "325.00",
     ncm: "85395200",
     cod_barras: "7892790012614",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qALTGkJQvZNJVlVI.jpg",
     custo_usd: 12.25,
   },
   {
@@ -529,7 +497,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "325.00",
     ncm: "85395200",
     cod_barras: "7892790012676",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qALTGkJQvZNJVlVI.jpg",
     custo_usd: 12.25,
   },
   {
@@ -545,7 +512,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "325.00",
     ncm: "85395200",
     cod_barras: "7892790012560",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qALTGkJQvZNJVlVI.jpg",
     custo_usd: 12.25,
   },
   {
@@ -561,7 +527,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7892790010818",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 5.8,
   },
   {
@@ -577,7 +542,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7892790010832",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 5.8,
   },
   {
@@ -593,7 +557,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "170.00",
     ncm: "85395200",
     cod_barras: "7892790010849",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 7.7,
   },
   {
@@ -609,7 +572,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7892790010870",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 5.8,
   },
   {
@@ -625,7 +587,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7892790010917",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 5.8,
   },
   {
@@ -641,7 +602,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7892790010979",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 5.8,
   },
   {
@@ -657,7 +617,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7892790010863",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GKbYsPjbQdAuBOaC.jpg",
     custo_usd: 5.8,
   },
   {
@@ -673,7 +632,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010511",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 4.08,
   },
   {
@@ -689,7 +647,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010535",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 4.08,
   },
   {
@@ -705,7 +662,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "145.00",
     ncm: "85395200",
     cod_barras: "7892790010542",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 5.68,
   },
   {
@@ -721,7 +677,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010573",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 4.08,
   },
   {
@@ -737,7 +692,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010610",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 4.08,
   },
   {
@@ -753,7 +707,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010665",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 0,
   },
   {
@@ -769,7 +722,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010672",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 4.08,
   },
   {
@@ -785,7 +737,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "125.00",
     ncm: "85395200",
     cod_barras: "7892790010566",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CKxSKuzjdPpoSaug.jpg",
     custo_usd: 4.08,
   },
   {
@@ -801,7 +752,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000021587",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -817,7 +767,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000021600",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -833,7 +782,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000016859",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 4.66,
   },
   {
@@ -849,7 +797,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000016842",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -865,7 +812,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000022638",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -881,7 +827,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000021617",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -897,7 +842,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000021594",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -913,7 +857,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "105.00",
     ncm: "85395200",
     cod_barras: "9000000016880",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/JBuycOYySZKvKgpn.jpg",
     custo_usd: 3.4,
   },
   {
@@ -929,7 +872,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "9000000017313",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 4.2,
   },
   {
@@ -945,7 +887,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "9000000021228",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 5.5,
   },
   {
@@ -961,7 +902,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "9000000024403",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 4.2,
   },
   {
@@ -977,7 +917,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "9000000044302",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 4.2,
   },
   {
@@ -993,7 +932,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "9000000021235",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 4.2,
   },
   {
@@ -1009,7 +947,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "190.00",
     ncm: "85395200",
     cod_barras: "7891196758225",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 6.5,
   },
   {
@@ -1025,7 +962,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "160.00",
     ncm: "85395200",
     cod_barras: "7890000052993",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 8.15,
   },
   {
@@ -1041,7 +977,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "160.00",
     ncm: "85395200",
     cod_barras: "789000053006",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 8.15,
   },
   {
@@ -1057,7 +992,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "160.00",
     ncm: "85395200",
     cod_barras: "7890000053013",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 8.15,
   },
   {
@@ -1073,7 +1007,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "375.00",
     ncm: "85395200",
     cod_barras: "7892790016308",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 15.7,
   },
   {
@@ -1089,7 +1022,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "155.00",
     ncm: "85395200",
     cod_barras: "7892790016315",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 0,
   },
   {
@@ -1105,7 +1037,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "29.00",
     ncm: "85395200",
     cod_barras: "7891196758256",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 1.55,
   },
   {
@@ -1121,7 +1052,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "29.00",
     ncm: "85395200",
     cod_barras: "7891196758232",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 1.55,
   },
   {
@@ -1137,7 +1067,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "39.00",
     ncm: "85395200",
     cod_barras: "7891196758249",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 2.3,
   },
   {
@@ -1153,7 +1082,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "29.00",
     ncm: "85395200",
     cod_barras: "9000000000674",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 1.55,
   },
   {
@@ -1169,7 +1097,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "29.00",
     ncm: "85395200",
     cod_barras: "9000000000544",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 1.55,
   },
   {
@@ -1185,7 +1112,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "29.00",
     ncm: "85395200",
     cod_barras: "7891192437940",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 1.55,
   },
   {
@@ -1201,7 +1127,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "29.00",
     ncm: "85395200",
     cod_barras: "9000000000551",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vDwWNEEtvpCNQVtL.jpg",
     custo_usd: 1.55,
   },
   {
@@ -1217,7 +1142,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "190.00",
     ncm: "85395200",
     cod_barras: "78900000457436",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 7.92,
   },
   {
@@ -1233,7 +1157,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "190.00",
     ncm: "85395200",
     cod_barras: "7890000045743",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 7.92,
   },
   {
@@ -1249,7 +1172,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "190.00",
     ncm: "85395200",
     cod_barras: "7890000045750",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 7.92,
   },
   {
@@ -1265,7 +1187,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "190.00",
     ncm: "85395200",
     cod_barras: "7890000045767",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 7.92,
   },
   {
@@ -1281,7 +1202,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "280.00",
     ncm: "85395200",
     cod_barras: "7890000045774",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 11.92,
   },
   {
@@ -1297,7 +1217,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "135.00",
     ncm: "85395200",
     cod_barras: "7892790017107",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/hWNRzmFBuomUASoJ.jpg",
     custo_usd: 5.8,
   },
   {
@@ -1313,7 +1232,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "115.00",
     ncm: "85395200",
     cod_barras: "7892790018012",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ttQJEWUdilOSwrBJ.jpg",
     custo_usd: 5.14,
   },
   {
@@ -1329,7 +1247,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "135.00",
     ncm: "85395200",
     cod_barras: "7892790018043",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ttQJEWUdilOSwrBJ.jpg",
     custo_usd: 7.09,
   },
   {
@@ -1345,7 +1262,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "115.00",
     ncm: "85395200",
     cod_barras: "7892790018074",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ttQJEWUdilOSwrBJ.jpg",
     custo_usd: 5.14,
   },
   {
@@ -1361,7 +1277,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "115.00",
     ncm: "85395200",
     cod_barras: "7892790018111",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ttQJEWUdilOSwrBJ.jpg",
     custo_usd: 5.14,
   },
   {
@@ -1377,7 +1292,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "115.00",
     ncm: "85395200",
     cod_barras: "7892790018067",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ttQJEWUdilOSwrBJ.jpg",
     custo_usd: 5.14,
   },
   {
@@ -1393,7 +1307,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85392910",
     cod_barras: "9000000002555",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1409,7 +1322,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "30.00",
     ncm: "85392910",
     cod_barras: "9000000002708",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1425,7 +1337,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "65.00",
     ncm: "85392910",
     cod_barras: "9000000002562",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1441,7 +1352,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "40.00",
     ncm: "85392910",
     cod_barras: "9000000002715",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1457,7 +1367,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "220.00",
     ncm: "85392910",
     cod_barras: "7892790020053",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1473,7 +1382,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "60.00",
     ncm: "85392910",
     cod_barras: "9000000036871",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1489,7 +1397,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "40.00",
     ncm: "85392910",
     cod_barras: "9000000002579",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1505,7 +1412,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85392910",
     cod_barras: "9000000002548",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nzgVbqCaNlyTIQIS.jpg",
     custo_usd: 0,
   },
   {
@@ -1521,7 +1427,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "7892790044011",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/inNYgdPpxiyeTYxX.jpg",
     custo_usd: 5.62,
   },
   {
@@ -1537,7 +1442,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "7892790044028",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/inNYgdPpxiyeTYxX.jpg",
     custo_usd: 5.62,
   },
   {
@@ -1553,7 +1457,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "7892790044035",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/inNYgdPpxiyeTYxX.jpg",
     custo_usd: 5.62,
   },
   {
@@ -1569,7 +1472,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "7892790044103",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/inNYgdPpxiyeTYxX.jpg",
     custo_usd: 0,
   },
   {
@@ -1585,7 +1487,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "7892790044110",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/inNYgdPpxiyeTYxX.jpg",
     custo_usd: 0,
   },
   {
@@ -1601,7 +1502,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "490.00",
     ncm: "85395200",
     cod_barras: "7892790044219",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/inNYgdPpxiyeTYxX.jpg",
     custo_usd: 0,
   },
   {
@@ -1617,7 +1517,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000011861",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 0.12,
   },
   {
@@ -1633,7 +1532,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000011878",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 0.12,
   },
   {
@@ -1649,7 +1547,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.00",
     ncm: "85395200",
     cod_barras: "9000000013728",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 0.12,
   },
   {
@@ -1665,7 +1562,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.30",
     ncm: "85395200",
     cod_barras: "9000000002210",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.093,
   },
   {
@@ -1681,7 +1577,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.30",
     ncm: "85395200",
     cod_barras: "9000000002234",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.093,
   },
   {
@@ -1697,7 +1592,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.30",
     ncm: "85395200",
     cod_barras: "9000000002227",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.093,
   },
   {
@@ -1713,7 +1607,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.30",
     ncm: "85395200",
     cod_barras: "9000000002241",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.093,
   },
   {
@@ -1729,7 +1622,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.30",
     ncm: "85395200",
     cod_barras: "9000000023789",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.093,
   },
   {
@@ -1745,7 +1637,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.30",
     ncm: "85395200",
     cod_barras: "7892790034159",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.093,
   },
   {
@@ -1761,7 +1652,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.85",
     ncm: "85395200",
     cod_barras: "9000000002180",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.0475,
   },
   {
@@ -1777,7 +1667,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.85",
     ncm: "85395200",
     cod_barras: "9000000002197",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.0475,
   },
   {
@@ -1793,7 +1682,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.85",
     ncm: "85395200",
     cod_barras: "7892790034036",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.0475,
   },
   {
@@ -1809,7 +1697,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "7891196758010",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.047,
   },
   {
@@ -1825,7 +1712,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "9000000003415",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.047,
   },
   {
@@ -1841,7 +1727,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "7891192437056",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.038,
   },
   {
@@ -1857,7 +1742,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.00",
     ncm: "85395200",
     cod_barras: "7891192437049",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.082,
   },
   {
@@ -1873,7 +1757,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.70",
     ncm: "85395200",
     cod_barras: "7891192437766",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.05,
   },
   {
@@ -1889,7 +1772,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85395200",
     cod_barras: "9000000021624",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.092,
   },
   {
@@ -1905,7 +1787,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85395200",
     cod_barras: "9000000021648",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.092,
   },
   {
@@ -1921,7 +1802,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85395200",
     cod_barras: "9000000021631",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.092,
   },
   {
@@ -1937,7 +1817,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "9000000038370",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.058,
   },
   {
@@ -1953,7 +1832,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "9000000038448",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.058,
   },
   {
@@ -1969,7 +1847,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "9000000038387",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.058,
   },
   {
@@ -1985,7 +1862,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85395200",
     cod_barras: "7892790030076",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2001,7 +1877,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "9000000038394",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.088,
   },
   {
@@ -2017,7 +1892,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "9000000038455",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.088,
   },
   {
@@ -2033,7 +1907,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85395200",
     cod_barras: "9000000038400",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.2,
   },
   {
@@ -2049,7 +1922,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "7892790030250",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2065,7 +1937,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "7892790030298",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2081,7 +1952,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.00",
     ncm: "85395200",
     cod_barras: "9000000038417",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.305,
   },
   {
@@ -2097,7 +1967,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.00",
     ncm: "85395200",
     cod_barras: "7892790030236",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.355,
   },
   {
@@ -2113,7 +1982,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.00",
     ncm: "85395200",
     cod_barras: "7892790030274",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.38,
   },
   {
@@ -2129,7 +1997,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.00",
     ncm: "85395200",
     cod_barras: "7892790030281",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2145,7 +2012,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85395200",
     cod_barras: "9000000023871",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.45,
   },
   {
@@ -2161,7 +2027,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85395200",
     cod_barras: "7892790035224",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.45,
   },
   {
@@ -2177,7 +2042,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85395200",
     cod_barras: "7892790035026",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.45,
   },
   {
@@ -2193,7 +2057,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.00",
     ncm: "85395200",
     cod_barras: "9000000020412",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.45,
   },
   {
@@ -2209,7 +2072,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "12.00",
     ncm: "85395200",
     cod_barras: "9000000030015",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.56,
   },
   {
@@ -2225,7 +2087,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.00",
     ncm: "85395200",
     cod_barras: "7891192437070",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.2,
   },
   {
@@ -2241,7 +2102,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "9.00",
     ncm: "85395200",
     cod_barras: "7892790030601",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.3529,
   },
   {
@@ -2257,7 +2117,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.20",
     ncm: "85395200",
     cod_barras: "7891192437032",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.1629,
   },
   {
@@ -2273,7 +2132,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.20",
     ncm: "85395200",
     cod_barras: "9000000023901",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.1629,
   },
   {
@@ -2289,7 +2147,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.00",
     ncm: "85395200",
     cod_barras: "9000000023918",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.075,
   },
   {
@@ -2305,7 +2162,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.00",
     ncm: "85395200",
     cod_barras: "9000000023925",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.075,
   },
   {
@@ -2321,7 +2177,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "85395200",
     cod_barras: "9000000001718",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2337,7 +2192,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "12.00",
     ncm: "85395200",
     cod_barras: "9000000021655",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.46,
   },
   {
@@ -2353,7 +2207,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.00",
     ncm: "85395200",
     cod_barras: "7891192437605",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.2,
   },
   {
@@ -2369,7 +2222,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.00",
     ncm: "85395200",
     cod_barras: "9000000023963",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.2579,
   },
   {
@@ -2385,7 +2237,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.00",
     ncm: "85395200",
     cod_barras: "9000000023970",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.2579,
   },
   {
@@ -2401,7 +2252,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.00",
     ncm: "85395200",
     cod_barras: "7892790035330",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0,
   },
   {
@@ -2417,7 +2267,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.00",
     ncm: "85395200",
     cod_barras: "7892790035347",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0,
   },
   {
@@ -2433,7 +2282,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.70",
     ncm: "85395200",
     cod_barras: "9000000023659",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.0584,
   },
   {
@@ -2449,7 +2297,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.70",
     ncm: "85395200",
     cod_barras: "9000000020436",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.0584,
   },
   {
@@ -2465,7 +2312,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.40",
     ncm: "85395200",
     cod_barras: "9000000024007",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.095,
   },
   {
@@ -2481,7 +2327,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.40",
     ncm: "85395200",
     cod_barras: "9000000024014",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/kXmsarjTBIndTtCx.jpg",
     custo_usd: 0.095,
   },
   {
@@ -2497,7 +2342,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000024113",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.2307,
   },
   {
@@ -2513,7 +2357,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "7891192437544",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.2307,
   },
   {
@@ -2529,7 +2372,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000012462",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.2307,
   },
   {
@@ -2545,7 +2387,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000012080",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.2307,
   },
   {
@@ -2561,7 +2402,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "9000000003491",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.092,
   },
   {
@@ -2577,7 +2417,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "9000000024083",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.092,
   },
   {
@@ -2593,7 +2432,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "9000000024069",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0.092,
   },
   {
@@ -2609,7 +2447,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "12.00",
     ncm: "85395200",
     cod_barras: "9000000030022",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.5157,
   },
   {
@@ -2625,7 +2462,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "7891192437551",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.095,
   },
   {
@@ -2641,7 +2477,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "7891192437612",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.092,
   },
   {
@@ -2657,7 +2492,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85395200",
     cod_barras: "9000000024021",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.092,
   },
   {
@@ -2673,7 +2507,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "12.00",
     ncm: "85395200",
     cod_barras: "9000000030039",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.5157,
   },
   {
@@ -2689,7 +2522,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "42.00",
     ncm: "85395200",
     cod_barras: "7892790032537",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 2.0,
   },
   {
@@ -2705,7 +2537,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "42.00",
     ncm: "85395200",
     cod_barras: "7892790032544",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 2.0,
   },
   {
@@ -2721,7 +2552,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "42.00",
     ncm: "85395200",
     cod_barras: "7892790032551",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0,
   },
   {
@@ -2737,7 +2567,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "42.00",
     ncm: "85395200",
     cod_barras: "7892790032568",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2753,7 +2582,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "42.00",
     ncm: "85395200",
     cod_barras: "7892790032575",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2769,7 +2597,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000038424",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.197,
   },
   {
@@ -2785,7 +2612,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000038462",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.197,
   },
   {
@@ -2801,7 +2627,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000038431",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.194,
   },
   {
@@ -2817,7 +2642,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85395200",
     cod_barras: "9000000038479",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cHpadFRQZDbsZVKR.jpg",
     custo_usd: 0.194,
   },
   {
@@ -2833,7 +2657,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.20",
     ncm: "85395200",
     cod_barras: "ATUALIZAR CÓD. DE BARRAS",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rSvAjlRQCdYFDXzy.jpg",
     custo_usd: 0,
   },
   {
@@ -2849,7 +2672,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.20",
     ncm: "85395200",
     cod_barras: "7891192437575",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.0909,
   },
   {
@@ -2865,7 +2687,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.20",
     ncm: "85395200",
     cod_barras: "7891192437704",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.0909,
   },
   {
@@ -2881,7 +2702,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.20",
     ncm: "85395200",
     cod_barras: "9000000024151",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.0909,
   },
   {
@@ -2897,7 +2717,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.20",
     ncm: "85395200",
     cod_barras: "9000000024168",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.0909,
   },
   {
@@ -2913,7 +2732,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85395200",
     cod_barras: "9000000016958",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.1629,
   },
   {
@@ -2929,7 +2747,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85395200",
     cod_barras: "9000000016941",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.1629,
   },
   {
@@ -2945,7 +2762,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85395200",
     cod_barras: "9000000016934",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.1629,
   },
   {
@@ -2961,7 +2777,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85395200",
     cod_barras: "7892790031141",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.1629,
   },
   {
@@ -2977,7 +2792,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.00",
     ncm: "85395200",
     cod_barras: "7892790031219",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.2714,
   },
   {
@@ -2993,7 +2807,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.00",
     ncm: "85395200",
     cod_barras: "7892790031226",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.2714,
   },
   {
@@ -3009,7 +2822,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.00",
     ncm: "85395200",
     cod_barras: "7892790031233",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/bxFWZhhMweIwsNdA.jpg",
     custo_usd: 0.2714,
   },
   {
@@ -3025,7 +2837,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "39235000",
     cod_barras: "9000000002173",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/iSfcFRArZUrPRQoE.jpg",
     custo_usd: 0,
   },
   {
@@ -3041,7 +2852,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85392110",
     cod_barras: "9000000021457",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3057,7 +2867,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85392110",
     cod_barras: "9000000002951",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3073,7 +2882,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "14.00",
     ncm: "85395200",
     cod_barras: "9000000022539",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3089,7 +2897,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "14.00",
     ncm: "85395200",
     cod_barras: "9000000022553",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3105,7 +2912,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85392110",
     cod_barras: "9000000017320",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3121,7 +2927,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85395200",
     cod_barras: "7891192432259",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3137,7 +2942,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "20.00",
     ncm: "85395200",
     cod_barras: "7890000044838",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3153,7 +2957,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "20.00",
     ncm: "85395200",
     cod_barras: "7890000044845",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/SytvtxtGLUyydNCp.jpg",
     custo_usd: 0,
   },
   {
@@ -3169,7 +2972,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "49.00",
     ncm: "85395200",
     cod_barras: "9000000016682",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 2.74,
   },
   {
@@ -3185,7 +2987,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "49.00",
     ncm: "85395200",
     cod_barras: "7890000044050",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 1.83,
   },
   {
@@ -3201,7 +3002,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "27.00",
     ncm: "85395200",
     cod_barras: "9000000003422",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 1.45,
   },
   {
@@ -3217,7 +3017,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "18.00",
     ncm: "85395200",
     cod_barras: "9000000007000",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 0.9,
   },
   {
@@ -3233,7 +3032,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "23.00",
     ncm: "85395200",
     cod_barras: "9000000016699",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 0.98,
   },
   {
@@ -3249,7 +3047,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "18.00",
     ncm: "85395200",
     cod_barras: "9000000000735",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 0.89,
   },
   {
@@ -3265,7 +3062,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "99.00",
     ncm: "85395200",
     cod_barras: "9000000039964",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 4.4,
   },
   {
@@ -3281,7 +3077,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "18.00",
     ncm: "85395200",
     cod_barras: "9000000000728",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/iSfcFRArZUrPRQoE.jpg",
     custo_usd: 0.89,
   },
   {
@@ -3297,7 +3092,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "75.00",
     ncm: "85395200",
     cod_barras: "7892790041423",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/iSfcFRArZUrPRQoE.jpg",
     custo_usd: 3.7,
   },
   {
@@ -3313,7 +3107,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "130.00",
     ncm: "85395200",
     cod_barras: "9000000037557",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/iSfcFRArZUrPRQoE.jpg",
     custo_usd: 0,
   },
   {
@@ -3329,7 +3122,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "39.00",
     ncm: "85395200",
     cod_barras: "9000000003101",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 1.76,
   },
   {
@@ -3345,7 +3137,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "55.00",
     ncm: "85395200",
     cod_barras: "9000000016545",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 2.7,
   },
   {
@@ -3361,7 +3152,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "49.00",
     ncm: "85395200",
     cod_barras: "9000000039957",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 2.3,
   },
   {
@@ -3377,7 +3167,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "23.00",
     ncm: "85395200",
     cod_barras: "9000000003071",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 0.98,
   },
   {
@@ -3393,7 +3182,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "23.00",
     ncm: "85395200",
     cod_barras: "9000000003088",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/iSfcFRArZUrPRQoE.jpg",
     custo_usd: 0.98,
   },
   {
@@ -3409,7 +3197,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "120.00",
     ncm: "85395200",
     cod_barras: "9000000003439",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 0,
   },
   {
@@ -3425,7 +3212,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "27.00",
     ncm: "85395200",
     cod_barras: "9000000021884",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 1.4,
   },
   {
@@ -3441,7 +3227,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "150.00",
     ncm: "85395200",
     cod_barras: "7897090155139",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 6.9,
   },
   {
@@ -3457,7 +3242,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "230.00",
     ncm: "85395200",
     cod_barras: "7893590363142",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 9.8,
   },
   {
@@ -3473,7 +3257,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "145.00",
     ncm: "85395200",
     cod_barras: "7892790043700",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 6.0,
   },
   {
@@ -3489,7 +3272,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "145.00",
     ncm: "85395200",
     cod_barras: "7892790043717",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 6.4,
   },
   {
@@ -3505,7 +3287,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "580.00",
     ncm: "85395200",
     cod_barras: "7892790043724",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/IAVHhSAFQOKMDbkH.jpg",
     custo_usd: 24.7,
   },
   {
@@ -3521,7 +3302,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "89.00",
     ncm: "85395200",
     cod_barras: "7892790044073",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 4.4,
   },
   {
@@ -3537,7 +3317,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "89.00",
     ncm: "85395200",
     cod_barras: "7890000044586",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 4.4,
   },
   {
@@ -3553,7 +3332,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "48.00",
     ncm: "83023000",
     cod_barras: "7892790044066",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 2.8,
   },
   {
@@ -3569,7 +3347,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "38.00",
     ncm: "83023000",
     cod_barras: "7892790044080",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 0,
   },
   {
@@ -3585,7 +3362,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "16.00",
     ncm: "85395200",
     cod_barras: "7891192437971",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 0.5,
   },
   {
@@ -3601,7 +3377,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "18.00",
     ncm: "85395200",
     cod_barras: "9000000022775",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 0.5,
   },
   {
@@ -3617,7 +3392,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85395200",
     cod_barras: "7891192437964",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 2.6,
   },
   {
@@ -3633,7 +3407,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85395200",
     cod_barras: "7891196758034",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 2.6,
   },
   {
@@ -3649,7 +3422,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85395200",
     cod_barras: "7891192437889",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 2.6,
   },
   {
@@ -3665,7 +3437,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "50.00",
     ncm: "85395200",
     cod_barras: "9000000026056",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 2.6,
   },
   {
@@ -3681,7 +3452,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "115.00",
     ncm: "85395200",
     cod_barras: "78900000047876",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 5.6,
   },
   {
@@ -3697,7 +3467,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "95.00",
     ncm: "85395200",
     cod_barras: "78900000047883",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 4.6,
   },
   {
@@ -3713,7 +3482,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "95.00",
     ncm: "85395200",
     cod_barras: "78900000047890",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 4.6,
   },
   {
@@ -3729,7 +3497,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "95.00",
     ncm: "85395200",
     cod_barras: "78900000047906",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 4.6,
   },
   {
@@ -3745,7 +3512,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "750.00",
     ncm: "85395200",
     cod_barras: "7892790060615",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 24.8,
   },
   {
@@ -3761,7 +3527,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "60.00",
     ncm: "85311090",
     cod_barras: "9000000044180",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aFoYQECRSTkgeopP.jpg",
     custo_usd: 3.95,
   },
   {
@@ -3777,7 +3542,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "70.00",
     ncm: "85395200",
     cod_barras: "9000000011830",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 3.2,
   },
   {
@@ -3793,7 +3557,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "95.00",
     ncm: "85395200",
     cod_barras: "7891192431139",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/uZbfpOVVMOkwNxAr.jpg",
     custo_usd: 4.9,
   },
   {
@@ -3809,7 +3572,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "15.00",
     ncm: "85395200",
     cod_barras: "9000000002616",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 0.62,
   },
   {
@@ -3825,7 +3587,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "13.50",
     ncm: "85395200",
     cod_barras: "7892790061063",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 0,
   },
   {
@@ -3841,7 +3602,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "13.50",
     ncm: "85395200",
     cod_barras: "7892790061070",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 0,
   },
   {
@@ -3857,7 +3617,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "28.00",
     ncm: "85395200",
     cod_barras: "9000000004221",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 1.15,
   },
   {
@@ -3873,7 +3632,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "28.00",
     ncm: "85395200",
     cod_barras: "7891192431177",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 1.15,
   },
   {
@@ -3889,7 +3647,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "28.00",
     ncm: "85395200",
     cod_barras: "9000000022744",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 1.15,
   },
   {
@@ -3905,7 +3662,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "28.00",
     ncm: "85395200",
     cod_barras: "9000000022720",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 1.15,
   },
   {
@@ -3921,7 +3677,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "32.00",
     ncm: "",
     cod_barras: "7892790060851",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/cuwIEdHfPAFfgeov.jpg",
     custo_usd: 1.7,
   },
   {
@@ -3937,7 +3692,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "23.00",
     ncm: "83023000",
     cod_barras: "7891196758492",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 0,
   },
   {
@@ -3953,7 +3707,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "21.00",
     ncm: "85395200",
     cod_barras: "9000000022973",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 0,
   },
   {
@@ -3969,7 +3722,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "21.00",
     ncm: "85395200",
     cod_barras: "9000000009219",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 0,
   },
   {
@@ -3985,7 +3737,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "21.00",
     ncm: "85395200",
     cod_barras: "9000000022966",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 0,
   },
   {
@@ -4001,7 +3752,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.90",
     ncm: "85395200",
     cod_barras: "7891196758348",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.32,
   },
   {
@@ -4017,7 +3767,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.90",
     ncm: "85395200",
     cod_barras: "7891196758362",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.32,
   },
   {
@@ -4033,7 +3782,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.90",
     ncm: "85395200",
     cod_barras: "7891196758355",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.32,
   },
   {
@@ -4049,7 +3797,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.90",
     ncm: "85395200",
     cod_barras: "7892790052740",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 0.32,
   },
   {
@@ -4065,7 +3812,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.90",
     ncm: "83023000",
     cod_barras: "9000000013056",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.065,
   },
   {
@@ -4081,7 +3827,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85395200",
     cod_barras: "7891196758324",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.31,
   },
   {
@@ -4097,7 +3842,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85395200",
     cod_barras: "7891196758317",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.31,
   },
   {
@@ -4113,7 +3857,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85395200",
     cod_barras: "7891196758331",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.31,
   },
   {
@@ -4129,7 +3872,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "83023000",
     cod_barras: "9000000013063",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.08,
   },
   {
@@ -4145,7 +3887,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.00",
     ncm: "85395200",
     cod_barras: "9000000012059",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.35,
   },
   {
@@ -4161,7 +3902,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.00",
     ncm: "85395200",
     cod_barras: "9000000012066",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.35,
   },
   {
@@ -4177,7 +3917,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.00",
     ncm: "85395200",
     cod_barras: "9000000001206",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.35,
   },
   {
@@ -4193,7 +3932,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.40",
     ncm: "83023000",
     cod_barras: "7890000040327",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.11,
   },
   {
@@ -4209,7 +3947,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "10.50",
     ncm: "85395200",
     cod_barras: "7890000040334",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.515,
   },
   {
@@ -4225,7 +3962,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "10.50",
     ncm: "85395200",
     cod_barras: "7890000040341",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.515,
   },
   {
@@ -4241,7 +3977,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "10.50",
     ncm: "85395200",
     cod_barras: "7890000040358",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.515,
   },
   {
@@ -4257,7 +3992,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "25.00",
     ncm: "73261900",
     cod_barras: "7892790053006",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 1.0,
   },
   {
@@ -4273,7 +4007,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "40.00",
     ncm: "85395200",
     cod_barras: "9000000010451",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 1.9,
   },
   {
@@ -4289,7 +4022,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "68.00",
     ncm: "85395200",
     cod_barras: "9000000020634",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 3.0,
   },
   {
@@ -4305,7 +4037,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "85.00",
     ncm: "85395200",
     cod_barras: "9000000020658",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 3.2,
   },
   {
@@ -4321,7 +4052,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "175.00",
     ncm: "85395200",
     cod_barras: "7892790053440",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 6.74,
   },
   {
@@ -4337,7 +4067,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "175.00",
     ncm: "85395200",
     cod_barras: "7892790053549",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/CniFCEcxTmceTpjO.jpg",
     custo_usd: 6.74,
   },
   {
@@ -4353,7 +4082,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "90.00",
     ncm: "85395200",
     cod_barras: "9000000036192",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 3.68,
   },
   {
@@ -4369,7 +4097,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "90.00",
     ncm: "85395200",
     cod_barras: "9000000020641",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 3.68,
   },
   {
@@ -4385,7 +4112,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "70.00",
     ncm: "85395200",
     cod_barras: "9000000020665",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 3.18,
   },
   {
@@ -4401,7 +4127,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "40.00",
     ncm: "85395200",
     cod_barras: "7890000404413",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 1.68,
   },
   {
@@ -4417,7 +4142,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "38.00",
     ncm: "85395200",
     cod_barras: "7892790053105",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 1.6,
   },
   {
@@ -4433,7 +4157,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "38.00",
     ncm: "85395200",
     cod_barras: "7890000056151",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 1.57,
   },
   {
@@ -4449,7 +4172,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "18.00",
     ncm: "85395200",
     cod_barras: "7892790053129",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 0,
   },
   {
@@ -4465,7 +4187,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "55.00",
     ncm: "85395200",
     cod_barras: "7892790053167",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 0,
   },
   {
@@ -4481,7 +4202,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "75.00",
     ncm: "85395200",
     cod_barras: "7892790053174",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 3.15,
   },
   {
@@ -4497,7 +4217,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "145.00",
     ncm: "85395200",
     cod_barras: "7890000042957",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 5.4,
   },
   {
@@ -4513,7 +4232,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "145.00",
     ncm: "85395200",
     cod_barras: "7890000042964",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 5.4,
   },
   {
@@ -4529,7 +4247,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "120.00",
     ncm: "85395200",
     cod_barras: "7890000042988",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 5.5,
   },
   {
@@ -4545,7 +4262,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "120.00",
     ncm: "85395200",
     cod_barras: "7890000042995",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 5.5,
   },
   {
@@ -4561,7 +4277,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "210.00",
     ncm: "85395200",
     cod_barras: "7892790053228",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 0,
   },
   {
@@ -4577,7 +4292,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "210.00",
     ncm: "85395200",
     cod_barras: "7892790053327",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 0,
   },
   {
@@ -4593,7 +4307,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "275.00",
     ncm: "85395200",
     cod_barras: "7892790053235",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 10.0,
   },
   {
@@ -4609,7 +4322,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "275.00",
     ncm: "85395200",
     cod_barras: "7892790053334",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 10.0,
   },
   {
@@ -4625,7 +4337,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "350.00",
     ncm: "85395200",
     cod_barras: "7892790053266",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 12.3,
   },
   {
@@ -4641,7 +4352,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "350.00",
     ncm: "85395200",
     cod_barras: "7892790053365",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 12.3,
   },
   {
@@ -4657,7 +4367,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "145.00",
     ncm: "85395200",
     cod_barras: "7890000050371",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 5.25,
   },
   {
@@ -4673,7 +4382,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "180.00",
     ncm: "85395200",
     cod_barras: "7890000050388",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 8.1,
   },
   {
@@ -4689,7 +4397,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "180.00",
     ncm: "85395200",
     cod_barras: "7890000050395",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 8.3,
   },
   {
@@ -4705,7 +4412,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "245.00",
     ncm: "85395200",
     cod_barras: "7892790053242",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 0,
   },
   {
@@ -4721,7 +4427,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "245.00",
     ncm: "85395200",
     cod_barras: "7892790053341",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 0,
   },
   {
@@ -4737,7 +4442,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "330.00",
     ncm: "85395200",
     cod_barras: "7892790053259",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 12.35,
   },
   {
@@ -4753,7 +4457,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "330.00",
     ncm: "85395200",
     cod_barras: "7892790053358",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 12.35,
   },
   {
@@ -4769,7 +4472,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "195.00",
     ncm: "85395200",
     cod_barras: "7890000050401",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 7.72,
   },
   {
@@ -4785,7 +4487,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "48.00",
     ncm: "85395200",
     cod_barras: "7890000050432",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 1.95,
   },
   {
@@ -4801,7 +4502,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "175.00",
     ncm: "85395200",
     cod_barras: "ATUALIZAR CÓD. DE BARRAS",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 6.96,
   },
   {
@@ -4817,7 +4517,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "175.00",
     ncm: "85395200",
     cod_barras: "ATUALIZAR CÓD. DE BARRAS",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qZzkCDQJupZaUFtG.jpg",
     custo_usd: 6.96,
   },
   {
@@ -4833,7 +4532,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "270.00",
     ncm: "85395200",
     cod_barras: "7892790053273",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 10.1,
   },
   {
@@ -4849,7 +4547,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "270.00",
     ncm: "85395200",
     cod_barras: "7892790053372",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 10.6,
   },
   {
@@ -4865,7 +4562,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "240.00",
     ncm: "85395200",
     cod_barras: "7892790053280",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 9.0,
   },
   {
@@ -4881,7 +4577,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "240.00",
     ncm: "85395200",
     cod_barras: "7892790053389",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/aKpJRXRjBqyZYQPW.jpg",
     custo_usd: 9.3,
   },
   {
@@ -4897,7 +4592,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "45.00",
     ncm: "85395200",
     cod_barras: "9000000030497",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 2.06,
   },
   {
@@ -4913,7 +4607,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "27.00",
     ncm: "85395200",
     cod_barras: "7892790053136",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/xXcYWPVmsQyRmYrC.jpg",
     custo_usd: 0.9,
   },
   {
@@ -4929,7 +4622,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "23.00",
     ncm: "85395200",
     cod_barras: "7891196758478",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 1.15,
   },
   {
@@ -4945,7 +4637,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "16.00",
     ncm: "85395200",
     cod_barras: "9000000018730",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 0.75,
   },
   {
@@ -4961,7 +4652,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "45.00",
     ncm: "85395200",
     cod_barras: "9000000031159",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 2.3,
   },
   {
@@ -4977,7 +4667,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "49.00",
     ncm: "85181090",
     cod_barras: "9000000022874",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 2.85,
   },
   {
@@ -4993,7 +4682,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.90",
     ncm: "85395200",
     cod_barras: "9000000039735",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/WpDljtjmyhPneIAm.jpg",
     custo_usd: 0.392,
   },
   {
@@ -5009,7 +4697,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "27.00",
     ncm: "85395200",
     cod_barras: "9000000022911",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 1.185,
   },
   {
@@ -5025,7 +4712,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "17.00",
     ncm: "85395200",
     cod_barras: "7890000041720",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 0.65,
   },
   {
@@ -5041,7 +4727,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "20.00",
     ncm: "85395200",
     cod_barras: "7890000041737",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 0.8,
   },
   {
@@ -5057,7 +4742,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.50",
     ncm: "85392110",
     cod_barras: "7891192437223",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.1443,
   },
   {
@@ -5073,7 +4757,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.50",
     ncm: "85392190",
     cod_barras: "7891192437377",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.158,
   },
   {
@@ -5089,7 +4772,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.50",
     ncm: "85392110",
     cod_barras: "7891192437230",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.1482,
   },
   {
@@ -5105,7 +4787,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.50",
     ncm: "85392190",
     cod_barras: "7891192437384",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.1599,
   },
   {
@@ -5121,7 +4802,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "7891192437247",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.3783,
   },
   {
@@ -5137,7 +4817,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392190",
     cod_barras: "7891192437391",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.3998,
   },
   {
@@ -5153,7 +4832,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85392110",
     cod_barras: "7891192437254",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.2603,
   },
   {
@@ -5169,7 +4847,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.50",
     ncm: "85392190",
     cod_barras: "9000000023130",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.2799,
   },
   {
@@ -5185,7 +4862,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "7891192437278",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.3865,
   },
   {
@@ -5201,7 +4877,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392190",
     cod_barras: "9000000020405",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.4023,
   },
   {
@@ -5217,7 +4892,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "9000000003323",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.2925,
   },
   {
@@ -5233,7 +4907,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "7891196758553",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0,
   },
   {
@@ -5249,7 +4922,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "9000000023239",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.3498,
   },
   {
@@ -5265,7 +4937,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "7891192437292",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.3498,
   },
   {
@@ -5281,7 +4952,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "7891192431078",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.3757,
   },
   {
@@ -5297,7 +4967,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "18.00",
     ncm: "85392110",
     cod_barras: "7891196758072",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.4388,
   },
   {
@@ -5313,7 +4982,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "19.00",
     ncm: "85392110",
     cod_barras: "9000000023178",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.7661,
   },
   {
@@ -5329,7 +4997,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85392110",
     cod_barras: "7890000053501",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.1122,
   },
   {
@@ -5345,7 +5012,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85392110",
     cod_barras: "7890000053518",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0,
   },
   {
@@ -5361,7 +5027,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.20",
     ncm: "85392110",
     cod_barras: "7890000053525",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.312,
   },
   {
@@ -5377,7 +5042,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.90",
     ncm: "85392110",
     cod_barras: "7890000053532",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.2116,
   },
   {
@@ -5393,7 +5057,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.20",
     ncm: "85392110",
     cod_barras: "7890000053549",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.3316,
   },
   {
@@ -5409,7 +5072,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.20",
     ncm: "85392110",
     cod_barras: "7892790028059",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.3316,
   },
   {
@@ -5425,7 +5087,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.20",
     ncm: "85392110",
     cod_barras: "7890000053563",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.3316,
   },
   {
@@ -5441,7 +5102,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.50",
     ncm: "85392190",
     cod_barras: "7892790029032",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.1336,
   },
   {
@@ -5457,7 +5117,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "6.20",
     ncm: "85392190",
     cod_barras: "7892790029049",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.234,
   },
   {
@@ -5473,7 +5132,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.90",
     ncm: "85392190",
     cod_barras: "7892790029070",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/GJmKCsoAjxdkKeBv.jpg",
     custo_usd: 0.234,
   },
   {
@@ -5489,7 +5147,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.70",
     ncm: "85392110",
     cod_barras: "7891196758089",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.015,
   },
   {
@@ -5505,7 +5162,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.70",
     ncm: "85392110",
     cod_barras: "7891196758096",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.015,
   },
   {
@@ -5521,7 +5177,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.70",
     ncm: "85392110",
     cod_barras: "7891196758102",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/vsKbCRzJzGnYHrZH.jpg",
     custo_usd: 0.015,
   },
   {
@@ -5537,7 +5192,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "85392110",
     cod_barras: "9000000023277",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0466,
   },
   {
@@ -5553,7 +5207,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "85392190",
     cod_barras: "7891192437490",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0466,
   },
   {
@@ -5569,7 +5222,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "85392110",
     cod_barras: "7891192437322",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0493,
   },
   {
@@ -5585,7 +5237,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "85392190",
     cod_barras: "7891192437414",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0493,
   },
   {
@@ -5601,7 +5252,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.75",
     ncm: "85392110",
     cod_barras: "9000000023314",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0324,
   },
   {
@@ -5617,7 +5267,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.75",
     ncm: "85392190",
     cod_barras: "9000000023321",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0331,
   },
   {
@@ -5633,7 +5282,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85392110",
     cod_barras: "7891192437315",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.053,
   },
   {
@@ -5649,7 +5297,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85392190",
     cod_barras: "7891192431054",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0544,
   },
   {
@@ -5665,7 +5312,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85392110",
     cod_barras: "9000000014282",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0562,
   },
   {
@@ -5681,7 +5327,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85392190",
     cod_barras: "9000000014299",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0562,
   },
   {
@@ -5697,7 +5342,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.00",
     ncm: "85392110",
     cod_barras: "9000000014343",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0917,
   },
   {
@@ -5713,7 +5357,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "2.00",
     ncm: "85392190",
     cod_barras: "9000000014350",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0917,
   },
   {
@@ -5729,7 +5372,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.50",
     ncm: "85392110",
     cod_barras: "7890000040624",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0161,
   },
   {
@@ -5745,7 +5387,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.50",
     ncm: "85392190",
     cod_barras: "7890000040631",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0161,
   },
   {
@@ -5761,7 +5402,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.60",
     ncm: "85392110",
     cod_barras: "9000000023420",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0272,
   },
   {
@@ -5777,7 +5417,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.60",
     ncm: "85392190",
     cod_barras: "7891192431030",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0285,
   },
   {
@@ -5793,7 +5432,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.35",
     ncm: "85392110",
     cod_barras: "7891192437346",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0123,
   },
   {
@@ -5809,7 +5447,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.35",
     ncm: "85392190",
     cod_barras: "9000000023482",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0123,
   },
   {
@@ -5825,7 +5462,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.45",
     ncm: "85392110",
     cod_barras: "9000000023475",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0123,
   },
   {
@@ -5841,7 +5477,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85392110",
     cod_barras: "7891192431047",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.107,
   },
   {
@@ -5857,7 +5492,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85392110",
     cod_barras: "7891196758119",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.116,
   },
   {
@@ -5873,7 +5507,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85392110",
     cod_barras: "7890000040648",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.116,
   },
   {
@@ -5889,7 +5522,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85392110",
     cod_barras: "7890000040655",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.116,
   },
   {
@@ -5905,7 +5537,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "3.00",
     ncm: "85392110",
     cod_barras: "9000000017498",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.1216,
   },
   {
@@ -5921,7 +5552,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85392110",
     cod_barras: "7891192431023",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0194,
   },
   {
@@ -5937,7 +5567,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.20",
     ncm: "85392110",
     cod_barras: "9000000017344",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/MpMKyIwDlusLnjfF.jpg",
     custo_usd: 0.0259,
   },
   {
@@ -5953,7 +5582,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85392110",
     cod_barras: "7891192437094",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.1878,
   },
   {
@@ -5969,7 +5597,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85392190",
     cod_barras: "9000000023505",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.2073,
   },
   {
@@ -5985,7 +5612,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85392110",
     cod_barras: "7891192437117",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.2073,
   },
   {
@@ -6001,7 +5627,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "5.00",
     ncm: "85392190",
     cod_barras: "7891192437445",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.2073,
   },
   {
@@ -6017,7 +5642,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "7891192437131",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.4486,
   },
   {
@@ -6033,7 +5657,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392190",
     cod_barras: "7891192437452",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.4486,
   },
   {
@@ -6049,7 +5672,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392110",
     cod_barras: "9000000023543",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.3239,
   },
   {
@@ -6065,7 +5687,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85392190",
     cod_barras: "7891192437469",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.3434,
   },
   {
@@ -6081,7 +5702,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "9000000023567",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.4275,
   },
   {
@@ -6097,7 +5717,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "7891192437162",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.4648,
   },
   {
@@ -6113,7 +5732,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "30.00",
     ncm: "85392110",
     cod_barras: "7891192437483",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 1.3652,
   },
   {
@@ -6129,7 +5747,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "21.00",
     ncm: "85392110",
     cod_barras: "7891192437209",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.3345,
   },
   {
@@ -6145,7 +5762,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "19.00",
     ncm: "85392110",
     cod_barras: "9000000023581",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.3345,
   },
   {
@@ -6161,7 +5777,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "9000000023628",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.3345,
   },
   {
@@ -6177,7 +5792,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "1234567890128",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.3345,
   },
   {
@@ -6193,7 +5807,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "9000000023598",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.4145,
   },
   {
@@ -6209,7 +5822,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "8.50",
     ncm: "85392110",
     cod_barras: "7891192437186",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/OseazfqpbmGjNXgW.jpg",
     custo_usd: 0.4145,
   },
   {
@@ -6225,7 +5837,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "4.00",
     ncm: "85444200",
     cod_barras: "7891196758065",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 0.27,
   },
   {
@@ -6241,7 +5852,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "7.50",
     ncm: "85444200",
     cod_barras: "7891196758058",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 0.46,
   },
   {
@@ -6257,7 +5867,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "13.00",
     ncm: "85444200",
     cod_barras: "7891196758041",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 0.98,
   },
   {
@@ -6273,7 +5882,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "475.00",
     ncm: "85272900",
     cod_barras: "9000000044203",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 23.0,
   },
   {
@@ -6289,7 +5897,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "245.00",
     ncm: "85272900",
     cod_barras: "9000000044197",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 3.5,
   },
   {
@@ -6305,7 +5912,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "245.00",
     ncm: "85272900",
     cod_barras: "9000000021464",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 14.6,
   },
   {
@@ -6321,7 +5927,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "53.00",
     ncm: "85272900",
     cod_barras: "7890000053624",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 2.92,
   },
   {
@@ -6337,7 +5942,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "69.00",
     ncm: "85272900",
     cod_barras: "7891192437780",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 4.08,
   },
   {
@@ -6353,7 +5957,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "300.00",
     ncm: "85185000",
     cod_barras: "9000000022331",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 16.5,
   },
   {
@@ -6369,7 +5972,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "500.00",
     ncm: "85185000",
     cod_barras: "7890000044234",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/VABgXDEYfSgQrhZx.jpg",
     custo_usd: 28.0,
   },
   {
@@ -6385,7 +5987,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.50",
     ncm: "85365090",
     cod_barras: "9000000022454",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 0.053,
   },
   {
@@ -6401,7 +6002,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.00",
     ncm: "85365090",
     cod_barras: "9000000022461",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 0.036,
   },
   {
@@ -6417,7 +6017,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "1.50",
     ncm: "85365090",
     cod_barras: "9000000022447",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 0.06,
   },
   {
@@ -6433,7 +6032,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "10.00",
     ncm: "85437099",
     cod_barras: "9000000024427",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/nEajYUgGiTNPjvhE.jpg",
     custo_usd: 0.5,
   },
   {
@@ -6449,7 +6047,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "16.00",
     ncm: "90303311",
     cod_barras: "9000000002654",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 1.0,
   },
   {
@@ -6465,7 +6062,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "26.00",
     ncm: "90303311",
     cod_barras: "9000000012882",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 1.5,
   },
   {
@@ -6481,7 +6077,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "21.00",
     ncm: "85044090",
     cod_barras: "7890000045781",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 1.25,
   },
   {
@@ -6497,7 +6092,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "21.00",
     ncm: "85044090",
     cod_barras: "7892790082341",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 1.35,
   },
   {
@@ -6513,7 +6107,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "45.00",
     ncm: "85044090",
     cod_barras: "7892790082358",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 0,
   },
   {
@@ -6529,7 +6122,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "19.00",
     ncm: "85122011",
     cod_barras: "7891192431214",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 1.18,
   },
   {
@@ -6545,7 +6137,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "19.00",
     ncm: "85258929",
     cod_barras: "7891192431221",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/qjGHuGfEcVYrQAeb.jpg",
     custo_usd: 1.18,
   },
   {
@@ -6561,7 +6152,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "0.00",
     ncm: "85122011",
     cod_barras: "6920180508681",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ApGrRINgOaOiLZQa.jpg",
     custo_usd: 5.0,
   },
   {
@@ -6577,7 +6167,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "48.00",
     ncm: "85258929",
     cod_barras: "9000000000759",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ApGrRINgOaOiLZQa.jpg",
     custo_usd: 3.1,
   },
   {
@@ -6593,7 +6182,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "48.00",
     ncm: "85258929",
     cod_barras: "9000000000766",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ApGrRINgOaOiLZQa.jpg",
     custo_usd: 3.1,
   },
   {
@@ -6609,7 +6197,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "48.00",
     ncm: "85258929",
     cod_barras: "6932658795622",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ApGrRINgOaOiLZQa.jpg",
     custo_usd: 3.1,
   },
   {
@@ -6625,7 +6212,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "48.00",
     ncm: "85258929",
     cod_barras: "9000000002876",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/ApGrRINgOaOiLZQa.jpg",
     custo_usd: 3.1,
   },
   {
@@ -6641,7 +6227,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "10.50",
     ncm: "84133090",
     cod_barras: "7891192437797",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 0.65,
   },
   {
@@ -6657,7 +6242,6 @@ export const produtos: Produto[] = [{
     preco_venda_str: "10.50",
     ncm: "84133090",
     cod_barras: "7891192437803",
-    imagem_url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663303404032/rmtMGPkpBpphgmBB.jpg",
     custo_usd: 0.65,
   },
 ];

@@ -402,13 +402,12 @@ export default function Home() {
                 <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '1200px' }}>
                   <thead>
                     <tr style={{ borderColor: 'oklch(0.22 0.005 285)' }} className="border-b">
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', width: '56px' }}>Foto</th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[56px] z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', width: '100px' }}>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', width: '100px' }}>
                         <button onClick={() => toggleSort('codigo')} className="flex items-center gap-1">
                           Código <SortIcon field="codigo" />
                         </button>
                       </th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[156px] z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', minWidth: '200px', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[100px] z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', minWidth: '200px', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>
                         <button onClick={() => toggleSort('descricao')} className="flex items-center gap-1">
                           Descrição <SortIcon field="descricao" />
                         </button>
@@ -452,17 +451,8 @@ export default function Home() {
                           onMouseEnter={e => (e.currentTarget.style.background = custo <= 0 ? 'oklch(0.16 0.05 25 / 0.25)' : 'oklch(0.16 0.005 285)')}
                           onMouseLeave={e => (e.currentTarget.style.background = custo <= 0 ? 'oklch(0.14 0.03 25 / 0.15)' : 'transparent')}
                         >
-                          <td className="px-3 py-2 sticky left-0 z-10" style={{ background: 'inherit' }}>
-                            {p.imagem_url ? (
-                              <img src={p.imagem_url} alt={p.codigo} className="w-10 h-10 object-contain rounded" style={{ background: 'oklch(0.20 0.005 285)' }} />
-                            ) : (
-                              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ background: 'oklch(0.18 0.005 285)' }}>
-                                <Package className="w-4 h-4" style={{ color: 'oklch(0.35 0.010 285)' }} />
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-3 py-2 font-rajdhani font-semibold text-xs tracking-wide sticky left-[56px] z-10" style={{ color: 'oklch(0.48 0.22 25)', background: 'inherit' }}>{p.codigo}</td>
-                          <td className="px-3 py-2 text-xs max-w-[280px] truncate sticky left-[156px] z-10" style={{ background: 'inherit', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>{p.descricao}</td>
+                          <td className="px-3 py-2 font-rajdhani font-semibold text-xs tracking-wide sticky left-0 z-10" style={{ color: 'oklch(0.48 0.22 25)', background: 'inherit' }}>{p.codigo}</td>
+                          <td className="px-3 py-2 text-xs max-w-[280px] truncate sticky left-[100px] z-10" style={{ background: 'inherit', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>{p.descricao}</td>
                           <td className="px-3 py-2 font-mono text-[11px]" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.cod_barras}</td>
                           <td className="px-3 py-2 text-xs" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.unid}</td>
                           <td className="px-3 py-2 text-right">
@@ -786,11 +776,7 @@ const ProductCard = React.memo(function ProductCard({
       <div className="mb-3 h-28 rounded-md flex items-center justify-center overflow-hidden" style={{
         background: 'oklch(0.12 0.005 285)',
       }}>
-        {produto.imagem_url ? (
-          <img src={produto.imagem_url} alt={produto.codigo} className="h-full w-full object-contain" />
-        ) : (
-          <Package className="w-8 h-8" style={{ color: 'oklch(0.30 0.010 285)' }} />
-        )}
+        <Package className="w-8 h-8" style={{ color: 'oklch(0.30 0.010 285)' }} />
       </div>
 
       {/* Info */}
