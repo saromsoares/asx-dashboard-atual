@@ -127,10 +127,7 @@ export default function Login() {
             {loading ? 'Autenticando...' : 'Entrar'}
           </button>
 
-          {/* Dica */}
-          <p className="text-xs text-center mt-6" style={{ color: 'oklch(0.45 0.010 285)' }}>
-            Credenciais padrão: sarom@asxstore.com / Asxx@China
-          </p>
+          {/* Dica removida por segurança */}
         </form>
 
         {/* Footer */}
