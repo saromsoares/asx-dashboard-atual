@@ -364,7 +364,7 @@ export default function Compras() {
                         <input
                           type="text"
                           disabled
-                          value={formatUSD(produtos.find(p => p.id === produtoSelecionado)?.preco_venda || 0)}
+                          value={formatUSD(produtos.find(p => p.id === produtoSelecionado)?.custo_usd || 0)}
                           className="w-full px-2 py-1 rounded text-sm mt-1"
                           style={{
                             background: 'oklch(0.18 0.005 285)',
