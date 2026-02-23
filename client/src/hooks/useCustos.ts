@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { TAXA_CAMBIO, produtos } from '@/data/produtos';
 
 const STORAGE_KEY = 'asx_custos_usd';
+const STORAGE_KEY_TAXA = 'asx_taxa_cambio';
 
 // Criar mapa de custo_usd padrão do catálogo (planilha)
 const catalogCustos: Record<number, number> = {};
@@ -11,6 +12,19 @@ for (const p of produtos) {
   if (p.custo_usd > 0) {
     catalogCustos[p.id] = p.custo_usd;
   }
+}
+
+// ---- Evento customizado para comunicação entre hooks ----
+// Substitui o polling por setInterval — muito mais eficiente
+export const CUSTOS_CHANGE_EVENT = 'asx_custos_changed';
+export const TAXA_CHANGE_EVENT = 'asx_taxa_changed';
+
+export function dispatchCustosChange() {
+  window.dispatchEvent(new CustomEvent(CUSTOS_CHANGE_EVENT));
+}
+
+export function dispatchTaxaChange() {
+  window.dispatchEvent(new CustomEvent(TAXA_CHANGE_EVENT));
 }
 
 export function useCustos() {
@@ -23,22 +37,31 @@ export function useCustos() {
     }
   });
 
-  const [taxaCambio, setTaxaCambio] = useState<number>(() => {
+  const [taxaCambio, setTaxaCambioState] = useState<number>(() => {
     try {
-      const stored = localStorage.getItem('asx_taxa_cambio');
+      const stored = localStorage.getItem(STORAGE_KEY_TAXA);
       return stored ? parseFloat(stored) : TAXA_CAMBIO;
     } catch {
       return TAXA_CAMBIO;
     }
   });
 
+  // Persistir custos e disparar evento
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(custos));
+    dispatchCustosChange();
   }, [custos]);
 
+  // Persistir taxa e disparar evento
   useEffect(() => {
-    localStorage.setItem('asx_taxa_cambio', String(taxaCambio));
+    localStorage.setItem(STORAGE_KEY_TAXA, String(taxaCambio));
+    dispatchTaxaChange();
   }, [taxaCambio]);
+
+  // Wrapper que garante persistência + evento
+  const setTaxaCambio = useCallback((valor: number) => {
+    setTaxaCambioState(valor);
+  }, []);
 
   const setCusto = useCallback((produtoId: number, valor: number) => {
     setCustos(prev => ({ ...prev, [produtoId]: valor }));

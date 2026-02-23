@@ -1,7 +1,7 @@
 // Design: Dark Command Center — painel automotivo escuro, acento vermelho ASX
 // Fontes: Rajdhani (títulos/códigos) + Inter (dados/labels)
 
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
 import {
@@ -553,7 +553,7 @@ export default function Home() {
 }
 
 /* ---- Inline Cost Input ---- */
-function InlineCustoInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+const InlineCustoInput = React.memo(function InlineCustoInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [editing, setEditing] = useState(false);
   const [inputVal, setInputVal] = useState(value.toString());
 
@@ -595,10 +595,10 @@ function InlineCustoInput({ value, onChange }: { value: number; onChange: (v: nu
       {value > 0 ? `$${value.toFixed(2)}` : '+ Custo'}
     </button>
   );
-}
+});
 
 /* ---- Product Card ---- */
-function ProductCard({
+const ProductCard = React.memo(function ProductCard({
   produto,
   custo,
   custoReal,
@@ -718,4 +718,4 @@ function ProductCard({
       )}
     </div>
   );
-}
+});

@@ -6,6 +6,7 @@ import { useLocation } from 'wouter';
 import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
+import { dispatchProcessosChange } from '../hooks/useEstoque';
 
 interface ItemConteiner {
   id: string;
@@ -73,6 +74,7 @@ export default function Conteiner() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_PROCESSOS, JSON.stringify(processos));
+      dispatchProcessosChange(); // Notificar useEstoque da mudança
     } catch (e) {
       console.error('Erro ao salvar processos:', e);
     }
@@ -442,7 +444,7 @@ export default function Conteiner() {
       const alexPreco = Number((item.pedidoAlexandre * item.precoUnitarioDolar).toFixed(2));
 
       setCell(`A${r}`, idx + 1, { font: fontNormal9, alignment: alignCenter, border: borderMediumLeft });
-      setCell(`B${r}`, `${item.descricao}${item.codigo}`, { font: fontNormal9, alignment: alignLeft, border: borderThin });
+      setCell(`B${r}`, `${item.codigo} - ${item.descricao}`, { font: fontNormal9, alignment: alignLeft, border: borderThin });
       setCell(`H${r}`, item.unidade || 'PIC', { font: fontNormal9, alignment: alignCenter, border: borderThin });
       setCell(`I${r}`, item.quantidade, { font: fontNormal9, alignment: alignCenter, border: borderThin });
       setCell(`J${r}`, Number(item.precoUnitarioDolar.toFixed(2)), { font: fontNormal9, alignment: alignCenter, border: borderThin });
@@ -880,12 +882,6 @@ export default function Conteiner() {
     }
     rows[embarqueRow - 1] = { hpt: 16 };
     rows[bankRow - 1] = { hpt: 133 };
-    ws['!rows'] = Object.keys(rows).map((k) => {
-      const arr: any[] = [];
-      const maxIdx = Math.max(...Object.keys(rows).map(Number));
-      return arr;
-    });
-    // Build rows array properly
     const maxRowIdx = Math.max(...Object.keys(rows).map(Number));
     const rowsArr: any[] = [];
     for (let i = 0; i <= maxRowIdx; i++) {

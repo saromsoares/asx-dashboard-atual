@@ -2,23 +2,29 @@
   Hook useEstoque — Gestão de Estoque e Necessidade de Compra
   Persistência independente por comprador (Sarom / Alexandre)
   Cálculos automáticos: média mensal, cobertura, necessidade de compra, valor investimento
+
   VINCULAÇÃO AUTOMÁTICA: lê processos de contêiner em trânsito para alimentar "A Chegar"
+
+  CORREÇÕES v2.1:
+  - Usa taxa de câmbio do localStorage (consistente com Dashboard e Configurações)
+  - Substituído setInterval polling por CustomEvent (performance)
+  - Adicionado evento de storage para sync entre abas
 */
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
+import { CUSTOS_CHANGE_EVENT, TAXA_CHANGE_EVENT } from './useCustos';
 
 // ---- Interfaces ----
 
 export interface DadosEstoqueProduto {
   produtoId: number;
   estoqueInicial: number;
-  mercadoriaAChegarManual: number; // preenchido manualmente pelo usuário
-  vendaTrimestre: number; // total de vendas do último trimestre
+  mercadoriaAChegarManual: number;
+  vendaTrimestre: number;
 }
 
 export interface ProdutoComEstoque {
-  // Bloco 1 — Identificação (do catálogo)
   id: number;
   codigo: string;
   descricao: string;
@@ -28,27 +34,23 @@ export interface ProdutoComEstoque {
   custoUsd: number;
   custoBrl: number;
 
-  // Bloco 2 — Posição de Estoque
   estoqueInicial: number;
-  mercadoriaAChegarManual: number;   // manual
-  mercadoriaAChegarConteiner: number; // automático dos contêineres
-  mercadoriaAChegar: number;          // total = manual + contêiner
+  mercadoriaAChegarManual: number;
+  mercadoriaAChegarConteiner: number;
+  mercadoriaAChegar: number;
   estoqueProjetado: number;
 
-  // Bloco 3 — Métricas de Venda
   vendaTrimestre: number;
   mediaMensal: number;
   coberturaMeses: number;
 
-  // Bloco 4 — Necessidade de Compra
   estoqueIdeal: number;
   necessidadeCompra: number;
   valorCompraUsd: number;
   valorCompraBrl: number;
   status: StatusEstoque;
 
-  // Info de vinculação
-  processosVinculados: string[]; // números dos processos que contribuem para "A Chegar"
+  processosVinculados: string[];
 }
 
 export type StatusEstoque = 'critico' | 'atencao' | 'ok' | 'excesso' | 'sem_dados';
@@ -116,6 +118,13 @@ function getMetaKey(comprador: string): string {
 
 const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
 
+// Evento customizado para quando processos mudam
+export const PROCESSOS_CHANGE_EVENT = 'asx_processos_changed';
+
+export function dispatchProcessosChange() {
+  window.dispatchEvent(new CustomEvent(PROCESSOS_CHANGE_EVENT));
+}
+
 /** Lê processos de contêiner do localStorage */
 function carregarProcessos(): ProcessoSR[] {
   try {
@@ -125,6 +134,15 @@ function carregarProcessos(): ProcessoSR[] {
     console.error('Erro ao carregar processos para vinculação:', e);
   }
   return [];
+}
+
+/** Lê taxa de câmbio do localStorage (consistente com Dashboard) */
+function carregarTaxaCambio(): number {
+  try {
+    const stored = localStorage.getItem('asx_taxa_cambio');
+    if (stored) return parseFloat(stored);
+  } catch { /* ignore */ }
+  return TAXA_CAMBIO;
 }
 
 /** Mapeia código de produto para ID */
@@ -147,7 +165,6 @@ function calcularEmTransito(
   const resultado = new Map<number, { quantidade: number; processos: string[] }>();
   const processos = carregarProcessos();
 
-  // Apenas processos "Em andamento" = mercadoria em trânsito
   const emAndamento = processos.filter(p => p.status === 'Em andamento');
 
   for (const processo of emAndamento) {
@@ -156,7 +173,6 @@ function calcularEmTransito(
       const produtoId = codigoMap.get(codigoUpper);
       if (!produtoId) continue;
 
-      // Pegar a quantidade do comprador correto
       const qtd = comprador === 'sarom' ? item.pedidoSarom : item.pedidoAlexandre;
       if (qtd <= 0) continue;
 
@@ -180,7 +196,6 @@ function migrarDadosAntigos(dados: Record<number, any>): Record<number, DadosEst
     const id = parseInt(idStr, 10);
     if (isNaN(id)) continue;
 
-    // Migrar dados antigos: se tinha vendaMes1/2/3, somar para vendaTrimestre
     const vendaTrimestre = valor.vendaTrimestre ?? ((valor.vendaMes1 || 0) + (valor.vendaMes2 || 0) + (valor.vendaMes3 || 0));
     migrado[id] = {
       produtoId: id,
@@ -199,7 +214,6 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
   const metaKey = getMetaKey(comprador);
   const codigoMap = useMemo(() => buildCodigoToIdMap(), []);
 
-  // Estado: dados de estoque por produto (Map: produtoId -> DadosEstoqueProduto)
   const [dadosEstoque, setDadosEstoque] = useState<Record<number, DadosEstoqueProduto>>(() => {
     try {
       const stored = localStorage.getItem(storageKey);
@@ -209,7 +223,6 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     }
   });
 
-  // Meta de cobertura em meses (padrão: 9)
   const [metaCobertura, setMetaCobertura] = useState<number>(() => {
     try {
       const stored = localStorage.getItem(metaKey);
@@ -219,7 +232,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     }
   });
 
-  // Carregar custos USD do localStorage (mesma fonte do Dashboard)
+  // CORREÇÃO: Carregar custos USD do localStorage
   const [custosUsd, setCustosUsd] = useState<Record<number, number>>(() => {
     try {
       const stored = localStorage.getItem('asx_custos_usd');
@@ -229,7 +242,9 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     }
   });
 
-  // Dados de contêineres em trânsito (atualizado periodicamente)
+  // CORREÇÃO: Carregar taxa de câmbio do localStorage (era hardcoded TAXA_CAMBIO)
+  const [taxaCambio, setTaxaCambio] = useState<number>(() => carregarTaxaCambio());
+
   const [emTransito, setEmTransito] = useState<Map<number, { quantidade: number; processos: string[] }>>(() =>
     calcularEmTransito(comprador, codigoMap)
   );
@@ -248,36 +263,64 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     localStorage.setItem(metaKey, String(metaCobertura));
   }, [metaCobertura, metaKey]);
 
-  // Recarregar custos USD periodicamente (caso o Dashboard atualize)
+  // CORREÇÃO: Substituído setInterval por event listeners
+  // Escutar mudanças nos custos USD (via CustomEvent do useCustos)
   useEffect(() => {
-    const interval = setInterval(() => {
+    const handleCustosChange = () => {
       try {
         const stored = localStorage.getItem('asx_custos_usd');
         if (stored) setCustosUsd(JSON.parse(stored));
       } catch { /* ignore */ }
-    }, 5000);
-    return () => clearInterval(interval);
+    };
+
+    // Escutar evento customizado (mesma aba)
+    window.addEventListener(CUSTOS_CHANGE_EVENT, handleCustosChange);
+    // Escutar evento de storage (outra aba)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'asx_custos_usd') handleCustosChange();
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener(CUSTOS_CHANGE_EVENT, handleCustosChange);
+      window.removeEventListener('storage', handleStorage);
+    };
   }, []);
 
-  // Recarregar dados de contêineres periodicamente (caso o Contêiner atualize)
+  // CORREÇÃO: Escutar mudanças na taxa de câmbio
+  useEffect(() => {
+    const handleTaxaChange = () => {
+      setTaxaCambio(carregarTaxaCambio());
+    };
+
+    window.addEventListener(TAXA_CHANGE_EVENT, handleTaxaChange);
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'asx_taxa_cambio') handleTaxaChange();
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener(TAXA_CHANGE_EVENT, handleTaxaChange);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  // CORREÇÃO: Substituído setInterval(3s) por event listeners para processos
   useEffect(() => {
     const atualizarTransito = () => {
       setEmTransito(calcularEmTransito(comprador, codigoMap));
     };
 
-    // Atualizar a cada 3 segundos para captar mudanças no Contêiner
-    const interval = setInterval(atualizarTransito, 3000);
-
-    // Também escutar eventos de storage (caso outra aba mude os dados)
+    // Escutar evento customizado (mesma aba)
+    window.addEventListener(PROCESSOS_CHANGE_EVENT, atualizarTransito);
+    // Escutar evento de storage (outra aba)
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY_PROCESSOS) {
-        atualizarTransito();
-      }
+      if (e.key === STORAGE_KEY_PROCESSOS) atualizarTransito();
     };
     window.addEventListener('storage', handleStorage);
 
     return () => {
-      clearInterval(interval);
+      window.removeEventListener(PROCESSOS_CHANGE_EVENT, atualizarTransito);
       window.removeEventListener('storage', handleStorage);
     };
   }, [comprador, codigoMap]);
@@ -285,7 +328,6 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
   // ---- Funções de atualização ----
 
   const atualizarDados = useCallback((produtoId: number, campo: string, valor: number) => {
-    // Mapear campo legado "mercadoriaAChegar" para "mercadoriaAChegarManual"
     const campoReal = campo === 'mercadoriaAChegar' ? 'mercadoriaAChegarManual' : campo;
 
     setDadosEstoque(prev => {
@@ -302,7 +344,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     });
   }, []);
 
-  const atualizarDadosEmMassa = useCallback((dados: Record<number, Partial<DadosEstoqueProduto & { mercadoriaAChegar?: number }>>) => {
+  const atualizarDadosEmMassa = useCallback((dados: Record<number, Partial<DadosEstoqueProduto>>) => {
     setDadosEstoque(prev => {
       const novo = { ...prev };
       Object.entries(dados).forEach(([idStr, parcial]) => {
@@ -313,7 +355,6 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
           mercadoriaAChegarManual: 0,
           vendaTrimestre: 0,
         };
-        // Mapear campo legado
         const { mercadoriaAChegar, ...rest } = parcial as any;
         const merged = { ...atual, ...rest, produtoId: id };
         if (mercadoriaAChegar !== undefined && rest.mercadoriaAChegarManual === undefined) {
@@ -326,6 +367,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
   }, []);
 
   // ---- Produtos com cálculos ----
+  // CORREÇÃO: Usa taxaCambio dinâmica em vez de TAXA_CAMBIO constante
 
   const produtosComEstoque: ProdutoComEstoque[] = useMemo(() => {
     return produtos.map(p => {
@@ -337,28 +379,24 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
       };
 
       const custoUsd = custosUsd[p.id] || p.custo_usd || 0;
-      const custoBrl = custoUsd * TAXA_CAMBIO;
+      const custoBrl = custoUsd * taxaCambio; // CORREÇÃO: era TAXA_CAMBIO hardcoded
 
-      // Dados de contêiner em trânsito
       const transitoInfo = emTransito.get(p.id);
       const mercadoriaAChegarConteiner = transitoInfo?.quantidade || 0;
       const processosVinculados = transitoInfo?.processos || [];
 
-      // Bloco 2 — Posição de Estoque
       const mercadoriaAChegarManual = dados.mercadoriaAChegarManual || 0;
       const mercadoriaAChegar = mercadoriaAChegarManual + mercadoriaAChegarConteiner;
       const estoqueProjetado = dados.estoqueInicial + mercadoriaAChegar;
 
-      // Bloco 3 — Métricas de Venda
       const vendaTrimestre = dados.vendaTrimestre || 0;
       const mediaMensal = vendaTrimestre > 0 ? vendaTrimestre / 3 : 0;
       const coberturaMeses = mediaMensal > 0 ? estoqueProjetado / mediaMensal : 0;
 
-      // Bloco 4 — Necessidade de Compra
       const estoqueIdeal = mediaMensal * metaCobertura;
       const necessidadeCompra = Math.max(0, estoqueIdeal - estoqueProjetado);
       const valorCompraUsd = necessidadeCompra * custoUsd;
-      const valorCompraBrl = valorCompraUsd * TAXA_CAMBIO;
+      const valorCompraBrl = valorCompraUsd * taxaCambio; // CORREÇÃO: era TAXA_CAMBIO
 
       const status = calcularStatus(coberturaMeses, mediaMensal);
 
@@ -387,12 +425,13 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
         processosVinculados,
       };
     });
-  }, [dadosEstoque, custosUsd, metaCobertura, emTransito]);
+  }, [dadosEstoque, custosUsd, taxaCambio, metaCobertura, emTransito]);
 
   // ---- KPIs ----
+  // CORREÇÃO: Usa taxaCambio dinâmica
 
   const kpis: KPIsEstoque = useMemo(() => {
-    const ativos = produtosComEstoque.filter(p => p.estoqueInicial > 0 || p.mercadoriaAChegar > 0 || p.mediaMensal > 0);
+    const ativos = produtosComEstoque.filter(p => p.estoqueInicial > 0 || p.mercadoriaAChegar > 0 || p.vendaTrimestre > 0);
     const criticos = produtosComEstoque.filter(p => p.status === 'critico');
     const atencao = produtosComEstoque.filter(p => p.status === 'atencao');
     const ok = produtosComEstoque.filter(p => p.status === 'ok');
@@ -400,7 +439,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
     const semDados = produtosComEstoque.filter(p => p.status === 'sem_dados');
 
     const investimentoTotalUsd = produtosComEstoque.reduce((s, p) => s + p.valorCompraUsd, 0);
-    const investimentoTotalBrl = investimentoTotalUsd * TAXA_CAMBIO;
+    const investimentoTotalBrl = investimentoTotalUsd * taxaCambio; // CORREÇÃO
 
     const comCobertura = produtosComEstoque.filter(p => p.mediaMensal > 0);
     const coberturaMediaGeral = comCobertura.length > 0
@@ -419,7 +458,7 @@ export function useEstoque(comprador: 'sarom' | 'alexandre') {
       investimentoTotalBrl,
       coberturaMediaGeral,
     };
-  }, [produtosComEstoque]);
+  }, [produtosComEstoque, taxaCambio]);
 
   return {
     produtosComEstoque,

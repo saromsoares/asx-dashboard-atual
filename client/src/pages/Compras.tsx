@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link, useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
 import { usePedidos, type ItemPedido } from '@/hooks/usePedidos';
+import XLSX from 'xlsx-js-style';
 import {
   Plus,
   Trash2,
@@ -89,8 +90,45 @@ export default function Compras() {
   };
 
   const exportarExcel = (pedido: any) => {
-    // Implementar exportação Excel
-    alert('Exportação Excel em desenvolvimento');
+    try {
+      const XLSX = require('xlsx-js-style');
+      const totais = calcularTotais(pedido);
+      
+      const dados = pedido.items.map((item: ItemPedido) => ({
+        'CÓDIGO': item.codigo,
+        'PRODUTO': item.nome,
+        'PREÇO USD': item.precoUSD,
+        'QTD SAROM': item.qtdSarom,
+        'VALOR SAROM': item.precoUSD * item.qtdSarom,
+        'QTD ALEXANDRE': item.qtdAlexandre,
+        'VALOR ALEXANDRE': item.precoUSD * item.qtdAlexandre,
+        'QTD TOTAL': item.qtdSarom + item.qtdAlexandre,
+        'VALOR TOTAL': item.precoUSD * (item.qtdSarom + item.qtdAlexandre),
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(dados);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, pedido.nome.substring(0, 31));
+
+      ws['!cols'] = [
+        { wch: 14 }, { wch: 45 }, { wch: 12 }, { wch: 12 },
+        { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 14 },
+      ];
+
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Pedido_${pedido.nome}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Erro na exportação:', err);
+      alert('Erro ao exportar planilha.');
+    }
   };
 
   return (
@@ -123,7 +161,7 @@ export default function Compras() {
                 placeholder="Nome do pedido..."
                 value={novoNomePedido}
                 onChange={e => setNovoNomePedido(e.target.value)}
-                onKeyPress={e => e.key === 'Enter' && handleCriarPedido()}
+                onKeyDown={e => e.key === 'Enter' && handleCriarPedido()}
                 className="flex-1 px-3 py-2 text-sm rounded-md border"
                 style={{
                   background: 'oklch(0.18 0.005 285)',
@@ -195,7 +233,7 @@ export default function Compras() {
                       value={pedidoAtualAtual.nome}
                       onChange={e => atualizarNomePedido(pedidoAtivo, e.target.value)}
                       onBlur={() => setEditandoNome(null)}
-                      onKeyPress={e => e.key === 'Enter' && setEditandoNome(null)}
+                      onKeyDown={e => e.key === 'Enter' && setEditandoNome(null)}
                       autoFocus
                       className="px-3 py-2 rounded-md border flex-1"
                       style={{
