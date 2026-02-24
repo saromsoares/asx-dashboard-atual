@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
-import { usePedidos, type ItemPedido } from '@/hooks/usePedidos';
+import { usePedidosSync, type ItemPedido } from '@/hooks/usePedidosSync';
 import { useIdioma } from '@/hooks/useIdioma';
+import { NotificacoesPedidos } from '@/components/NotificacoesPedidos';
 import XLSX from 'xlsx-js-style';
 import {
   Plus,
@@ -33,14 +34,15 @@ export default function Compras() {
     atualizarNomePedido,
     adicionarItem,
     removerItem,
-    toggleConfirmacao,
     atualizarStatusPedido,
     calcularTotais,
-  } = usePedidos();
+    notificacoes,
+    carregando,
+  } = usePedidosSync();
 
-  const [pedidoAtivo, setPedidoAtivo] = useState<string | null>(null);
+  const [pedidoAtivo, setPedidoAtivo] = useState<number | null>(null);
   const [novoNomePedido, setNovoNomePedido] = useState('');
-  const [editandoNome, setEditandoNome] = useState<string | null>(null);
+  const [editandoNome, setEditandoNome] = useState<number | null>(null);
   const [buscaProduto, setBuscaProduto] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState<number | null>(null);
   const [qtdSarom, setQtdSarom] = useState(0);
@@ -49,7 +51,8 @@ export default function Compras() {
   const [showAutoDistrib, setShowAutoDistrib] = useState(false);
   const [proporcaoSarom, setProporcaoSarom] = useState(50);
   const [filtroTabela, setFiltroTabela] = useState<string>('');
-  const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Pendente' | 'Enviado' | 'Recebido'>('Todos');
+  const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Pendente' | 'Confirmado' | 'Recebido'>('Todos');
+  const [notificacoesLocais, setNotificacoesLocais] = useState(notificacoes);
 
   // Extrair categorias únicas dos produtos
   const categorias = useMemo(() => {
@@ -97,13 +100,15 @@ export default function Compras() {
     return resultado.slice(0, 50);
   }, [filtroTabela, categoriaFiltro]);
 
-  const handleCriarPedido = () => {
+  const handleCriarPedido = useCallback(async () => {
     if (novoNomePedido.trim()) {
-      const novo = criarPedido(novoNomePedido);
-      setPedidoAtivo(novo.id);
-      setNovoNomePedido('');
+      const novo = await criarPedido(novoNomePedido);
+      if (novo) {
+        setPedidoAtivo(novo.id);
+        setNovoNomePedido('');
+      }
     }
-  };
+  }, [novoNomePedido, criarPedido]);
 
   const handleAdicionarItem = () => {
     if (!pedidoAtivo || !produtoSelecionado || (qtdSarom === 0 && qtdAlexandre === 0)) {
@@ -247,7 +252,7 @@ export default function Compras() {
             {[
               { label: 'Todos', value: 'Todos' as const, count: contagemStatus.todos, color: 'oklch(0.48 0.22 25)' },
               { label: 'Pendente', value: 'Pendente' as const, count: contagemStatus.pendente, color: 'oklch(0.65 0.22 25)' },
-              { label: 'Enviado', value: 'Enviado' as const, count: contagemStatus.enviado, color: 'oklch(0.55 0.15 270)' },
+              { label: 'Confirmado', value: 'Confirmado' as const, count: contagemStatus.enviado, color: 'oklch(0.55 0.15 270)' },
               { label: 'Recebido', value: 'Recebido' as const, count: contagemStatus.recebido, color: 'oklch(0.72 0.17 145)' },
             ].map(tab => (
               <button
@@ -752,6 +757,9 @@ export default function Compras() {
           </div>
         </div>
       )}
+
+      {/* Notificações de Pedidos */}
+      <NotificacoesPedidos notificacoes={notificacoes} />
     </div>
   );
 }

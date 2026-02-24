@@ -86,7 +86,7 @@ export const appRouter = router({
         return await getAllPedidos();
       }),
     atualizarStatus: protectedProcedure
-      .input(z.object({ pedidoId: z.number(), novoStatus: z.enum(["Pendente", "Enviado", "Recebido"]) }))
+      .input(z.object({ pedidoId: z.number(), novoStatus: z.enum(["Pendente", "Confirmado", "Recebido"]) }))
       .mutation(async ({ input, ctx }) => {
         const pedidoAnterior = await getPedido(input.pedidoId);
         const result = await atualizarStatusPedido(input.pedidoId, input.novoStatus);

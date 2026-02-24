@@ -63,7 +63,7 @@ export type InsertPreco = typeof precos.$inferInsert;
 export const pedidos = mysqlTable("pedidos", {
   id: int("id").autoincrement().primaryKey(),
   nome: varchar("nome", { length: 255 }).notNull(),
-  status: mysqlEnum("status", ["Pendente", "Enviado", "Recebido"]).default("Pendente").notNull(),
+  status: mysqlEnum("status", ["Pendente", "Confirmado", "Recebido"]).default("Pendente").notNull(),
   dataCreacao: timestamp("dataCreacao").defaultNow().notNull(),
   dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
 });

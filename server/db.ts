@@ -263,7 +263,7 @@ export async function getAllPedidos() {
   }
 }
 
-export async function atualizarStatusPedido(pedidoId: number, novoStatus: "Pendente" | "Enviado" | "Recebido") {
+export async function atualizarStatusPedido(pedidoId: number, novoStatus: "Pendente" | "Confirmado" | "Recebido") {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot update pedido status: database not available");

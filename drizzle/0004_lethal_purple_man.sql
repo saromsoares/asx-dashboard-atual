@@ -1,0 +1,1 @@
+ALTER TABLE `pedidos` MODIFY COLUMN `status` enum('Pendente','Confirmado','Recebido') NOT NULL DEFAULT 'Pendente';
