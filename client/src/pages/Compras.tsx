@@ -436,20 +436,30 @@ export default function Compras() {
                         <th className="px-4 py-2 text-center font-semibold">Preço USD</th>
                         <th className="px-4 py-2 text-center font-semibold">Qtd Sarom</th>
                         <th className="px-4 py-2 text-center font-semibold">Qtd Alexandre</th>
-                        <th className="px-4 py-2 text-center font-semibold">% Item</th>
-                        <th className="px-4 py-2 text-center font-semibold">% Total</th>
+                        <th className="px-4 py-2 text-center font-semibold">% Sarom (Item)</th>
+                        <th className="px-4 py-2 text-center font-semibold">% Alexandre (Item)</th>
+                        <th className="px-4 py-2 text-center font-semibold">% Sarom (Total)</th>
+                        <th className="px-4 py-2 text-center font-semibold">% Alexandre (Total)</th>
                         <th className="px-4 py-2 text-center font-semibold">Ação</th>
                       </tr>
                     </thead>
                     <tbody>
                       {produtosFiltrados.map(p => {
-                        const qtdTotal = pedidoAtualAtual?.items.reduce((sum, item) => sum + item.qtdSarom + item.qtdAlexandre, 0) || 0;
+                        const totalSarom = pedidoAtualAtual?.items.reduce((sum, item) => sum + item.qtdSarom, 0) || 0;
+                        const totalAlexandre = pedidoAtualAtual?.items.reduce((sum, item) => sum + item.qtdAlexandre, 0) || 0;
+                        const qtdTotal = totalSarom + totalAlexandre;
                         const itemExistente = pedidoAtualAtual?.items.find(item => item.produtoId === p.id);
                         const qtdSaromItem = itemExistente?.qtdSarom || 0;
                         const qtdAlexandreItem = itemExistente?.qtdAlexandre || 0;
                         const qtdItemTotal = qtdSaromItem + qtdAlexandreItem;
-                        const pctItem = qtdItemTotal > 0 ? ((qtdItemTotal / (qtdTotal + qtdItemTotal)) * 100) : 0;
-                        const pctTotal = qtdTotal > 0 ? ((qtdItemTotal / qtdTotal) * 100) : 0;
+                        
+                        // Percentuais por item
+                        const pctSaromItem = qtdItemTotal > 0 ? ((qtdSaromItem / qtdItemTotal) * 100) : 0;
+                        const pctAlexandreItem = qtdItemTotal > 0 ? ((qtdAlexandreItem / qtdItemTotal) * 100) : 0;
+                        
+                        // Percentuais do total do pedido
+                        const pctSaromTotal = qtdTotal > 0 ? ((totalSarom / qtdTotal) * 100) : 0;
+                        const pctAlexandreTotal = qtdTotal > 0 ? ((totalAlexandre / qtdTotal) * 100) : 0;
 
                         return (
                           <tr
@@ -518,10 +528,16 @@ export default function Compras() {
                               />
                             </td>
                             <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.72 0.17 145)' }}>
-                              {pctItem.toFixed(1)}%
+                              {pctSaromItem.toFixed(1)}%
                             </td>
-                            <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.48 0.22 25)' }}>
-                              {pctTotal.toFixed(1)}%
+                            <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.65 0.18 60)' }}>
+                              {pctAlexandreItem.toFixed(1)}%
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.72 0.17 145)' }}>
+                              {pctSaromTotal.toFixed(1)}%
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.65 0.18 60)' }}>
+                              {pctAlexandreTotal.toFixed(1)}%
                             </td>
                             <td className="px-4 py-3 text-center">
                               {itemExistente && (
