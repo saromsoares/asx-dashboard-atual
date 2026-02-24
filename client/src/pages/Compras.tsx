@@ -15,6 +15,9 @@ import {
   FileText,
   ArrowLeft,
   Zap,
+  Clock,
+  Send,
+  CheckCheck,
 } from 'lucide-react';
 
 const formatUSD = (v: number) =>
@@ -46,6 +49,7 @@ export default function Compras() {
   const [showAutoDistrib, setShowAutoDistrib] = useState(false);
   const [proporcaoSarom, setProporcaoSarom] = useState(50);
   const [filtroTabela, setFiltroTabela] = useState<string>('');
+  const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Pendente' | 'Enviado' | 'Recebido'>('Todos');
 
   // Extrair categorias únicas dos produtos
   const categorias = useMemo(() => {
@@ -54,6 +58,24 @@ export default function Compras() {
   }, []);
 
   const pedidoAtualAtual = pedidos.find(p => p.id === pedidoAtivo);
+
+  // Filtrar pedidos por status
+  const pedidosFiltrados = useMemo(() => {
+    if (filtroStatus === 'Todos') {
+      return pedidos;
+    }
+    return pedidos.filter(p => p.status === filtroStatus);
+  }, [pedidos, filtroStatus]);
+
+  // Contar pedidos por status
+  const contagemStatus = useMemo(() => {
+    return {
+      todos: pedidos.length,
+      pendente: pedidos.filter(p => p.status === 'Pendente').length,
+      enviado: pedidos.filter(p => p.status === 'Enviado').length,
+      recebido: pedidos.filter(p => p.status === 'Recebido').length,
+    };
+  }, [pedidos]);
 
   const produtosFiltrados = useMemo(() => {
     let resultado = produtos;
@@ -220,13 +242,37 @@ export default function Compras() {
             </div>
           </div>
 
+          {/* Abas de filtro de status */}
+          <div className="border-b px-4 py-3 flex gap-2" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+            {[
+              { label: 'Todos', value: 'Todos' as const, count: contagemStatus.todos, color: 'oklch(0.48 0.22 25)' },
+              { label: 'Pendente', value: 'Pendente' as const, count: contagemStatus.pendente, color: 'oklch(0.65 0.22 25)' },
+              { label: 'Enviado', value: 'Enviado' as const, count: contagemStatus.enviado, color: 'oklch(0.55 0.15 270)' },
+              { label: 'Recebido', value: 'Recebido' as const, count: contagemStatus.recebido, color: 'oklch(0.72 0.17 145)' },
+            ].map(tab => (
+              <button
+                key={tab.value}
+                onClick={() => setFiltroStatus(tab.value)}
+                className="flex-1 px-2 py-1.5 rounded text-xs font-semibold transition-colors"
+                style={{
+                  background: filtroStatus === tab.value ? tab.color : 'oklch(0.18 0.005 285)',
+                  color: filtroStatus === tab.value ? 'white' : 'oklch(0.65 0.010 285)',
+                  borderColor: tab.color,
+                  border: '1px solid',
+                }}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+
           <div className="flex-1 overflow-y-auto">
-            {pedidos.length === 0 ? (
+            {pedidosFiltrados.length === 0 ? (
               <div className="p-4 text-center text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
                 Nenhum pedido criado
               </div>
             ) : (
-              pedidos.map(pedido => (
+              pedidosFiltrados.map(pedido => (
                 <button
                   key={pedido.id}
                   onClick={() => setPedidoAtivo(pedido.id)}
@@ -234,17 +280,20 @@ export default function Compras() {
                   style={{
                     background: pedidoAtivo === pedido.id ? 'oklch(0.18 0.005 285)' : 'transparent',
                     borderColor: 'oklch(0.22 0.005 285)',
+                    borderLeft: pedido.status === 'Pendente' ? '3px solid oklch(0.65 0.22 25)' : pedido.status === 'Enviado' ? '3px solid oklch(0.55 0.15 270)' : '3px solid oklch(0.72 0.17 145)',
                   }}
                 >
-                  {pedido.confirmado ? (
-                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.72 0.17 145)' }} />
+                  {pedido.status === 'Pendente' ? (
+                    <Clock className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.65 0.22 25)' }} />
+                  ) : pedido.status === 'Enviado' ? (
+                    <Send className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.55 0.15 270)' }} />
                   ) : (
-                    <Circle className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.50 0.010 285)' }} />
+                    <CheckCheck className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.72 0.17 145)' }} />
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{pedido.nome}</p>
                     <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                      {pedido.items.length} itens
+                      {pedido.items.length} itens • {pedido.status}
                     </p>
                   </div>
                 </button>
