@@ -22,6 +22,15 @@ export default function Desenvolvimento() {
   const [busca, setBusca] = useState('');
   const [produtosEditando, setProdutosEditando] = useState<Record<number, Partial<ProdutoEditavel>>>({});
   const [alteracoesSalvas, setAlteracoesSalvas] = useState<Record<number, boolean>>({});
+  const [mostrarModalNovoProduto, setMostrarModalNovoProduto] = useState(false);
+  const [novoProduto, setNovoProduto] = useState({
+    categoria: '',
+    nome: '',
+    codigoBarras: '',
+    codigoProduto: '',
+    descricao: '',
+    observacoes: '',
+  });
 
   // Carregar edições do localStorage ao montar
   useEffect(() => {
@@ -209,6 +218,13 @@ export default function Desenvolvimento() {
 
             <div className="text-xs" style={{ color: 'oklch(0.60 0.010 285)' }}>
               {produtosFiltrados.length} {produtosFiltrados.length === 1 ? 'produto' : 'produtos'}
+              <button
+                onClick={() => setMostrarModalNovoProduto(true)}
+                className="px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                style={{ background: "oklch(0.48 0.22 25)", color: "white" }}
+              >
+                + Novo Produto
+              </button>
             </div>
           </div>
 
@@ -341,6 +357,125 @@ export default function Desenvolvimento() {
           )}
         </div>
       </main>
+
+      {/* Modal de Novo Produto */}
+      {mostrarModalNovoProduto && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-black rounded-lg border max-w-2xl w-full max-h-[90vh] overflow-y-auto" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
+            <div className="sticky top-0 px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'oklch(0.26 0.005 285)', background: 'oklch(0.14 0.005 285)' }}>
+              <h2 className="text-xl font-rajdhani font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>Novo Produto</h2>
+              <button onClick={() => setMostrarModalNovoProduto(false)} className="p-1 rounded hover:bg-white/10">
+                <X className="w-5 h-5" style={{ color: 'oklch(0.65 0.010 285)' }} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Categoria *</label>
+                <select
+                  value={novoProduto.categoria}
+                  onChange={e => setNovoProduto({...novoProduto, categoria: e.target.value})}
+                  className="w-full px-3 py-2 rounded-md border text-sm mt-1"
+                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                >
+                  <option value="">Selecione uma categoria...</option>
+                  {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Nome do Produto *</label>
+                <input
+                  type="text"
+                  value={novoProduto.nome}
+                  onChange={e => setNovoProduto({...novoProduto, nome: e.target.value})}
+                  className="w-full px-3 py-2 rounded-md border text-sm mt-1"
+                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  placeholder="Nome do produto"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Código do Produto *</label>
+                  <input
+                    type="text"
+                    value={novoProduto.codigoProduto}
+                    onChange={e => setNovoProduto({...novoProduto, codigoProduto: e.target.value})}
+                    className="w-full px-3 py-2 rounded-md border text-sm mt-1"
+                    style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                    placeholder="Ex: ASX1001"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Código de Barras *</label>
+                  <input
+                    type="text"
+                    value={novoProduto.codigoBarras}
+                    onChange={e => setNovoProduto({...novoProduto, codigoBarras: e.target.value})}
+                    className="w-full px-3 py-2 rounded-md border text-sm mt-1"
+                    style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                    placeholder="EAN/UPC"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Descrição do Produto</label>
+                <textarea
+                  value={novoProduto.descricao}
+                  onChange={e => setNovoProduto({...novoProduto, descricao: e.target.value})}
+                  className="w-full px-3 py-2 rounded-md border text-sm mt-1 resize-none"
+                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  placeholder="Descrição detalhada do produto"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Observações</label>
+                <textarea
+                  value={novoProduto.observacoes}
+                  onChange={e => setNovoProduto({...novoProduto, observacoes: e.target.value})}
+                  className="w-full px-3 py-2 rounded-md border text-sm mt-1 resize-none"
+                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  placeholder="Observações adicionais"
+                  rows={2}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Foto do Produto</label>
+                <div className="mt-2 p-4 rounded-md border-2 border-dashed text-center cursor-pointer transition-colors hover:bg-white/5" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
+                  <input type="file" accept="image/*" className="hidden" id="foto-input" />
+                  <label htmlFor="foto-input" className="cursor-pointer">
+                    <p style={{ color: 'oklch(0.70 0.010 285)' }}>Clique para adicionar foto</p>
+                  </label>
+                </div>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setMostrarModalNovoProduto(false)}
+                  className="flex-1 px-4 py-2 rounded-md font-semibold transition-colors"
+                  style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    if (novoProduto.categoria && novoProduto.nome && novoProduto.codigoProduto && novoProduto.codigoBarras) {
+                      alert('Produto criado com sucesso!\n' + JSON.stringify(novoProduto));
+                      setMostrarModalNovoProduto(false);
+                      setNovoProduto({ categoria: '', nome: '', codigoBarras: '', codigoProduto: '', descricao: '', observacoes: '' });
+                    } else {
+                      alert('Preencha todos os campos obrigatórios');
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 rounded-md font-semibold transition-colors flex items-center justify-center gap-2"
+                  style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+                >
+                  <Save className="w-4 h-4" />
+                  Criar Produto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

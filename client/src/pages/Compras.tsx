@@ -248,7 +248,7 @@ export default function Compras() {
           </div>
 
           {/* Abas de filtro de status */}
-          <div className="border-b px-4 py-3 flex gap-2" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+          <div className="border-b px-4 py-3 flex gap-2 overflow-x-auto" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
             {[
               { label: 'Todos', value: 'Todos' as const, count: contagemStatus.todos, color: 'oklch(0.48 0.22 25)' },
               { label: 'Pendente', value: 'Pendente' as const, count: contagemStatus.pendente, color: 'oklch(0.65 0.22 25)' },
@@ -258,7 +258,7 @@ export default function Compras() {
               <button
                 key={tab.value}
                 onClick={() => setFiltroStatus(tab.value)}
-                className="flex-1 px-2 py-1.5 rounded text-xs font-semibold transition-colors"
+                className="px-4 py-1.5 rounded text-xs font-semibold transition-colors whitespace-nowrap"
                 style={{
                   background: filtroStatus === tab.value ? tab.color : 'oklch(0.18 0.005 285)',
                   color: filtroStatus === tab.value ? 'white' : 'oklch(0.65 0.010 285)',
