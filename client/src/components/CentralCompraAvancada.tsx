@@ -277,8 +277,9 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                       type="number"
                       value={estoqueEditando[item.codigo] ?? item.estoqueAtual}
                       onChange={e => setEstoqueEditando({...estoqueEditando, [item.codigo]: parseInt(e.target.value) || 0})}
+                      min="0"
                       className="w-full px-1 py-0.5 text-center rounded border text-xs"
-                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)', textAlign: 'center' }}
                     />
                   </td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalOrdens)}</td>
