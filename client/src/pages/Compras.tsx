@@ -44,6 +44,7 @@ export default function Compras() {
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('Todas');
   const [showAutoDistrib, setShowAutoDistrib] = useState(false);
   const [proporcaoSarom, setProporcaoSarom] = useState(50);
+  const [filtroTabela, setFiltroTabela] = useState<string>('');
 
   // Extrair categorias únicas dos produtos
   const categorias = useMemo(() => {
@@ -61,9 +62,9 @@ export default function Compras() {
       resultado = resultado.filter(p => p.categoria === categoriaFiltro);
     }
     
-    // Filtrar por busca
-    if (buscaProduto.trim()) {
-      const q = buscaProduto.toLowerCase();
+    // Filtrar por busca na tabela
+    if (filtroTabela.trim()) {
+      const q = filtroTabela.toLowerCase();
       resultado = resultado.filter(p =>
         p.codigo.toLowerCase().includes(q) ||
         p.descricao.toLowerCase().includes(q)
@@ -71,7 +72,7 @@ export default function Compras() {
     }
     
     return resultado.slice(0, 50);
-  }, [buscaProduto, categoriaFiltro]);
+  }, [filtroTabela, categoriaFiltro]);
 
   const handleCriarPedido = () => {
     if (novoNomePedido.trim()) {
@@ -364,8 +365,24 @@ export default function Compras() {
 
               {/* Tabela de Produtos da Categoria */}
               {categoriaFiltro !== 'Todas' && produtosFiltrados.length > 0 && (
-                <div className="flex-1 overflow-auto">
-                  <table className="w-full text-sm">
+                <div className="flex-1 overflow-auto flex flex-col">
+                  {/* Campo de Busca na Tabela */}
+                  <div className="px-6 py-3 border-b" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+                    <input
+                      type="text"
+                      placeholder="Buscar por código ou descrição..."
+                      value={filtroTabela}
+                      onChange={e => setFiltroTabela(e.target.value)}
+                      className="w-full px-3 py-2 rounded-md border text-sm"
+                      style={{
+                        background: 'oklch(0.18 0.005 285)',
+                        borderColor: 'oklch(0.28 0.005 285)',
+                        color: 'oklch(0.90 0.005 65)',
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 overflow-auto">
+                    <table className="w-full text-sm">
                     <thead style={{ background: 'oklch(0.14 0.005 285)', borderBottom: '1px solid oklch(0.22 0.005 285)', position: 'sticky', top: 0 }}>
                       <tr>
                         <th className="px-4 py-2 text-left font-semibold">Código</th>
@@ -476,6 +493,7 @@ export default function Compras() {
                       })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               )}
 
