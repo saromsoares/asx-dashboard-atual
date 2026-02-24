@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Search, ArrowLeft, Save, X } from 'lucide-react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
@@ -13,6 +13,8 @@ interface ProdutoEditavel {
   categoria: string;
 }
 
+const STORAGE_KEY = 'asx_produtos_edicoes';
+
 export default function Desenvolvimento() {
   const [, setLocation] = useLocation();
   const { t } = useIdioma();
@@ -20,6 +22,18 @@ export default function Desenvolvimento() {
   const [busca, setBusca] = useState('');
   const [produtosEditando, setProdutosEditando] = useState<Record<number, Partial<ProdutoEditavel>>>({});
   const [alteracoesSalvas, setAlteracoesSalvas] = useState<Record<number, boolean>>({});
+
+  // Carregar edições do localStorage ao montar
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setProdutosEditando(JSON.parse(saved));
+      } catch (e) {
+        console.error('Erro ao carregar edições:', e);
+      }
+    }
+  }, []);
 
   // Extrair categorias únicas
   const categorias = useMemo(() => {
@@ -29,16 +43,19 @@ export default function Desenvolvimento() {
 
   // Filtrar produtos por categoria e busca
   const produtosFiltrados = useMemo(() => {
-    let filtered = produtos;
+    let filtered = [...produtos];
 
-    if (categoriaSelected) {
+    // Filtro por categoria
+    if (categoriaSelected && categoriaSelected.trim() !== '') {
       filtered = filtered.filter(p => p.categoria === categoriaSelected);
     }
 
-    if (busca.trim()) {
+    // Filtro por busca
+    if (busca && busca.trim() !== '') {
+      const searchTerm = busca.toLowerCase();
       filtered = filtered.filter(p =>
-        p.codigo.toLowerCase().includes(busca.toLowerCase()) ||
-        p.descricao.toLowerCase().includes(busca.toLowerCase())
+        p.codigo.toLowerCase().includes(searchTerm) ||
+        p.descricao.toLowerCase().includes(searchTerm)
       );
     }
 
@@ -55,21 +72,31 @@ export default function Desenvolvimento() {
 
   // Atualizar valor editável
   const handleEditarValor = (produtoId: number, campo: 'custoUsd' | 'precoVendaBrl', valor: number) => {
-    setProdutosEditando(prev => ({
-      ...prev,
-      [produtoId]: {
-        ...prev[produtoId],
-        [campo]: valor,
-      },
-    }));
+    setProdutosEditando(prev => {
+      const novo = {
+        ...prev,
+        [produtoId]: {
+          ...prev[produtoId],
+          [campo]: valor,
+        },
+      };
+      // Salvar no localStorage imediatamente
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      return novo;
+    });
     setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: false }));
   };
 
-  // Salvar alterações (simular salvamento)
+  // Salvar alterações
   const handleSalvar = (produtoId: number) => {
     setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: true }));
-    // Aqui você poderia enviar para um backend
+    // Dados já estão salvos no localStorage
     console.log(`Produto ${produtoId} salvo:`, produtosEditando[produtoId]);
+    
+    // Mostrar feedback visual (opcional)
+    setTimeout(() => {
+      setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: false }));
+    }, 2000);
   };
 
   // Cancelar edição
@@ -77,6 +104,8 @@ export default function Desenvolvimento() {
     setProdutosEditando(prev => {
       const novo = { ...prev };
       delete novo[produtoId];
+      // Atualizar localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
       return novo;
     });
     setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: false }));
@@ -98,6 +127,13 @@ export default function Desenvolvimento() {
     const custoBrl = calcularCustoBrl(custoUsd);
     if (custoBrl === 0) return 0;
     return ((precoVendaBrl - custoBrl) / custoBrl) * 100;
+  };
+
+  // Obter cor de status para margem
+  const getCorMargem = (markup: number) => {
+    if (markup > 50) return 'oklch(0.70 0.15 140)'; // Verde
+    if (markup > 20) return 'oklch(0.80 0.15 60)';  // Amarelo
+    return 'oklch(0.60 0.20 25)';                   // Vermelho
   };
 
   return (
@@ -132,7 +168,10 @@ export default function Desenvolvimento() {
               </label>
               <select
                 value={categoriaSelected}
-                onChange={e => setCategoriaSelected(e.target.value)}
+                onChange={e => {
+                  console.log('Select changed to:', e.target.value);
+                  setCategoriaSelected(e.target.value);
+                }}
                 className="w-full px-3 py-2 rounded-md border text-sm mt-1"
                 style={{
                   background: 'oklch(0.14 0.005 285)',
@@ -140,7 +179,7 @@ export default function Desenvolvimento() {
                   color: 'oklch(0.90 0.005 65)',
                 }}
               >
-                <option value="">{t('selecionarCategoria') || 'Selecionar categoria...'}</option>
+                <option value="">{t('selecionarCategoria') || 'Selecione uma categoria...'}</option>
                 {categorias.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
@@ -166,6 +205,10 @@ export default function Desenvolvimento() {
                   }}
                 />
               </div>
+            </div>
+
+            <div className="text-xs" style={{ color: 'oklch(0.60 0.010 285)' }}>
+              {produtosFiltrados.length} {produtosFiltrados.length === 1 ? 'produto' : 'produtos'}
             </div>
           </div>
 
@@ -203,14 +246,12 @@ export default function Desenvolvimento() {
                       <tr
                         key={produto.id}
                         style={{
-                          background: idx % 2 === 0 ? 'oklch(0.14 0.005 285)' : 'oklch(0.16 0.005 285)',
-                          borderBottom: '1px solid oklch(0.22 0.005 285)',
+                          borderBottom: '1px solid oklch(0.20 0.005 285)',
+                          background: idx % 2 === 0 ? 'oklch(0.12 0.005 285)' : 'oklch(0.14 0.005 285)',
                         }}
                       >
-                        <td className="px-4 py-3 font-mono" style={{ color: 'oklch(0.85 0.005 65)' }}>{produto.codigo}</td>
-                        <td className="px-4 py-3 text-sm" style={{ color: 'oklch(0.80 0.005 65)' }}>{produto.descricao}</td>
-
-                        {/* CUSTO USD */}
+                        <td className="px-4 py-3" style={{ color: 'oklch(0.80 0.005 65)' }}>{produto.codigo}</td>
+                        <td className="px-4 py-3 text-sm" style={{ color: 'oklch(0.75 0.005 65)' }}>{produto.descricao}</td>
                         <td className="px-4 py-3 text-center">
                           {editando ? (
                             <input
@@ -218,25 +259,20 @@ export default function Desenvolvimento() {
                               step="0.01"
                               value={editando.custoUsd ?? custoUsd}
                               onChange={e => handleEditarValor(produto.id, 'custoUsd', parseFloat(e.target.value) || 0)}
-                              className="w-20 px-2 py-1 rounded text-center text-sm"
+                              className="w-24 px-2 py-1 rounded text-center text-sm"
                               style={{
-                                background: 'oklch(0.12 0.005 285)',
+                                background: 'oklch(0.18 0.005 285)',
                                 borderColor: 'oklch(0.26 0.005 285)',
                                 color: 'oklch(0.90 0.005 65)',
-                                border: '1px solid oklch(0.26 0.005 285)',
                               }}
                             />
                           ) : (
                             <span style={{ color: 'oklch(0.80 0.005 65)' }}>${custoUsd.toFixed(2)}</span>
                           )}
                         </td>
-
-                        {/* CUSTO BRL */}
-                        <td className="px-4 py-3 text-center" style={{ color: 'oklch(0.75 0.010 285)' }}>
+                        <td className="px-4 py-3 text-center" style={{ color: 'oklch(0.75 0.005 65)' }}>
                           R$ {custoBrl.toFixed(2)}
                         </td>
-
-                        {/* PREÇO VENDA BRL */}
                         <td className="px-4 py-3 text-center">
                           {editando ? (
                             <input
@@ -246,59 +282,54 @@ export default function Desenvolvimento() {
                               onChange={e => handleEditarValor(produto.id, 'precoVendaBrl', parseFloat(e.target.value) || 0)}
                               className="w-24 px-2 py-1 rounded text-center text-sm"
                               style={{
-                                background: 'oklch(0.12 0.005 285)',
+                                background: 'oklch(0.18 0.005 285)',
                                 borderColor: 'oklch(0.26 0.005 285)',
                                 color: 'oklch(0.90 0.005 65)',
-                                border: '1px solid oklch(0.26 0.005 285)',
                               }}
                             />
                           ) : (
-                            <span style={{ color: 'oklch(0.85 0.005 65)' }}>R$ {precoVendaBrl.toFixed(2)}</span>
+                            <span style={{ color: 'oklch(0.80 0.005 65)' }}>R$ {precoVendaBrl.toFixed(2)}</span>
                           )}
                         </td>
-
-                        {/* MARGEM */}
-                        <td className="px-4 py-3 text-center" style={{ color: margem > 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.70 0.22 30)' }}>
+                        <td className="px-4 py-3 text-center" style={{ color: getCorMargem(markup) }}>
                           R$ {margem.toFixed(2)}
                         </td>
-
-                        {/* MARKUP % */}
-                        <td className="px-4 py-3 text-center" style={{ color: markup > 50 ? 'oklch(0.72 0.17 145)' : markup > 20 ? 'oklch(0.80 0.18 85)' : 'oklch(0.70 0.22 30)' }}>
+                        <td className="px-4 py-3 text-center font-bold" style={{ color: getCorMargem(markup) }}>
                           {markup.toFixed(1)}%
                         </td>
-
-                        {/* AÇÕES */}
-                        <td className="px-4 py-3 text-center flex gap-2 justify-center">
+                        <td className="px-4 py-3 text-center">
                           {editando ? (
-                            <>
+                            <div className="flex gap-2 justify-center">
                               <button
                                 onClick={() => handleSalvar(produto.id)}
-                                className="p-1.5 rounded transition-colors"
-                                style={{ background: 'oklch(0.60 0.17 145)', color: 'white' }}
-                                title="Salvar"
+                                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors"
+                                style={{ background: 'oklch(0.60 0.20 140)', color: 'oklch(0.98 0.001 285)' }}
                               >
-                                <Save className="w-4 h-4" />
+                                <Save className="w-3 h-3" />
+                                {salvo ? 'Salvo!' : 'Salvar'}
                               </button>
                               <button
                                 onClick={() => handleCancelar(produto.id)}
-                                className="p-1.5 rounded transition-colors"
-                                style={{ background: 'oklch(0.70 0.22 30)', color: 'white' }}
-                                title="Cancelar"
+                                className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium transition-colors"
+                                style={{ background: 'oklch(0.40 0.10 285)', color: 'oklch(0.98 0.001 285)' }}
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3 h-3" />
                               </button>
-                            </>
+                            </div>
                           ) : (
                             <button
-                              onClick={() => setProdutosEditando(prev => ({ ...prev, [produto.id]: {} }))}
-                              className="px-3 py-1 rounded text-sm transition-colors"
-                              style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+                              onClick={() => setProdutosEditando(prev => ({
+                                ...prev,
+                                [produto.id]: {
+                                  custoUsd: custoUsd,
+                                  precoVendaBrl: precoVendaBrl,
+                                },
+                              }))}
+                              className="px-3 py-1 rounded text-xs font-medium transition-colors"
+                              style={{ background: 'oklch(0.48 0.22 25)', color: 'oklch(0.98 0.001 285)' }}
                             >
-                              {t('editar') || 'Editar'}
+                              Editar
                             </button>
-                          )}
-                          {salvo && (
-                            <span className="text-xs" style={{ color: 'oklch(0.72 0.17 145)' }}>✓ Salvo</span>
                           )}
                         </td>
                       </tr>
@@ -306,15 +337,6 @@ export default function Desenvolvimento() {
                   })}
                 </tbody>
               </table>
-            </div>
-          )}
-
-          {/* Resumo */}
-          {produtosFiltrados.length > 0 && (
-            <div className="mt-6 p-4 rounded-lg border" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-              <p className="text-sm" style={{ color: 'oklch(0.70 0.010 285)' }}>
-                {t('totalProdutos') || 'Total de produtos'}: <strong style={{ color: 'oklch(0.85 0.005 65)' }}>{produtosFiltrados.length}</strong>
-              </p>
             </div>
           )}
         </div>
