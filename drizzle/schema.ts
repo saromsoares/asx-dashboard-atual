@@ -56,3 +56,34 @@ export const precos = mysqlTable("precos", {
 
 export type Preco = typeof precos.$inferSelect;
 export type InsertPreco = typeof precos.$inferInsert;
+/**
+ * Tabela de pedidos de compra
+ * Armazena informações dos pedidos com status de progresso
+ */
+export const pedidos = mysqlTable("pedidos", {
+  id: int("id").autoincrement().primaryKey(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["Pendente", "Enviado", "Recebido"]).default("Pendente").notNull(),
+  dataCreacao: timestamp("dataCreacao").defaultNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Pedido = typeof pedidos.$inferSelect;
+export type InsertPedido = typeof pedidos.$inferInsert;
+
+/**
+ * Tabela de itens de pedidos
+ * Armazena os produtos incluídos em cada pedido
+ */
+export const itens_pedidos = mysqlTable("itens_pedidos", {
+  id: int("id").autoincrement().primaryKey(),
+  pedidoId: int("pedidoId").notNull(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull(),
+  quantidadeSarom: int("quantidadeSarom").default(0).notNull(),
+  quantidadeAlexandre: int("quantidadeAlexandre").default(0).notNull(),
+  precoUnitario: decimal("precoUnitario", { precision: 10, scale: 2 }).default("0").notNull(),
+  dataAdicao: timestamp("dataAdicao").defaultNow().notNull(),
+});
+
+export type ItensPedido = typeof itens_pedidos.$inferSelect;
+export type InsertItensPedido = typeof itens_pedidos.$inferInsert;

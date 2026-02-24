@@ -14,6 +14,7 @@ export interface Pedido {
   nome: string;
   items: ItemPedido[];
   confirmado: boolean;
+  status: 'Pendente' | 'Enviado' | 'Recebido';
   dataCriacao: string;
   dataAtualizacao: string;
 }
@@ -50,6 +51,7 @@ export function usePedidos() {
       nome,
       items: [],
       confirmado: false,
+      status: 'Pendente',
       dataCriacao: new Date().toISOString(),
       dataAtualizacao: new Date().toISOString(),
     };
@@ -119,6 +121,15 @@ export function usePedidos() {
     ));
   }, [pedidos, salvarPedidos]);
 
+  // Atualizar status do pedido
+  const atualizarStatusPedido = useCallback((id: string, novoStatus: 'Pendente' | 'Enviado' | 'Recebido') => {
+    salvarPedidos(pedidos.map(p =>
+      p.id === id
+        ? { ...p, status: novoStatus, dataAtualizacao: new Date().toISOString() }
+        : p
+    ));
+  }, [pedidos, salvarPedidos]);
+
   // Calcular totais
   const calcularTotais = (pedido: Pedido) => {
     let totalSarom = 0;
@@ -145,6 +156,7 @@ export function usePedidos() {
     adicionarItem,
     removerItem,
     toggleConfirmacao,
+    atualizarStatusPedido,
     calcularTotais,
   };
 }

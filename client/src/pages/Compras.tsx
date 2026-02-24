@@ -31,6 +31,7 @@ export default function Compras() {
     adicionarItem,
     removerItem,
     toggleConfirmacao,
+    atualizarStatusPedido,
     calcularTotais,
   } = usePedidos();
 
@@ -292,26 +293,22 @@ export default function Compras() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleConfirmacao(pedidoAtivo)}
-                    className="px-3 py-2 rounded-md transition-colors flex items-center gap-2 text-sm"
+                  <select
+                    value={pedidoAtualAtual.status || 'Pendente'}
+                    onChange={(e) => {
+                      atualizarStatusPedido(pedidoAtivo, e.target.value as 'Pendente' | 'Enviado' | 'Recebido');
+                    }}
+                    className="px-3 py-2 rounded-md border text-sm"
                     style={{
-                      background: pedidoAtualAtual.confirmado ? 'oklch(0.72 0.17 145 / 0.2)' : 'oklch(0.48 0.22 25 / 0.2)',
-                      color: pedidoAtualAtual.confirmado ? 'oklch(0.72 0.17 145)' : 'oklch(0.48 0.22 25)',
+                      background: 'oklch(0.18 0.005 285)',
+                      borderColor: 'oklch(0.28 0.005 285)',
+                      color: 'oklch(0.90 0.005 65)',
                     }}
                   >
-                    {pedidoAtualAtual.confirmado ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        Confirmado
-                      </>
-                    ) : (
-                      <>
-                        <Circle className="w-4 h-4" />
-                        Pendente
-                      </>
-                    )}
-                  </button>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Enviado">Enviado</option>
+                    <option value="Recebido">Recebido</option>
+                  </select>
 
                   <button
                     onClick={() => exportarPDF(pedidoAtualAtual)}

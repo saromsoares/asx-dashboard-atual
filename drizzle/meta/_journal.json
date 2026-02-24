@@ -15,6 +15,13 @@
       "when": 1771955710105,
       "tag": "0001_condemned_stingray",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771958637165,
+      "tag": "0002_aromatic_ink",
+      "breakpoints": true
     }
   ]
 }

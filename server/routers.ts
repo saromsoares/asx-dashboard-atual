@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido } from "./db";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -52,6 +52,34 @@ export const appRouter = router({
     getAll: protectedProcedure
       .query(async () => {
         return await getAllPrecos();
+      }),
+  }),
+
+  pedido: router({
+    criar: protectedProcedure
+      .input(z.object({ nome: z.string() }))
+      .mutation(async ({ input }) => {
+        const result = await criarPedido(input.nome);
+        return result;
+      }),
+    get: protectedProcedure
+      .input(z.object({ pedidoId: z.number() }))
+      .query(async ({ input }) => {
+        return await getPedido(input.pedidoId);
+      }),
+    getAll: protectedProcedure
+      .query(async () => {
+        return await getAllPedidos();
+      }),
+    atualizarStatus: protectedProcedure
+      .input(z.object({ pedidoId: z.number(), novoStatus: z.enum(["Pendente", "Enviado", "Recebido"]) }))
+      .mutation(async ({ input }) => {
+        return await atualizarStatusPedido(input.pedidoId, input.novoStatus);
+      }),
+    deletar: protectedProcedure
+      .input(z.object({ pedidoId: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deletarPedido(input.pedidoId);
       }),
   }),
 });

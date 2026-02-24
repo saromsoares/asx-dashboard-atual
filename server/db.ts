@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, estoques, precos, type InsertEstoque, type InsertPreco } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -204,5 +204,91 @@ export async function getAllPrecos() {
   } catch (error) {
     console.error("[Database] Failed to get precos:", error);
     return [];
+  }
+}
+
+
+// Pedidos queries
+export async function criarPedido(nome: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create pedido: database not available");
+    return undefined;
+  }
+
+  try {
+    const values: InsertPedido = {
+      nome,
+      status: "Pendente",
+    };
+
+    const result = await db.insert(pedidos).values(values);
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to create pedido:", error);
+    throw error;
+  }
+}
+
+export async function getPedido(pedidoId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get pedido: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.select().from(pedidos).where(eq(pedidos.id, pedidoId)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Failed to get pedido:", error);
+    return undefined;
+  }
+}
+
+export async function getAllPedidos() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get pedidos: database not available");
+    return [];
+  }
+
+  try {
+    return await db.select().from(pedidos);
+  } catch (error) {
+    console.error("[Database] Failed to get pedidos:", error);
+    return [];
+  }
+}
+
+export async function atualizarStatusPedido(pedidoId: number, novoStatus: "Pendente" | "Enviado" | "Recebido") {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update pedido status: database not available");
+    return;
+  }
+
+  try {
+    await db.update(pedidos).set({ status: novoStatus }).where(eq(pedidos.id, pedidoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update pedido status:", error);
+    throw error;
+  }
+}
+
+export async function deletarPedido(pedidoId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete pedido: database not available");
+    return;
+  }
+
+  try {
+    await db.delete(pedidos).where(eq(pedidos.id, pedidoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete pedido:", error);
+    throw error;
   }
 }
