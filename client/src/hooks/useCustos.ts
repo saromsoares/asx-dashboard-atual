@@ -92,6 +92,12 @@ export function useCustos() {
     return ((precoVenda - custoReal) / precoVenda) * 100;
   }, [getCustoReal]);
 
+  const getMarkup = useCallback((produtoId: number, precoVenda: number): number => {
+    const custoReal = getCustoReal(produtoId);
+    if (custoReal === 0) return 0;
+    return ((precoVenda - custoReal) / custoReal) * 100;
+  }, [getCustoReal]);
+
   return {
     custos,
     taxaCambio,
@@ -101,5 +107,6 @@ export function useCustos() {
     getCustoReal,
     getLucro,
     getLucroPct,
+    getMarkup,
   };
 }

@@ -57,7 +57,7 @@ export default function Home() {
   const [showOnlySemCusto, setShowOnlySemCusto] = useState(false);
   const [showCategoryPanel, setShowCategoryPanel] = useState(false);
 
-  const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct } = useCustos();
+  const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct, getMarkup } = useCustos();
 
   const volts = useMemo(() => ['TODOS', ...Array.from(new Set(produtos.map(p => p.volt).filter(Boolean)))], []);
   const unids = useMemo(() => ['TODOS', ...Array.from(new Set(produtos.map(p => p.unid).filter(Boolean)))], []);
@@ -105,12 +105,10 @@ export default function Home() {
   const stats = useMemo(() => {
     const comCusto = filtered.filter(p => getCusto(p.id) > 0);
     const semCusto = filtered.filter(p => getCusto(p.id) <= 0);
-    const totalVenda = filtered.reduce((s, p) => s + p.preco_venda, 0);
-    const totalLucro = comCusto.reduce((s, p) => s + getLucro(p.id, p.preco_venda), 0);
     const avgLucroPct = comCusto.length > 0
       ? comCusto.reduce((s, p) => s + getLucroPct(p.id, p.preco_venda), 0) / comCusto.length
       : 0;
-    return { total: filtered.length, comCusto: comCusto.length, semCusto: semCusto.length, totalVenda, totalLucro, avgLucroPct };
+    return { total: filtered.length, comCusto: comCusto.length, semCusto: semCusto.length, avgLucroPct };
   }, [filtered, custos, taxaCambio]);
 
   const toggleSort = useCallback((field: SortField) => {
@@ -309,7 +307,7 @@ export default function Home() {
         {/* Main Content */}
         <main className="flex-1 overflow-auto flex flex-col">
           {/* Stats Bar */}
-          <div className="border-b px-6 py-3 grid grid-cols-6 gap-4"
+          <div className="border-b px-6 py-3 grid grid-cols-4 gap-4"
             style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Produtos</p>
@@ -333,16 +331,6 @@ export default function Home() {
                   {showOnlySemCusto && <span className="text-xs font-normal ml-1" style={{ color: 'oklch(0.65 0.22 25)' }}>(filtrado)</span>}
                 </p>
               </button>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Venda</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatBRL(stats.totalVenda)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Lucro</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: stats.totalLucro >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
-                {formatBRL(stats.totalLucro)}
-              </p>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Margem Média</p>
@@ -452,6 +440,7 @@ export default function Home() {
                           Margem <SortIcon field="lucro_pct" />
                         </button>
                       </th>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.48 0.22 25)' }}>Markup %</th>
                       <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Foto</th>
                     </tr>
                   </thead>
@@ -461,6 +450,7 @@ export default function Home() {
                       const custoR = getCustoReal(p.id);
                       const lucro = getLucro(p.id, p.preco_venda);
                       const lucroPct = getLucroPct(p.id, p.preco_venda);
+                      const markup = getMarkup(p.id, p.preco_venda);
                       return (
                         <tr
                           key={p.id}
@@ -543,6 +533,15 @@ export default function Home() {
                                 }}
                                 label="Margem"
                               />
+                            ) : (
+                              <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {custo > 0 ? (
+                              <span className="font-rajdhani font-semibold text-sm" style={{ color: markup >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
+                                {markup.toFixed(1)}%
+                              </span>
                             ) : (
                               <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
                             )}
