@@ -120,6 +120,7 @@ export const translations = {
     sugestaoCompra: 'COMPRAS',
     sugeridas: 'sugeridas',
     descricao: 'DESCRIÇÃO',
+    estoqueAtual: 'ESTOQUE ATUAL',
     estoqueEm: 'ESTOQUE',
     totalOrdens: 'TOTAL ORDENS',
     estoquePedidos: 'EST.+PED.',
@@ -172,7 +173,7 @@ export const translations = {
     anterior: 'Anterior',
     ok: 'OK',
   },
-  en: {
+    en: {
     // Navigation
     dashboard: 'Product Dashboard',
     gerenciadorCompras: 'Purchase Manager',
@@ -293,6 +294,7 @@ export const translations = {
     sugestaoCompra: 'PURCHASES',
     sugeridas: 'suggested',
     descricao: 'DESCRIPTION',
+    estoqueAtual: 'CURRENT STOCK',
     estoqueEm: 'STOCK',
     totalOrdens: 'TOTAL ORDERS',
     estoquePedidos: 'STOCK+ORDERS',

@@ -37,7 +37,7 @@ const getDuracaoColor = (duracao: number) => {
   return { bg: 'oklch(0.60 0.17 145 / 0.25)', text: 'oklch(0.80 0.17 145)' };
 };
 
-const LOGO_URL = 'https://files.manuscdn.com/forge/67bb6c0e-e6e3-4e6a-8230-1583c2b8e34e/logo-asx-black-white-stroke.png';
+const LOGO_URL = '/logo-asx-black.svg'; // Logo SVG simples em preto
 
 export default function CentralCompraAvancada({ comprador, titulo, corAcento }: CentralCompraAvancadaProps) {
   const [, setLocation] = useLocation();
@@ -50,6 +50,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [dataEstoque, setDataEstoque] = useState(new Date().toISOString().split('T')[0]);
   const [showModalEstoque, setShowModalEstoque] = useState(false);
+  const [estoqueEditando, setEstoqueEditando] = useState<{[key: string]: number}>({});
 
   const handleSaveManualEstoque = useCallback((codigo: string, quantidade: number) => {
     console.log(`Estoque adicionado: ${codigo} = ${quantidade}`);
@@ -183,7 +184,9 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
       <header className="sticky top-0 z-40 border-b px-6 py-3" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.28 0.005 285)' }}>
         <div className="flex items-center justify-between mb-3 gap-4">
           <div className="flex-1 flex items-center">
-            <img src={LOGO_URL} alt="ASX" className="h-14 object-contain" />
+            <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="h-14">
+              <text x="50" y="65" fontSize="60" fontWeight="bold" textAnchor="middle" fill="black" fontFamily="Arial, sans-serif" stroke="white" strokeWidth="2" paintOrder="stroke">ASX</text>
+            </svg>
           </div>
           <button onClick={() => setLocation('/')} className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors" style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.70 0.010 285)' }}>
             <ArrowLeft className="w-4 h-4" />
@@ -222,7 +225,10 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                 <button onClick={() => handleSort('descricao')} className="flex items-center gap-1 hover:opacity-75">{t('descricao') || 'DESCRIÇÃO'} <SortIcon field="descricao" /></button>
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
-                <button onClick={() => handleSort('estoqueAtual')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('estoqueEm') || 'ESTOQUE'} <SortIcon field="estoqueAtual" /></button>
+                <div className="flex flex-col items-center gap-0.5">
+                  <button onClick={() => handleSort('estoqueAtual')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('estoqueAtual') || 'ESTOQUE ATUAL'} <SortIcon field="estoqueAtual" /></button>
+                  <span className="text-[8px]" style={{ color: 'oklch(0.50 0.010 285)' }}>{dataEstoque}</span>
+                </div>
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 <button onClick={() => handleSort('totalOrdens')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('totalOrdens') || 'TOTAL ORDENS'} <SortIcon field="totalOrdens" /></button>
@@ -266,7 +272,15 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                 <tr key={idx} style={{ borderBottom: '1px solid oklch(0.22 0.005 285)', background: idx % 2 === 0 ? 'transparent' : 'oklch(0.15 0.005 285 / 0.5)' }}>
                   <td className="px-2 py-2 font-mono text-xs font-semibold" style={{ color: 'oklch(0.85 0.005 65)' }}>{item.codigo}</td>
                   <td className="px-2 py-2 text-xs max-w-[200px] truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>{item.descricao}</td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoqueAtual)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>
+                    <input
+                      type="number"
+                      value={estoqueEditando[item.codigo] ?? item.estoqueAtual}
+                      onChange={e => setEstoqueEditando({...estoqueEditando, [item.codigo]: parseInt(e.target.value) || 0})}
+                      className="w-full px-1 py-0.5 text-center rounded border text-xs"
+                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                    />
+                  </td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalOrdens)}</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoquePlusPedidos)}</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6.text, background: dur6.bg }}>{item.duracao6meses.toFixed(1)}m</td>
