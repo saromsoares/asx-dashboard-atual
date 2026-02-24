@@ -206,8 +206,8 @@ export default function Sidebar({ currentPage }: SidebarProps) {
               Iluminação
             </p>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-lg">🇧🇷</span>
-              <span className="text-lg">🇨🇳</span>
+              <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: 'oklch(0.48 0.22 25)', color: 'oklch(0.98 0.001 285)' }}>BR</span>
+              <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: 'oklch(0.48 0.22 25)', color: 'oklch(0.98 0.001 285)' }}>CN</span>
             </div>
           </div>
         )}
