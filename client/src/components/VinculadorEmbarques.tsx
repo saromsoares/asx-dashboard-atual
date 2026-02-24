@@ -33,7 +33,7 @@ export const VinculadorEmbarques: React.FC<VinculadorEmbarquesProps> = ({
   );
 
   const pedidosConfirmados = useMemo(
-    () => pedidos.filter(p => p.confirmado),
+    () => pedidos.filter(p => p.status === 'Confirmado'),
     [pedidos]
   );
 

@@ -14,7 +14,7 @@ export interface Pedido {
   nome: string;
   items: ItemPedido[];
   confirmado: boolean;
-  status: 'Pendente' | 'Enviado' | 'Recebido';
+  status: 'Pendente' | 'Confirmado' | 'Recebido';
   dataCriacao: string;
   dataAtualizacao: string;
 }
@@ -122,7 +122,7 @@ export function usePedidos() {
   }, [pedidos, salvarPedidos]);
 
   // Atualizar status do pedido
-  const atualizarStatusPedido = useCallback((id: string, novoStatus: 'Pendente' | 'Enviado' | 'Recebido') => {
+  const atualizarStatusPedido = useCallback((id: string, novoStatus: 'Pendente' | 'Confirmado' | 'Recebido') => {
     salvarPedidos(pedidos.map(p =>
       p.id === id
         ? { ...p, status: novoStatus, dataAtualizacao: new Date().toISOString() }

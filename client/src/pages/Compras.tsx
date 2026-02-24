@@ -72,7 +72,7 @@ export default function Compras() {
     return {
       todos: pedidos.length,
       pendente: pedidos.filter(p => p.status === 'Pendente').length,
-      enviado: pedidos.filter(p => p.status === 'Enviado').length,
+      enviado: pedidos.filter(p => p.status === 'Confirmado').length,
       recebido: pedidos.filter(p => p.status === 'Recebido').length,
     };
   }, [pedidos]);
@@ -280,12 +280,12 @@ export default function Compras() {
                   style={{
                     background: pedidoAtivo === pedido.id ? 'oklch(0.18 0.005 285)' : 'transparent',
                     borderColor: 'oklch(0.22 0.005 285)',
-                    borderLeft: pedido.status === 'Pendente' ? '3px solid oklch(0.65 0.22 25)' : pedido.status === 'Enviado' ? '3px solid oklch(0.55 0.15 270)' : '3px solid oklch(0.72 0.17 145)',
+                    borderLeft: pedido.status === 'Pendente' ? '3px solid oklch(0.65 0.22 25)' : pedido.status === 'Confirmado' ? '3px solid oklch(0.55 0.15 270)' : '3px solid oklch(0.72 0.17 145)',
                   }}
                 >
                   {pedido.status === 'Pendente' ? (
                     <Clock className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.65 0.22 25)' }} />
-                  ) : pedido.status === 'Enviado' ? (
+                  ) : pedido.status === 'Confirmado' ? (
                     <Send className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.55 0.15 270)' }} />
                   ) : (
                     <CheckCheck className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.72 0.17 145)' }} />
@@ -345,7 +345,7 @@ export default function Compras() {
                   <select
                     value={pedidoAtualAtual.status || 'Pendente'}
                     onChange={(e) => {
-                      atualizarStatusPedido(pedidoAtivo, e.target.value as 'Pendente' | 'Enviado' | 'Recebido');
+                      atualizarStatusPedido(pedidoAtivo, e.target.value as 'Pendente' | 'Confirmado' | 'Recebido');
                     }}
                     className="px-3 py-2 rounded-md border text-sm"
                     style={{
@@ -355,7 +355,7 @@ export default function Compras() {
                     }}
                   >
                     <option value="Pendente">Pendente</option>
-                    <option value="Enviado">Enviado</option>
+                    <option value="Confirmado">Confirmado</option>
                     <option value="Recebido">Recebido</option>
                   </select>
 
@@ -373,6 +373,19 @@ export default function Compras() {
                     style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
                   >
                     <Download className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      // Salvar pedido
+                      localStorage.setItem(`pedido_${pedidoAtivo}`, JSON.stringify(pedidoAtualAtual));
+                      alert('Pedido salvo com sucesso!');
+                    }}
+                    className="px-4 py-2 rounded-md transition-colors font-medium text-sm"
+                    style={{ background: 'oklch(0.72 0.17 145)', color: 'white' }}
+                    title="Salvar pedido"
+                  >
+                    💾 Salvar
                   </button>
 
                   <button
