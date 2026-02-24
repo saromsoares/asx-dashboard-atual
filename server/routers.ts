@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 
 export const appRouter = router({
@@ -121,6 +121,115 @@ export const appRouter = router({
           userAgent,
         });
         return result;
+      }),
+  }),
+
+  container: router({
+    criar: protectedProcedure
+      .input(z.object({ numero: z.string(), capacidadeMaxima: z.number().optional(), pesoMaximo: z.string().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await criarContainer(input.numero, input.capacidadeMaxima, input.pesoMaximo);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'criou',
+          entidade: 'container',
+          entidadeId: String(result?.id),
+          dadosNovos: JSON.stringify({ numero: input.numero, status: 'Vazio' }),
+          descricao: criarDescricaoAcao('criou', 'container', { numero: input.numero }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    get: protectedProcedure
+      .input(z.object({ containerId: z.number() }))
+      .query(async ({ input }) => {
+        return await getContainer(input.containerId);
+      }),
+    getAll: protectedProcedure
+      .query(async () => {
+        return await getAllContainers();
+      }),
+    getAllComPedidos: protectedProcedure
+      .query(async () => {
+        return await getContainersComPedidos();
+      }),
+    atualizarStatus: protectedProcedure
+      .input(z.object({ containerId: z.number(), novoStatus: z.enum(["Vazio", "Preenchendo", "Cheio", "Enviado", "Entregue"]) }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await atualizarStatusContainer(input.containerId, input.novoStatus);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'alterou_status',
+          entidade: 'container',
+          entidadeId: String(input.containerId),
+          dadosNovos: JSON.stringify({ novoStatus: input.novoStatus }),
+          descricao: criarDescricaoAcao('alterou_status', 'container', { novoStatus: input.novoStatus }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    deletar: protectedProcedure
+      .input(z.object({ containerId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const container = await getContainer(input.containerId);
+        const result = await deletarContainer(input.containerId);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'deletou',
+          entidade: 'container',
+          entidadeId: String(input.containerId),
+          dadosAntigos: JSON.stringify({ numero: container?.numero, status: container?.status }),
+          descricao: criarDescricaoAcao('deletou', 'container'),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+  }),
+
+  containerPedido: router({
+    vincular: protectedProcedure
+      .input(z.object({ containerId: z.number(), pedidoId: z.number(), sequencia: z.number().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await vincularPedidoAContainer(input.containerId, input.pedidoId, input.sequencia);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'vinculou_pedido',
+          entidade: 'container_pedido',
+          entidadeId: String(result?.id),
+          dadosNovos: JSON.stringify({ containerId: input.containerId, pedidoId: input.pedidoId }),
+          descricao: criarDescricaoAcao('vinculou_pedido', 'container', { containerId: input.containerId, pedidoId: input.pedidoId }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    desvincular: protectedProcedure
+      .input(z.object({ containerPedidoId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await desvincularPedidoDoContainer(input.containerPedidoId);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'desvinculou_pedido',
+          entidade: 'container_pedido',
+          entidadeId: String(input.containerPedidoId),
+          descricao: criarDescricaoAcao('desvinculou_pedido', 'container'),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    getPedidos: protectedProcedure
+      .input(z.object({ containerId: z.number() }))
+      .query(async ({ input }) => {
+        return await getPedidosDoContainer(input.containerId);
       }),
   }),
 });

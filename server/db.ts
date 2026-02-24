@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc } from 'drizzle-orm';
 
@@ -292,5 +292,175 @@ export async function deletarPedido(pedidoId: number) {
   } catch (error) {
     console.error("[Database] Failed to delete pedido:", error);
     throw error;
+  }
+}
+
+
+// ============= CONTAINERS =============
+
+export async function criarContainer(numero: string, capacidadeMaxima: number = 1000, pesoMaximo: string = "0") {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create container: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db.insert(containers).values({
+      numero,
+      capacidadeMaxima,
+      pesoMaximo,
+      status: "Vazio",
+    });
+    return { id: result[0].insertId, numero, status: "Vazio" };
+  } catch (error) {
+    console.error("[Database] Failed to create container:", error);
+    throw error;
+  }
+}
+
+export async function getContainer(containerId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get container: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db.select().from(containers).where(eq(containers.id, containerId));
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get container:", error);
+    return null;
+  }
+}
+
+export async function getAllContainers() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get containers: database not available");
+    return [];
+  }
+
+  try {
+    return await db.select().from(containers).orderBy(desc(containers.dataCreacao));
+  } catch (error) {
+    console.error("[Database] Failed to get containers:", error);
+    return [];
+  }
+}
+
+export async function atualizarStatusContainer(containerId: number, novoStatus: "Vazio" | "Preenchendo" | "Cheio" | "Enviado" | "Entregue") {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update container status: database not available");
+    return;
+  }
+
+  try {
+    await db.update(containers).set({ status: novoStatus }).where(eq(containers.id, containerId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update container status:", error);
+    throw error;
+  }
+}
+
+export async function deletarContainer(containerId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete container: database not available");
+    return;
+  }
+
+  try {
+    // Primeiro, remover todos os pedidos vinculados
+    await db.delete(container_pedidos).where(eq(container_pedidos.containerId, containerId));
+    // Depois, deletar o container
+    await db.delete(containers).where(eq(containers.id, containerId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete container:", error);
+    throw error;
+  }
+}
+
+// ============= CONTAINER-PEDIDOS =============
+
+export async function vincularPedidoAContainer(containerId: number, pedidoId: number, sequencia: number = 0) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot link pedido to container: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db.insert(container_pedidos).values({
+      containerId,
+      pedidoId,
+      sequencia,
+    });
+    return { success: true, id: result[0].insertId };
+  } catch (error) {
+    console.error("[Database] Failed to link pedido to container:", error);
+    throw error;
+  }
+}
+
+export async function desvincularPedidoDoContainer(containerPedidoId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot unlink pedido from container: database not available");
+    return;
+  }
+
+  try {
+    await db.delete(container_pedidos).where(eq(container_pedidos.id, containerPedidoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to unlink pedido from container:", error);
+    throw error;
+  }
+}
+
+export async function getPedidosDoContainer(containerId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get container pedidos: database not available");
+    return [];
+  }
+
+  try {
+    return await db.select().from(container_pedidos).where(eq(container_pedidos.containerId, containerId));
+  } catch (error) {
+    console.error("[Database] Failed to get container pedidos:", error);
+    return [];
+  }
+}
+
+export async function getContainersComPedidos() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get containers with pedidos: database not available");
+    return [];
+  }
+
+  try {
+    // Retorna todos os containers com contagem de pedidos
+    const allContainers = await db.select().from(containers);
+    const result = [];
+    
+    for (const container of allContainers) {
+      const pedidosCount = await db.select().from(container_pedidos).where(eq(container_pedidos.containerId, container.id));
+      result.push({
+        ...container,
+        pedidosCount: pedidosCount.length,
+      });
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get containers with pedidos:", error);
+    return [];
   }
 }

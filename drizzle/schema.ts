@@ -108,3 +108,36 @@ export const auditLogs = mysqlTable("auditLogs", {
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+/**
+ * Tabela de containers
+ * Armazena informações de containers que recebem pedidos
+ */
+export const containers = mysqlTable("containers", {
+  id: int("id").autoincrement().primaryKey(),
+  numero: varchar("numero", { length: 64 }).notNull().unique(), // Ex: "CONT-001", "CONT-002"
+  status: mysqlEnum("status", ["Vazio", "Preenchendo", "Cheio", "Enviado", "Entregue"]).default("Vazio").notNull(),
+  capacidadeMaxima: int("capacidadeMaxima").default(1000).notNull(), // Capacidade em unidades
+  pesoMaximo: decimal("pesoMaximo", { precision: 10, scale: 2 }).default("0").notNull(), // Peso máximo em kg
+  dataCreacao: timestamp("dataCreacao").defaultNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Container = typeof containers.$inferSelect;
+export type InsertContainer = typeof containers.$inferInsert;
+
+/**
+ * Tabela de relacionamento entre containers e pedidos
+ * Armazena quais pedidos estão vinculados a cada container
+ */
+export const container_pedidos = mysqlTable("container_pedidos", {
+  id: int("id").autoincrement().primaryKey(),
+  containerId: int("containerId").notNull(), // Referência ao container
+  pedidoId: int("pedidoId").notNull(), // Referência ao pedido
+  sequencia: int("sequencia").default(0).notNull(), // Ordem de inclusão no container
+  dataVinculacao: timestamp("dataVinculacao").defaultNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ContainerPedido = typeof container_pedidos.$inferSelect;
+export type InsertContainerPedido = typeof container_pedidos.$inferInsert;

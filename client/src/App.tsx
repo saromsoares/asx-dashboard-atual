@@ -12,6 +12,7 @@ import Compras from "./pages/Compras";
 import Configuracoes from "./pages/Configuracoes";
 import Desenvolvimento from "./pages/Desenvolvimento";
 import Conteiner from "./pages/Conteiner";
+import Containers from "./pages/Containers";
 import Rastreamento from "./pages/Rastreamento";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
@@ -40,6 +41,7 @@ function AuthenticatedRouter() {
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
     if (location === "/conteiner") return "conteiner";
+    if (location === "/containers") return "containers";
     if (location === "/rastreamento") return "rastreamento";
     if (location === "/central-sarom") return "central-sarom";
     if (location === "/central-alexandre") return "central-alexandre";
@@ -57,6 +59,7 @@ function AuthenticatedRouter() {
           <Route path="/" component={Home} />
           <Route path="/compras" component={Compras} />
           <Route path="/conteiner" component={Conteiner} />
+          <Route path="/containers" component={Containers} />
           <Route path="/rastreamento" component={Rastreamento} />
           <Route path="/central-sarom" component={CentralSarom} />
           <Route path="/central-alexandre" component={CentralAlexandre} />
