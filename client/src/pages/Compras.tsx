@@ -341,169 +341,143 @@ export default function Compras() {
                 </div>
               </div>
 
-              {/* Adicionar item */}
+              {/* Seletor de Categoria */}
               <div className="border-b px-6 py-4" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                      Categoria
-                    </label>
-                    <select
-                      value={categoriaFiltro}
-                      onChange={e => setCategoriaFiltro(e.target.value)}
-                      className="w-full px-3 py-2 rounded-md border text-sm mt-1"
-                      style={{
-                        background: 'oklch(0.18 0.005 285)',
-                        borderColor: 'oklch(0.28 0.005 285)',
-                        color: 'oklch(0.90 0.005 65)',
-                      }}
-                    >
-                      {categorias.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                      Buscar Produto
-                    </label>
-                    <div className="relative mt-1">
-                      <input
-                        type="text"
-                        placeholder="Código ou nome..."
-                        value={buscaProduto}
-                        onChange={e => setBuscaProduto(e.target.value)}
-                        className="w-full px-3 py-2 rounded-md border text-sm"
-                        style={{
-                          background: 'oklch(0.18 0.005 285)',
-                          borderColor: 'oklch(0.28 0.005 285)',
-                          color: 'oklch(0.90 0.005 65)',
-                        }}
-                      />
-                      {produtosFiltrados.length > 0 && (
-                        <div
-                          className="absolute top-full left-0 right-0 mt-1 rounded-md border max-h-40 overflow-y-auto z-10"
-                          style={{
-                            background: 'oklch(0.18 0.005 285)',
-                            borderColor: 'oklch(0.28 0.005 285)',
-                          }}
-                        >
-                          {produtosFiltrados.map(p => (
-                            <button
-                              key={p.id}
-                              onClick={() => {
-                                setProdutoSelecionado(p.id);
-                                setBuscaProduto(`${p.codigo} - ${p.descricao.substring(0, 30)}`);
-                              }}
-                              className="w-full text-left px-3 py-2 text-sm hover:opacity-75 transition-opacity"
-                              style={{ borderColor: 'oklch(0.22 0.005 285)' }}
-                            >
-                              <div className="font-medium">{p.codigo}</div>
-                              <div className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                                {p.descricao.substring(0, 50)}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {produtoSelecionado && (
-                    <div className="grid grid-cols-4 gap-2">
-                      <div>
-                        <label className="text-xs font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                          Preço USD
-                        </label>
-                        <input
-                          type="text"
-                          disabled
-                          value={formatUSD(produtos.find(p => p.id === produtoSelecionado)?.custo_usd || 0)}
-                          className="w-full px-2 py-1 rounded text-sm mt-1"
-                          style={{
-                            background: 'oklch(0.18 0.005 285)',
-                            borderColor: 'oklch(0.28 0.005 285)',
-                            color: 'oklch(0.70 0.010 285)',
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                          Qtd Sarom
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={qtdSarom}
-                          onChange={e => setQtdSarom(parseInt(e.target.value) || 0)}
-                          className="w-full px-2 py-1 rounded text-sm mt-1"
-                          style={{
-                            background: 'oklch(0.18 0.005 285)',
-                            borderColor: 'oklch(0.28 0.005 285)',
-                            color: 'oklch(0.90 0.005 65)',
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                          Qtd Alexandre
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={qtdAlexandre}
-                          onChange={e => setQtdAlexandre(parseInt(e.target.value) || 0)}
-                          className="w-full px-2 py-1 rounded text-sm mt-1"
-                          style={{
-                            background: 'oklch(0.18 0.005 285)',
-                            borderColor: 'oklch(0.28 0.005 285)',
-                            color: 'oklch(0.90 0.005 65)',
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-end gap-1">
-                        <button
-                          onClick={() => setShowAutoDistrib(true)}
-                          className="px-3 py-1 rounded text-sm transition-colors flex items-center gap-1"
-                          style={{
-                            background: 'oklch(0.48 0.22 145)',
-                            color: 'white',
-                          }}
-                          title="Auto-distribuir entre Sarom e Alexandre"
-                        >
-                          <Zap className="w-4 h-4" />
-                          Auto
-                        </button>
-                        <button
-                          onClick={handleAdicionarItem}
-                          className="flex-1 px-3 py-1 rounded text-sm transition-colors"
-                          style={{
-                            background: 'oklch(0.48 0.22 25)',
-                            color: 'white',
-                          }}
-                        >
-                          Adicionar
-                        </button>
-                        <button
-                          onClick={() => {
-                            setProdutoSelecionado(null);
-                            setBuscaProduto('');
-                            setQtdSarom(0);
-                            setQtdAlexandre(0);
-                          }}
-                          className="px-2 py-1 rounded text-sm"
-                          style={{
-                            background: 'oklch(0.18 0.005 285)',
-                            color: 'oklch(0.70 0.010 285)',
-                          }}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <label className="text-xs font-semibold uppercase" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                  Selecione uma Categoria para Listar Produtos
+                </label>
+                <select
+                  value={categoriaFiltro}
+                  onChange={e => setCategoriaFiltro(e.target.value)}
+                  className="w-full px-3 py-2 rounded-md border text-sm mt-2"
+                  style={{
+                    background: 'oklch(0.18 0.005 285)',
+                    borderColor: 'oklch(0.28 0.005 285)',
+                    color: 'oklch(0.90 0.005 65)',
+                  }}
+                >
+                  {categorias.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
+
+              {/* Tabela de Produtos da Categoria */}
+              {categoriaFiltro !== 'Todas' && produtosFiltrados.length > 0 && (
+                <div className="flex-1 overflow-auto">
+                  <table className="w-full text-sm">
+                    <thead style={{ background: 'oklch(0.14 0.005 285)', borderBottom: '1px solid oklch(0.22 0.005 285)', position: 'sticky', top: 0 }}>
+                      <tr>
+                        <th className="px-4 py-2 text-left font-semibold">Código</th>
+                        <th className="px-4 py-2 text-left font-semibold">Descrição</th>
+                        <th className="px-4 py-2 text-center font-semibold">Preço USD</th>
+                        <th className="px-4 py-2 text-center font-semibold">Qtd Sarom</th>
+                        <th className="px-4 py-2 text-center font-semibold">Qtd Alexandre</th>
+                        <th className="px-4 py-2 text-center font-semibold">% Item</th>
+                        <th className="px-4 py-2 text-center font-semibold">% Total</th>
+                        <th className="px-4 py-2 text-center font-semibold">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {produtosFiltrados.map(p => {
+                        const qtdTotal = pedidoAtualAtual?.items.reduce((sum, item) => sum + item.qtdSarom + item.qtdAlexandre, 0) || 0;
+                        const itemExistente = pedidoAtualAtual?.items.find(item => item.produtoId === p.id);
+                        const qtdSaromItem = itemExistente?.qtdSarom || 0;
+                        const qtdAlexandreItem = itemExistente?.qtdAlexandre || 0;
+                        const qtdItemTotal = qtdSaromItem + qtdAlexandreItem;
+                        const pctItem = qtdItemTotal > 0 ? ((qtdItemTotal / (qtdTotal + qtdItemTotal)) * 100) : 0;
+                        const pctTotal = qtdTotal > 0 ? ((qtdItemTotal / qtdTotal) * 100) : 0;
+
+                        return (
+                          <tr
+                            key={p.id}
+                            style={{ borderBottom: '1px solid oklch(0.22 0.005 285)' }}
+                          >
+                            <td className="px-4 py-3 font-mono text-xs">{p.codigo}</td>
+                            <td className="px-4 py-3 text-xs">{p.descricao.substring(0, 40)}</td>
+                            <td className="px-4 py-3 text-center">{formatUSD(p.custo_usd)}</td>
+                            <td className="px-4 py-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                value={qtdSaromItem}
+                                onChange={e => {
+                                  const novaQtd = parseInt(e.target.value) || 0;
+                                  if (itemExistente) {
+                                    removerItem(pedidoAtivo, p.id);
+                                  }
+                                  if (novaQtd > 0 || qtdAlexandreItem > 0) {
+                                    adicionarItem(pedidoAtivo, {
+                                      produtoId: p.id,
+                                      codigo: p.codigo,
+                                      nome: p.descricao,
+                                      precoUSD: p.custo_usd,
+                                      qtdSarom: novaQtd,
+                                      qtdAlexandre: qtdAlexandreItem,
+                                    });
+                                  }
+                                }}
+                                className="w-16 px-2 py-1 rounded text-sm text-center"
+                                style={{
+                                  background: 'oklch(0.18 0.005 285)',
+                                  borderColor: 'oklch(0.28 0.005 285)',
+                                  color: 'oklch(0.90 0.005 65)',
+                                }}
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                value={qtdAlexandreItem}
+                                onChange={e => {
+                                  const novaQtd = parseInt(e.target.value) || 0;
+                                  if (itemExistente) {
+                                    removerItem(pedidoAtivo, p.id);
+                                  }
+                                  if (novaQtd > 0 || qtdSaromItem > 0) {
+                                    adicionarItem(pedidoAtivo, {
+                                      produtoId: p.id,
+                                      codigo: p.codigo,
+                                      nome: p.descricao,
+                                      precoUSD: p.custo_usd,
+                                      qtdSarom: qtdSaromItem,
+                                      qtdAlexandre: novaQtd,
+                                    });
+                                  }
+                                }}
+                                className="w-16 px-2 py-1 rounded text-sm text-center"
+                                style={{
+                                  background: 'oklch(0.18 0.005 285)',
+                                  borderColor: 'oklch(0.28 0.005 285)',
+                                  color: 'oklch(0.90 0.005 65)',
+                                }}
+                              />
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.72 0.17 145)' }}>
+                              {pctItem.toFixed(1)}%
+                            </td>
+                            <td className="px-4 py-3 text-center text-xs" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                              {pctTotal.toFixed(1)}%
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {itemExistente && (
+                                <button
+                                  onClick={() => removerItem(pedidoAtivo, p.id)}
+                                  className="p-1 rounded hover:opacity-75"
+                                  style={{ color: 'oklch(0.65 0.22 25)' }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               {/* Tabela de itens */}
               <div className="flex-1 overflow-auto">

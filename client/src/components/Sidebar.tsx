@@ -13,7 +13,7 @@ import { useEstoque } from "@/hooks/useEstoque";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdioma } from "@/hooks/useIdioma";
 
-const LOGO_URL = 'https://files.manuscdn.com/user_upload_by_module/session_file/310519663371351265/eZWmpvJzWGYwKZuO.png';
+// Logo removido
 
 interface SidebarProps {
   currentPage: string;
@@ -189,29 +189,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         borderColor: 'oklch(0.22 0.005 285)',
       }}
     >
-      {/* Logo */}
-      <div className="p-4 border-b flex items-center gap-4" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-        <img
-          src={LOGO_URL}
-          alt="ASX Logo"
-          className={collapsed ? "w-16 h-16 object-contain flex-shrink-0" : "w-20 h-20 object-contain flex-shrink-0"}
-          style={{ mixBlendMode: 'screen', filter: 'brightness(1.1) contrast(1.2)' }}
-        />
-        {!collapsed && (
-          <div className="overflow-hidden flex-1">
-            <h1 className="font-rajdhani font-bold text-2xl tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>
-              ASX
-            </h1>
-            <p className="text-[11px] uppercase tracking-widest" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              Iluminação
-            </p>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: 'oklch(0.48 0.22 25)', color: 'oklch(0.98 0.001 285)' }}>BR</span>
-              <span className="text-xs font-bold px-2 py-1 rounded" style={{ background: 'oklch(0.48 0.22 25)', color: 'oklch(0.98 0.001 285)' }}>CN</span>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Logo removido */}
 
       {/* Cotação USD em tempo real - Banco Central do Brasil */}
       {!collapsed && (
