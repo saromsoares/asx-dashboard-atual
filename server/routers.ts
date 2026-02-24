@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido } from "./db";
+import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -58,8 +59,21 @@ export const appRouter = router({
   pedido: router({
     criar: protectedProcedure
       .input(z.object({ nome: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const result = await criarPedido(input.nome);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        if (result) {
+          await registrarAuditoria({
+            userId: ctx.user.id,
+            acao: 'criou',
+            entidade: 'pedido',
+            entidadeId: String(result.id),
+          dadosNovos: JSON.stringify({ nome: input.nome, status: 'Pendente' }),
+            descricao: criarDescricaoAcao('criou', 'pedido'),
+            ipAddress,
+            userAgent,
+          });
+        }
         return result;
       }),
     get: protectedProcedure
@@ -73,13 +87,40 @@ export const appRouter = router({
       }),
     atualizarStatus: protectedProcedure
       .input(z.object({ pedidoId: z.number(), novoStatus: z.enum(["Pendente", "Enviado", "Recebido"]) }))
-      .mutation(async ({ input }) => {
-        return await atualizarStatusPedido(input.pedidoId, input.novoStatus);
+      .mutation(async ({ input, ctx }) => {
+        const pedidoAnterior = await getPedido(input.pedidoId);
+        const result = await atualizarStatusPedido(input.pedidoId, input.novoStatus);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'alterou_status',
+          entidade: 'pedido',
+          entidadeId: String(input.pedidoId),
+          dadosAntigos: JSON.stringify({ status: pedidoAnterior?.status }),
+          dadosNovos: JSON.stringify({ status: input.novoStatus }),
+          descricao: criarDescricaoAcao('alterou_status', 'pedido', { novoStatus: input.novoStatus }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
       }),
     deletar: protectedProcedure
       .input(z.object({ pedidoId: z.number() }))
-      .mutation(async ({ input }) => {
-        return await deletarPedido(input.pedidoId);
+      .mutation(async ({ input, ctx }) => {
+        const pedido = await getPedido(input.pedidoId);
+        const result = await deletarPedido(input.pedidoId);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'deletou',
+          entidade: 'pedido',
+          entidadeId: String(input.pedidoId),
+          dadosAntigos: JSON.stringify({ nome: pedido?.nome, status: pedido?.status }),
+          descricao: criarDescricaoAcao('deletou', 'pedido'),
+          ipAddress,
+          userAgent,
+        });
+        return result;
       }),
   }),
 });

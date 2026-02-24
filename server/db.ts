@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { eq, desc } from 'drizzle-orm';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -223,7 +223,9 @@ export async function criarPedido(nome: string) {
     };
 
     const result = await db.insert(pedidos).values(values);
-    return result;
+    // Retornar o pedido criado
+    const pedidoCriado = await db.select().from(pedidos).where(eq(pedidos.nome, nome)).orderBy(desc(pedidos.dataCreacao)).limit(1);
+    return pedidoCriado[0];
   } catch (error) {
     console.error("[Database] Failed to create pedido:", error);
     throw error;

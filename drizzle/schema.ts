@@ -87,3 +87,24 @@ export const itens_pedidos = mysqlTable("itens_pedidos", {
 
 export type ItensPedido = typeof itens_pedidos.$inferSelect;
 export type InsertItensPedido = typeof itens_pedidos.$inferInsert;
+
+/**
+ * Tabela de logs de auditoria
+ * Registra todas as ações realizadas no sistema para rastreabilidade
+ */
+export const auditLogs = mysqlTable("auditLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  acao: varchar("acao", { length: 255 }).notNull(), // Ex: "criou_pedido", "atualizou_status", "deletou_item"
+  entidade: varchar("entidade", { length: 64 }).notNull(), // Ex: "pedido", "item_pedido", "estoque"
+  entidadeId: varchar("entidadeId", { length: 64 }).notNull(), // ID do registro afetado
+  dadosAntigos: text("dadosAntigos"), // JSON com dados anteriores (para comparação)
+  dadosNovos: text("dadosNovos"), // JSON com novos dados
+  descricao: text("descricao"), // Descrição legível da ação
+  ipAddress: varchar("ipAddress", { length: 45 }), // IPv4 ou IPv6
+  userAgent: text("userAgent"), // Navegador/cliente
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
