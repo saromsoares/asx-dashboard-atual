@@ -5,6 +5,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
 import { useIdioma } from '@/hooks/useIdioma';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { ImageUploadButton } from '@/components/ImageUploadButton';
 import { CategoryAdjustmentPanel } from '@/components/CategoryAdjustmentPanel';
 import {
@@ -39,6 +40,10 @@ type SortField = 'codigo' | 'descricao' | 'preco_venda' | 'lucro' | 'lucro_pct';
 type SortDir = 'asc' | 'desc';
 
 export default function Home() {
+  // The userAuth hooks provides authentication state
+  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
+  let { user, loading, error, isAuthenticated, logout } = useAuth();
+
   const [, setLocation] = useLocation();
   const { t } = useIdioma();
   const [search, setSearch] = useState('');

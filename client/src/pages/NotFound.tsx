@@ -32,7 +32,10 @@ export default function NotFound() {
             Ela pode ter sido movida ou removida.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div
+            id="not-found-button-group"
+            className="flex flex-col sm:flex-row gap-3 justify-center"
+          >
             <Button
               onClick={handleGoHome}
               className="px-6 py-2.5 rounded-lg font-medium transition-colors"

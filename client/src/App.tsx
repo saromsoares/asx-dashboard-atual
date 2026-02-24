@@ -19,7 +19,6 @@ import CentralAlexandre from "./pages/CentralAlexandre";
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
   const [location, setLocation] = useLocation();
-
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
@@ -49,6 +48,7 @@ function AuthenticatedRouter() {
     return "dashboard";
   };
 
+  // make sure to consider if you need authentication for certain routes
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)' }}>
       <Sidebar currentPage={getCurrentPage()} />
