@@ -172,5 +172,18 @@
 - [x] Testar /conteiner carrega sem 404
 - [x] Testar Central de Compras campos editáveis
 - [x] Testar Contêiner SR importar de pedido
+- [x] Push para GitHub
+- [x] Salvar checkpoint
+
+## 🔄 Importação v6 (Correções do Usuário via Claude)
+
+- [x] Extrair ZIP v6 e substituir 12 arquivos
+- [x] Deletar usePedidosSync.ts (código morto)
+- [x] Executar migration 0007 (tabelas já existiam da v4 - pulado)
+- [x] Verificar compilação TypeScript sem erros
+- [x] Testar /rastreamento carrega com pedidos confirmados e % embarque
+- [x] Testar /conteiner carrega sem 404
+- [x] Testar Central Sarom/Alexandre campos editáveis
+- [x] Console do browser sem erros
 - [ ] Push para GitHub
 - [ ] Salvar checkpoint

@@ -1,0 +1,16 @@
+{
+  "query": "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('processos_sr', 'itens_processo');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME IN ('processos_sr', 'itens_processo');",
+  "rows": [
+    {
+      "TABLE_NAME": "processos_sr"
+    },
+    {
+      "TABLE_NAME": "itens_processo"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\nprocessos_sr\nitens_processo\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

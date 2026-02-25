@@ -78,84 +78,194 @@ export default function Conteiner() {
   const [showVinculador, setShowVinculador] = useState(false);
   const { obterEmbarquesProcesso } = useEmbarques();
 
-  // ===== IMPORTAR DE PEDIDO CONFIRMADO =====
-  const [showImportarPedido, setShowImportarPedido] = useState(false);
+  // ===== IMPORTAR DE PEDIDO CONFIRMADO (Modal Grande) =====
+  const [showModalImport, setShowModalImport] = useState(false);
   const [pedidoSelecionadoImport, setPedidoSelecionadoImport] = useState<number | null>(null);
-  const [itensCheckados, setItensCheckados] = useState<Set<string>>(new Set());
+
+  // Auto-abrir modal se veio do Rastreamento (sessionStorage)
+  useEffect(() => {
+    const pedidoId = sessionStorage.getItem('asx_importar_pedido');
+    if (pedidoId) {
+      sessionStorage.removeItem('asx_importar_pedido');
+      const id = Number(pedidoId);
+      if (id > 0) {
+        // Aguardar dados carregarem e abrir modal
+        setTimeout(() => {
+          setPedidoSelecionadoImport(id);
+          setShowModalImport(true);
+        }, 500);
+      }
+    }
+  }, []);
 
   // Queries tRPC para pedidos confirmados
   const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
   const { data: todosItensDb = [] } = trpc.itemPedido.getAll.useQuery();
+
+  // Saldo pendente: quantidades já embarcadas de cada pedido em contêineres anteriores
+  const STORAGE_SALDO = 'asx_saldo_embarques';
+  const [saldoEmbarques, setSaldoEmbarques] = useState<Record<string, Record<string, { sarom: number; alexandre: number }>>>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_SALDO);
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
+  const salvarSaldo = useCallback((novoSaldo: typeof saldoEmbarques) => {
+    setSaldoEmbarques(novoSaldo);
+    try { localStorage.setItem(STORAGE_SALDO, JSON.stringify(novoSaldo)); } catch {}
+  }, []);
 
   // Filtrar apenas pedidos confirmados
   const pedidosConfirmadosDb = useMemo(() => {
     return pedidosDb.filter((p: any) => p.status === 'Confirmado');
   }, [pedidosDb]);
 
-  // Itens do pedido selecionado para importação
+  // Itens do pedido selecionado com saldo pendente calculado
   const itensDoSelecionado = useMemo(() => {
     if (!pedidoSelecionadoImport) return [];
+    const saldoPedido = saldoEmbarques[String(pedidoSelecionadoImport)] || {};
+
     return todosItensDb
       .filter((i: any) => i.pedidoId === pedidoSelecionadoImport)
       .map((item: any) => {
         const prod = produtos.find(p => p.codigo === item.produtoId);
+        const jaEmbarcado = saldoPedido[item.produtoId] || { sarom: 0, alexandre: 0 };
+        const pedSarom = item.quantidadeSarom || 0;
+        const pedAlexandre = item.quantidadeAlexandre || 0;
+        const saldoSarom = Math.max(0, pedSarom - jaEmbarcado.sarom);
+        const saldoAlexandre = Math.max(0, pedAlexandre - jaEmbarcado.alexandre);
         return {
           produtoId: item.produtoId,
           descricao: prod?.descricao || item.produtoId,
           unidade: prod?.unid || 'UND',
-          quantidadeSarom: item.quantidadeSarom || 0,
-          quantidadeAlexandre: item.quantidadeAlexandre || 0,
+          pedidoSarom: pedSarom,
+          pedidoAlexandre: pedAlexandre,
+          jaEmbarcadoSarom: jaEmbarcado.sarom,
+          jaEmbarcadoAlexandre: jaEmbarcado.alexandre,
+          saldoSarom,
+          saldoAlexandre,
           precoUnitario: parseFloat(item.precoUnitario) || prod?.custo_usd || 0,
         };
       });
-  }, [pedidoSelecionadoImport, todosItensDb]);
+  }, [pedidoSelecionadoImport, todosItensDb, saldoEmbarques]);
 
-  // Handler: importar itens selecionados do pedido para a invoice
-  const handleImportarItensDoPedido = useCallback(() => {
-    if (!processoSelecionado || itensCheckados.size === 0) return;
+  // Quantidades editáveis no modal (embarcar agora)
+  const [qtdsEmbarcar, setQtdsEmbarcar] = useState<Record<string, { sarom: number; alexandre: number }>>({});
 
-    const itensParaImportar = itensDoSelecionado.filter(i => itensCheckados.has(i.produtoId));
-    const novosItens: ItemConteiner[] = itensParaImportar.map(item => ({
-      id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      codigo: item.produtoId,
-      descricao: item.descricao,
-      unidade: item.unidade,
-      quantidade: item.quantidadeSarom + item.quantidadeAlexandre,
-      precoUnitarioDolar: item.precoUnitario,
-      precoTotalDolar: (item.quantidadeSarom + item.quantidadeAlexandre) * item.precoUnitario,
-      pedidoSarom: item.quantidadeSarom,
-      pedidoAlexandre: item.quantidadeAlexandre,
-      ordemCompra: pedidosDb.find((p: any) => p.id === pedidoSelecionadoImport)?.nome || '',
+  // Inicializar qtds quando seleciona pedido (preenche com saldo pendente)
+  useEffect(() => {
+    if (!pedidoSelecionadoImport || itensDoSelecionado.length === 0) return;
+    const initial: Record<string, { sarom: number; alexandre: number }> = {};
+    itensDoSelecionado.forEach(item => {
+      initial[item.produtoId] = { sarom: item.saldoSarom, alexandre: item.saldoAlexandre };
+    });
+    setQtdsEmbarcar(initial);
+  }, [pedidoSelecionadoImport, itensDoSelecionado.length]);
+
+  // Atualizar quantidade de embarque
+  const updateQtdEmbarcar = useCallback((produtoId: string, campo: 'sarom' | 'alexandre', valor: number) => {
+    setQtdsEmbarcar(prev => ({
+      ...prev,
+      [produtoId]: { ...prev[produtoId], [campo]: Math.max(0, valor) },
     }));
+  }, []);
 
-    // Verificar duplicatas (itens com mesmo código já existentes)
-    const codigosExistentes = new Set(processoSelecionado.itens.map(i => i.codigo));
-    const itensNovos = novosItens.filter(i => !codigosExistentes.has(i.codigo));
-    const itensDuplicados = novosItens.filter(i => codigosExistentes.has(i.codigo));
+  // Totais do modal
+  const totaisImport = useMemo(() => {
+    let totalSaromPedido = 0, totalAlexandrePedido = 0;
+    let totalSaromEmbarcar = 0, totalAlexandreEmbarcar = 0;
+    let totalUsdEmbarcar = 0;
+    let itensComEmbarque = 0;
 
-    if (itensDuplicados.length > 0 && itensNovos.length === 0) {
-      alert(`Todos os ${itensDuplicados.length} item(ns) já existem no processo. Nenhum item importado.`);
+    itensDoSelecionado.forEach(item => {
+      totalSaromPedido += item.saldoSarom;
+      totalAlexandrePedido += item.saldoAlexandre;
+      const qtd = qtdsEmbarcar[item.produtoId] || { sarom: 0, alexandre: 0 };
+      totalSaromEmbarcar += qtd.sarom;
+      totalAlexandreEmbarcar += qtd.alexandre;
+      totalUsdEmbarcar += (qtd.sarom + qtd.alexandre) * item.precoUnitario;
+      if (qtd.sarom > 0 || qtd.alexandre > 0) itensComEmbarque++;
+    });
+
+    const pctSarom = totalSaromPedido > 0 ? (totalSaromEmbarcar / totalSaromPedido) * 100 : 0;
+    const pctAlexandre = totalAlexandrePedido > 0 ? (totalAlexandreEmbarcar / totalAlexandrePedido) * 100 : 0;
+    const totalGeralPedido = totalSaromPedido + totalAlexandrePedido;
+    const totalGeralEmbarcar = totalSaromEmbarcar + totalAlexandreEmbarcar;
+    const pctGeral = totalGeralPedido > 0 ? (totalGeralEmbarcar / totalGeralPedido) * 100 : 0;
+
+    return {
+      totalSaromPedido, totalAlexandrePedido, totalSaromEmbarcar, totalAlexandreEmbarcar,
+      totalUsdEmbarcar, itensComEmbarque, pctSarom, pctAlexandre, pctGeral,
+      totalGeralPedido, totalGeralEmbarcar,
+      saldoRestante: totalGeralPedido - totalGeralEmbarcar,
+    };
+  }, [itensDoSelecionado, qtdsEmbarcar]);
+
+  // Handler: confirmar importação do modal
+  const handleConfirmarImportacao = useCallback(() => {
+    if (!processoSelecionado) return;
+
+    // Gerar itens para a invoice
+    const novosItens: ItemConteiner[] = [];
+    const nomePedido = pedidosDb.find((p: any) => p.id === pedidoSelecionadoImport)?.nome || '';
+
+    itensDoSelecionado.forEach(item => {
+      const qtd = qtdsEmbarcar[item.produtoId] || { sarom: 0, alexandre: 0 };
+      if (qtd.sarom === 0 && qtd.alexandre === 0) return;
+
+      // Verificar se item já existe no processo
+      const jaExiste = processoSelecionado.itens.some(i => i.codigo === item.produtoId);
+      if (jaExiste) return;
+
+      novosItens.push({
+        id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        codigo: item.produtoId,
+        descricao: item.descricao,
+        unidade: item.unidade,
+        quantidade: qtd.sarom + qtd.alexandre,
+        precoUnitarioDolar: item.precoUnitario,
+        precoTotalDolar: (qtd.sarom + qtd.alexandre) * item.precoUnitario,
+        pedidoSarom: qtd.sarom,
+        pedidoAlexandre: qtd.alexandre,
+        ordemCompra: nomePedido,
+      });
+    });
+
+    if (novosItens.length === 0) {
+      alert('Nenhum item novo para importar (todos já existem ou quantidades são 0).');
       return;
     }
 
+    // Atualizar processo
     const processoAtualizado = {
       ...processoSelecionado,
-      itens: [...processoSelecionado.itens, ...itensNovos],
+      itens: [...processoSelecionado.itens, ...novosItens],
     };
-
     setProcessos(prev => prev.map(p => p.id === processoSelecionado.id ? processoAtualizado : p));
     setProcessoSelecionado(processoAtualizado);
 
-    const msg = itensDuplicados.length > 0
-      ? `${itensNovos.length} item(ns) importado(s). ${itensDuplicados.length} ignorado(s) (já existiam).`
-      : `${itensNovos.length} item(ns) importado(s) com sucesso!`;
-    alert(msg);
+    // Atualizar saldo de embarques (registrar o que foi embarcado)
+    const pedidoKey = String(pedidoSelecionadoImport);
+    const saldoAtual = { ...saldoEmbarques };
+    if (!saldoAtual[pedidoKey]) saldoAtual[pedidoKey] = {};
 
-    // Limpar estados
-    setShowImportarPedido(false);
+    itensDoSelecionado.forEach(item => {
+      const qtd = qtdsEmbarcar[item.produtoId] || { sarom: 0, alexandre: 0 };
+      if (qtd.sarom === 0 && qtd.alexandre === 0) return;
+      const atual = saldoAtual[pedidoKey][item.produtoId] || { sarom: 0, alexandre: 0 };
+      saldoAtual[pedidoKey][item.produtoId] = {
+        sarom: atual.sarom + qtd.sarom,
+        alexandre: atual.alexandre + qtd.alexandre,
+      };
+    });
+    salvarSaldo(saldoAtual);
+
+    alert(`${novosItens.length} item(ns) importado(s)! Saldo pendente atualizado.`);
+    setShowModalImport(false);
     setPedidoSelecionadoImport(null);
-    setItensCheckados(new Set());
-  }, [processoSelecionado, itensDoSelecionado, itensCheckados, pedidosDb, pedidoSelecionadoImport, processos]);
+    setQtdsEmbarcar({});
+  }, [processoSelecionado, itensDoSelecionado, qtdsEmbarcar, pedidosDb, pedidoSelecionadoImport, saldoEmbarques, salvarSaldo, processos]);
 
   // Persistir processos no localStorage sempre que mudar
   useEffect(() => {
@@ -1412,135 +1522,18 @@ export default function Conteiner() {
                   Adicionar Item
                 </h3>
                 <button
-                  onClick={() => setShowImportarPedido(!showImportarPedido)}
-                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5"
-                  style={{
-                    background: showImportarPedido ? 'oklch(0.30 0.15 145)' : 'oklch(0.25 0.12 200)',
-                    color: 'white',
-                  }}
+                  onClick={() => setShowModalImport(true)}
+                  className="px-4 py-2 rounded-md text-xs font-bold transition-colors flex items-center gap-2"
+                  style={{ background: 'oklch(0.25 0.12 200)', color: 'white' }}
                 >
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                  {showImportarPedido ? 'Fechar Import' : 'Importar de Pedido'}
+                  <ShoppingCart className="w-4 h-4" />
+                  Importar de Pedido Confirmado
                 </button>
               </div>
 
-              {/* ===== PAINEL: IMPORTAR DE PEDIDO CONFIRMADO ===== */}
-              {showImportarPedido && (
-                <div className="mb-4 p-3 rounded-lg border" style={{ background: 'oklch(0.12 0.005 285)', borderColor: 'oklch(0.30 0.12 200)' }}>
-                  <p className="text-xs font-bold mb-2" style={{ color: 'oklch(0.70 0.12 200)' }}>
-                    IMPORTAR ITENS DE PEDIDO CONFIRMADO
-                  </p>
-
-                  {/* Select de pedido */}
-                  <select
-                    value={pedidoSelecionadoImport || ''}
-                    onChange={(e) => {
-                      const val = e.target.value ? Number(e.target.value) : null;
-                      setPedidoSelecionadoImport(val);
-                      setItensCheckados(new Set());
-                    }}
-                    className="w-full px-3 py-2 rounded-md border text-sm mb-2"
-                    style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
-                  >
-                    <option value="">— Selecione um pedido confirmado —</option>
-                    {pedidosConfirmadosDb.map((p: any) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nome} (#{p.id})
-                      </option>
-                    ))}
-                  </select>
-
-                  {pedidosConfirmadosDb.length === 0 && (
-                    <p className="text-xs py-2" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                      Nenhum pedido confirmado encontrado. Confirme pedidos no Gerenciador de Compras primeiro.
-                    </p>
-                  )}
-
-                  {/* Lista de itens do pedido selecionado */}
-                  {pedidoSelecionadoImport && itensDoSelecionado.length > 0 && (
-                    <div className="mt-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs" style={{ color: 'oklch(0.55 0.010 285)' }}>
-                          {itensDoSelecionado.length} item(ns) — {itensCheckados.size} selecionado(s)
-                        </span>
-                        <button
-                          onClick={() => {
-                            if (itensCheckados.size === itensDoSelecionado.length) {
-                              setItensCheckados(new Set());
-                            } else {
-                              setItensCheckados(new Set(itensDoSelecionado.map(i => i.produtoId)));
-                            }
-                          }}
-                          className="text-xs px-2 py-1 rounded transition-colors"
-                          style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.75 0.005 65)' }}
-                        >
-                          {itensCheckados.size === itensDoSelecionado.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
-                        </button>
-                      </div>
-
-                      <div className="max-h-48 overflow-y-auto rounded border" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-                        {itensDoSelecionado.map(item => {
-                          const checked = itensCheckados.has(item.produtoId);
-                          const jaExiste = processoSelecionado?.itens.some(i => i.codigo === item.produtoId);
-                          return (
-                            <div
-                              key={item.produtoId}
-                              onClick={() => {
-                                if (jaExiste) return;
-                                const next = new Set(itensCheckados);
-                                if (checked) next.delete(item.produtoId);
-                                else next.add(item.produtoId);
-                                setItensCheckados(next);
-                              }}
-                              className="flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors text-xs"
-                              style={{
-                                background: checked ? 'oklch(0.20 0.08 200 / 0.3)' : 'transparent',
-                                borderBottom: '1px solid oklch(0.18 0.005 285)',
-                                opacity: jaExiste ? 0.4 : 1,
-                              }}
-                            >
-                              <div
-                                className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0"
-                                style={{
-                                  borderColor: checked ? 'oklch(0.55 0.15 200)' : 'oklch(0.35 0.005 285)',
-                                  background: checked ? 'oklch(0.35 0.15 200)' : 'transparent',
-                                }}
-                              >
-                                {checked && <Check className="w-3 h-3" style={{ color: 'white' }} />}
-                              </div>
-                              <span className="font-mono font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>{item.produtoId}</span>
-                              <span className="flex-1 truncate" style={{ color: 'oklch(0.75 0.005 65)' }}>{item.descricao}</span>
-                              <span style={{ color: 'oklch(0.60 0.15 200)' }}>S:{item.quantidadeSarom}</span>
-                              <span style={{ color: 'oklch(0.60 0.15 145)' }}>A:{item.quantidadeAlexandre}</span>
-                              <span className="font-mono" style={{ color: 'oklch(0.65 0.010 285)' }}>${item.precoUnitario.toFixed(2)}</span>
-                              {jaExiste && <span className="text-[10px] px-1 rounded" style={{ background: 'oklch(0.30 0.15 50)', color: 'oklch(0.80 0.15 50)' }}>Já existe</span>}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <button
-                        onClick={handleImportarItensDoPedido}
-                        disabled={itensCheckados.size === 0}
-                        className="mt-2 w-full px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
-                        style={{ background: 'oklch(0.35 0.15 200)', color: 'white' }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Importar {itensCheckados.size} item(ns) para Invoice
-                      </button>
-                    </div>
-                  )}
-
-                  {pedidoSelecionadoImport && itensDoSelecionado.length === 0 && (
-                    <p className="text-xs py-2" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                      Este pedido não possui itens.
-                    </p>
-                  )}
-                </div>
-              )}
-              {/* Ou adicionar manualmente */}
+              {/* Adicionar manualmente */}
               <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: 'oklch(0.45 0.010 285)' }}>
-                {showImportarPedido ? 'Ou adicionar manualmente:' : 'Adicionar manualmente:'}
+                Adicionar manualmente:
               </p>
 <div className="grid grid-cols-9 gap-2">
                 <div className="relative">
@@ -1918,6 +1911,272 @@ export default function Conteiner() {
           processoId={processoSelecionado.id}
           onClose={() => setShowVinculador(false)}
         />
+      )}
+
+      {/* ===== MODAL IMPORTAR DE PEDIDO (Fullscreen) ===== */}
+      {showModalImport && processoSelecionado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'oklch(0.08 0.005 285 / 0.92)' }}>
+          <div className="w-[95vw] max-w-[1400px] max-h-[92vh] flex flex-col rounded-xl overflow-hidden border" style={{ background: 'oklch(0.13 0.005 285)', borderColor: 'oklch(0.28 0.005 285)' }}>
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'oklch(0.25 0.005 285)', background: 'oklch(0.11 0.005 285)' }}>
+              <div>
+                <h2 className="text-lg font-rajdhani font-bold" style={{ color: 'oklch(0.90 0.005 65)' }}>
+                  Importar Itens para Invoice — {processoSelecionado.numeroProcesso}
+                </h2>
+                <p className="text-xs mt-0.5" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                  Selecione o pedido e ajuste as quantidades a embarcar neste contêiner
+                </p>
+              </div>
+              <button onClick={() => { setShowModalImport(false); setPedidoSelecionadoImport(null); }} className="p-2 rounded-lg transition-colors" style={{ color: 'oklch(0.60 0.005 285)' }}>
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Seleção de Pedido */}
+            <div className="px-6 py-3 border-b" style={{ borderColor: 'oklch(0.22 0.005 285)', background: 'oklch(0.15 0.005 285)' }}>
+              <div className="flex items-center gap-4">
+                <label className="text-xs font-bold uppercase" style={{ color: 'oklch(0.55 0.010 285)' }}>Pedido:</label>
+                <select
+                  value={pedidoSelecionadoImport || ''}
+                  onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    setPedidoSelecionadoImport(val);
+                    setQtdsEmbarcar({});
+                  }}
+                  className="flex-1 max-w-md px-3 py-2 rounded-md border text-sm"
+                  style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                >
+                  <option value="">— Selecione um pedido confirmado —</option>
+                  {pedidosConfirmadosDb.map((p: any) => {
+                    const saldo = saldoEmbarques[String(p.id)];
+                    const temSaldo = saldo && Object.keys(saldo).length > 0;
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.nome} (#{p.id}) {temSaldo ? '⚠ parcialmente embarcado' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                {pedidoSelecionadoImport && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        const next: Record<string, { sarom: number; alexandre: number }> = {};
+                        itensDoSelecionado.forEach(i => { next[i.produtoId] = { sarom: i.saldoSarom, alexandre: i.saldoAlexandre }; });
+                        setQtdsEmbarcar(next);
+                      }}
+                      className="px-3 py-1.5 rounded text-xs font-bold"
+                      style={{ background: 'oklch(0.30 0.15 145)', color: 'white' }}
+                    >
+                      Embarcar Todo Saldo
+                    </button>
+                    <button
+                      onClick={() => {
+                        const next: Record<string, { sarom: number; alexandre: number }> = {};
+                        itensDoSelecionado.forEach(i => { next[i.produtoId] = { sarom: 0, alexandre: 0 }; });
+                        setQtdsEmbarcar(next);
+                      }}
+                      className="px-3 py-1.5 rounded text-xs font-bold"
+                      style={{ background: 'oklch(0.25 0.005 285)', color: 'oklch(0.65 0.005 285)' }}
+                    >
+                      Zerar Tudo
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Tabela de Itens */}
+            <div className="flex-1 overflow-auto px-6 py-2">
+              {!pedidoSelecionadoImport ? (
+                <div className="flex items-center justify-center h-full" style={{ color: 'oklch(0.40 0.010 285)' }}>
+                  <p className="text-sm">Selecione um pedido confirmado acima para ver os itens</p>
+                </div>
+              ) : itensDoSelecionado.length === 0 ? (
+                <div className="flex items-center justify-center h-full" style={{ color: 'oklch(0.40 0.010 285)' }}>
+                  <p className="text-sm">Este pedido não possui itens.</p>
+                </div>
+              ) : (
+                <table className="w-full text-xs" style={{ borderCollapse: 'separate', borderSpacing: '0 2px' }}>
+                  <thead>
+                    <tr style={{ background: 'oklch(0.18 0.005 285)' }}>
+                      <th className="px-2 py-2.5 text-left font-bold" style={{ color: 'oklch(0.60 0.005 285)' }}>CÓDIGO</th>
+                      <th className="px-2 py-2.5 text-left font-bold" style={{ color: 'oklch(0.60 0.005 285)' }}>DESCRIÇÃO</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.55 0.15 200)' }}>PEDIDO S</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.55 0.15 145)' }}>PEDIDO A</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.50 0.010 285)' }}>JÁ EMB. S</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.50 0.010 285)' }}>JÁ EMB. A</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.70 0.18 85)' }}>SALDO S</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.70 0.18 85)' }}>SALDO A</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.48 0.22 25)', background: 'oklch(0.48 0.22 25 / 0.10)' }}>EMBARCAR S</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.48 0.22 25)', background: 'oklch(0.48 0.22 25 / 0.10)' }}>EMBARCAR A</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.60 0.005 285)' }}>%</th>
+                      <th className="px-2 py-2.5 text-right font-bold" style={{ color: 'oklch(0.60 0.005 285)' }}>USD</th>
+                      <th className="px-2 py-2.5 text-center font-bold" style={{ color: 'oklch(0.60 0.005 285)' }}>STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {itensDoSelecionado.map((item, idx) => {
+                      const qtd = qtdsEmbarcar[item.produtoId] || { sarom: 0, alexandre: 0 };
+                      const totalPedido = item.pedidoSarom + item.pedidoAlexandre;
+                      const totalEmbarcar = qtd.sarom + qtd.alexandre;
+                      const totalJaEmb = item.jaEmbarcadoSarom + item.jaEmbarcadoAlexandre;
+                      const pctEmbarcar = totalPedido > 0 ? ((totalJaEmb + totalEmbarcar) / totalPedido) * 100 : 0;
+                      const jaExiste = processoSelecionado?.itens.some(i => i.codigo === item.produtoId);
+                      const saldoZero = item.saldoSarom === 0 && item.saldoAlexandre === 0;
+                      const usdLinha = totalEmbarcar * item.precoUnitario;
+
+                      return (
+                        <tr
+                          key={item.produtoId}
+                          style={{
+                            background: idx % 2 === 0 ? 'transparent' : 'oklch(0.15 0.005 285 / 0.5)',
+                            opacity: (jaExiste || saldoZero) ? 0.45 : 1,
+                          }}
+                        >
+                          <td className="px-2 py-2 font-mono font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>{item.produtoId}</td>
+                          <td className="px-2 py-2 max-w-[200px] truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>{item.descricao}</td>
+                          <td className="px-2 py-2 text-center font-bold" style={{ color: 'oklch(0.60 0.15 200)' }}>{item.pedidoSarom}</td>
+                          <td className="px-2 py-2 text-center font-bold" style={{ color: 'oklch(0.60 0.15 145)' }}>{item.pedidoAlexandre}</td>
+                          <td className="px-2 py-2 text-center" style={{ color: 'oklch(0.50 0.010 285)' }}>{item.jaEmbarcadoSarom}</td>
+                          <td className="px-2 py-2 text-center" style={{ color: 'oklch(0.50 0.010 285)' }}>{item.jaEmbarcadoAlexandre}</td>
+                          <td className="px-2 py-2 text-center font-bold" style={{ color: item.saldoSarom > 0 ? 'oklch(0.80 0.18 85)' : 'oklch(0.40 0.010 285)' }}>{item.saldoSarom}</td>
+                          <td className="px-2 py-2 text-center font-bold" style={{ color: item.saldoAlexandre > 0 ? 'oklch(0.80 0.18 85)' : 'oklch(0.40 0.010 285)' }}>{item.saldoAlexandre}</td>
+                          {/* Inputs editáveis */}
+                          <td className="px-1 py-1 text-center" style={{ background: 'oklch(0.48 0.22 25 / 0.06)' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.saldoSarom}
+                              value={qtd.sarom}
+                              disabled={jaExiste || saldoZero}
+                              onChange={e => updateQtdEmbarcar(item.produtoId, 'sarom', Math.min(parseInt(e.target.value) || 0, item.saldoSarom))}
+                              onFocus={e => e.target.select()}
+                              className="w-16 px-1 py-1 text-center rounded border text-xs font-bold"
+                              style={{
+                                background: 'oklch(0.14 0.005 285)',
+                                borderColor: qtd.sarom > 0 ? 'oklch(0.55 0.15 200)' : 'oklch(0.25 0.005 285)',
+                                color: 'oklch(0.60 0.15 200)',
+                              }}
+                            />
+                          </td>
+                          <td className="px-1 py-1 text-center" style={{ background: 'oklch(0.48 0.22 25 / 0.06)' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.saldoAlexandre}
+                              value={qtd.alexandre}
+                              disabled={jaExiste || saldoZero}
+                              onChange={e => updateQtdEmbarcar(item.produtoId, 'alexandre', Math.min(parseInt(e.target.value) || 0, item.saldoAlexandre))}
+                              onFocus={e => e.target.select()}
+                              className="w-16 px-1 py-1 text-center rounded border text-xs font-bold"
+                              style={{
+                                background: 'oklch(0.14 0.005 285)',
+                                borderColor: qtd.alexandre > 0 ? 'oklch(0.55 0.15 145)' : 'oklch(0.25 0.005 285)',
+                                color: 'oklch(0.60 0.15 145)',
+                              }}
+                            />
+                          </td>
+                          {/* Barra de % */}
+                          <td className="px-2 py-2 text-center">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span className="text-[10px] font-bold" style={{ color: pctEmbarcar >= 100 ? 'oklch(0.72 0.17 145)' : pctEmbarcar > 0 ? 'oklch(0.80 0.18 85)' : 'oklch(0.40 0.010 285)' }}>
+                                {pctEmbarcar.toFixed(0)}%
+                              </span>
+                              <div className="w-12 h-1.5 rounded-full overflow-hidden" style={{ background: 'oklch(0.22 0.005 285)' }}>
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{
+                                    width: `${Math.min(100, pctEmbarcar)}%`,
+                                    background: pctEmbarcar >= 100 ? 'oklch(0.55 0.17 145)' : pctEmbarcar >= 50 ? 'oklch(0.70 0.18 85)' : 'oklch(0.55 0.25 30)',
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-2 py-2 text-right font-mono" style={{ color: 'oklch(0.65 0.010 285)' }}>${usdLinha.toFixed(2)}</td>
+                          <td className="px-2 py-2 text-center">
+                            {jaExiste ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'oklch(0.30 0.15 50)', color: 'oklch(0.80 0.15 50)' }}>NA INVOICE</span>
+                            ) : saldoZero ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'oklch(0.30 0.15 145)', color: 'oklch(0.75 0.15 145)' }}>100% EMB.</span>
+                            ) : totalEmbarcar > 0 ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: 'oklch(0.30 0.12 200)', color: 'oklch(0.75 0.12 200)' }}>EMBARCAR</span>
+                            ) : (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ color: 'oklch(0.40 0.010 285)' }}>PENDENTE</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Footer com resumo e ação */}
+            {pedidoSelecionadoImport && itensDoSelecionado.length > 0 && (
+              <div className="px-6 py-4 border-t" style={{ borderColor: 'oklch(0.25 0.005 285)', background: 'oklch(0.11 0.005 285)' }}>
+                <div className="flex items-center justify-between">
+                  {/* KPIs resumo */}
+                  <div className="flex gap-4">
+                    <div className="text-center px-3 py-1.5 rounded" style={{ background: 'oklch(0.18 0.005 285)' }}>
+                      <div className="text-[10px] uppercase font-bold" style={{ color: 'oklch(0.50 0.010 285)' }}>Itens</div>
+                      <div className="text-sm font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{totaisImport.itensComEmbarque}/{itensDoSelecionado.length}</div>
+                    </div>
+                    <div className="text-center px-3 py-1.5 rounded" style={{ background: 'oklch(0.18 0.005 285)' }}>
+                      <div className="text-[10px] uppercase font-bold" style={{ color: 'oklch(0.55 0.15 200)' }}>Sarom</div>
+                      <div className="text-sm font-bold" style={{ color: 'oklch(0.60 0.15 200)' }}>{totaisImport.totalSaromEmbarcar}/{totaisImport.totalSaromPedido}</div>
+                      <div className="text-[10px] font-bold" style={{ color: 'oklch(0.55 0.15 200)' }}>{totaisImport.pctSarom.toFixed(0)}%</div>
+                    </div>
+                    <div className="text-center px-3 py-1.5 rounded" style={{ background: 'oklch(0.18 0.005 285)' }}>
+                      <div className="text-[10px] uppercase font-bold" style={{ color: 'oklch(0.55 0.15 145)' }}>Alexandre</div>
+                      <div className="text-sm font-bold" style={{ color: 'oklch(0.60 0.15 145)' }}>{totaisImport.totalAlexandreEmbarcar}/{totaisImport.totalAlexandrePedido}</div>
+                      <div className="text-[10px] font-bold" style={{ color: 'oklch(0.55 0.15 145)' }}>{totaisImport.pctAlexandre.toFixed(0)}%</div>
+                    </div>
+                    <div className="text-center px-3 py-1.5 rounded" style={{ background: 'oklch(0.18 0.005 285)' }}>
+                      <div className="text-[10px] uppercase font-bold" style={{ color: 'oklch(0.50 0.010 285)' }}>Total USD</div>
+                      <div className="text-sm font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>${totaisImport.totalUsdEmbarcar.toFixed(2)}</div>
+                    </div>
+                    <div className="text-center px-3 py-1.5 rounded" style={{ background: 'oklch(0.18 0.005 285)' }}>
+                      <div className="text-[10px] uppercase font-bold" style={{ color: 'oklch(0.50 0.010 285)' }}>% Geral</div>
+                      <div className="text-lg font-bold" style={{
+                        color: totaisImport.pctGeral >= 100 ? 'oklch(0.72 0.17 145)' : totaisImport.pctGeral >= 50 ? 'oklch(0.80 0.18 85)' : 'oklch(0.70 0.22 30)',
+                      }}>{totaisImport.pctGeral.toFixed(0)}%</div>
+                    </div>
+                    {totaisImport.saldoRestante > 0 && (
+                      <div className="text-center px-3 py-1.5 rounded" style={{ background: 'oklch(0.70 0.18 85 / 0.12)' }}>
+                        <div className="text-[10px] uppercase font-bold" style={{ color: 'oklch(0.70 0.18 85)' }}>Saldo Pendente</div>
+                        <div className="text-sm font-bold" style={{ color: 'oklch(0.80 0.18 85)' }}>{totaisImport.saldoRestante} un</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Botões de ação */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => { setShowModalImport(false); setPedidoSelecionadoImport(null); }}
+                      className="px-5 py-2.5 rounded-md text-sm font-bold"
+                      style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.65 0.005 285)' }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleConfirmarImportacao}
+                      disabled={totaisImport.itensComEmbarque === 0}
+                      className="px-6 py-2.5 rounded-md text-sm font-bold transition-colors flex items-center gap-2 disabled:opacity-40"
+                      style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+                    >
+                      <Check className="w-4 h-4" />
+                      Confirmar Embarque ({totaisImport.itensComEmbarque} itens — {totaisImport.pctGeral.toFixed(0)}%)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
