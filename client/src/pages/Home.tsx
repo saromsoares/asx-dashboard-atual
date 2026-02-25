@@ -24,6 +24,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { ProductCardMobile } from '@/components/ProductCardMobile';
 
 // Função para disparar evento de mudança de processos
 function dispatchProcessosChange() {
@@ -36,7 +37,7 @@ const formatBRL = (v: number) =>
 const formatUSD = (v: number) =>
   v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
-type ViewMode = 'grid' | 'list';
+type ViewMode = 'grid' | 'list' | 'cards';
 type SortField = 'codigo' | 'descricao' | 'preco_venda' | 'lucro' | 'lucro_pct';
 type SortDir = 'asc' | 'desc';
 
@@ -456,8 +457,33 @@ export default function Home() {
             </div>
           )}
 
-          {/* Products */}
-          <div className="flex-1 flex flex-col p-4" style={{ minHeight: 0 }}>
+          {/* Products - Mobile Cards */}
+          <div className="md:hidden flex-1 flex flex-col p-4 overflow-auto" style={{ minHeight: 0 }}>
+            <div className="grid grid-cols-1 gap-3">
+              {filtered.map(p => {
+                const custo = getCusto(p.id);
+                const custoR = getCustoReal(p.id);
+                const lucro = getLucro(p.id, p.preco_venda);
+                const markup = getMarkup(p.id, p.preco_venda);
+                return (
+                  <ProductCardMobile
+                    key={p.id}
+                    codigo={p.codigo}
+                    descricao={p.descricao}
+                    precoVenda={p.preco_venda}
+                    custoUsd={custo}
+                    custoBrl={custoR}
+                    lucro={lucro}
+                    margem={getLucroPct(p.id, p.preco_venda)}
+                    markup={markup}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Products - Desktop */}
+          <div className="hidden md:flex flex-1 flex-col p-4" style={{ minHeight: 0 }}>
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 overflow-auto flex-1">
                 {filtered.map(p => (

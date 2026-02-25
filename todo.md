@@ -102,8 +102,8 @@
 
 ### Sessão 2: Tabelas → Cards Mobile
 - [x] Criar ProductCard, OrderCard, ContainerCard
-- [ ] Integrar ProductCard em Home.tsx
-- [ ] Integrar OrderCard em Compras.tsx
+- [x] Integrar ProductCard em Home.tsx (md:hidden)
+- [x] Integrar OrderCard em Compras.tsx (md:hidden)
 - [ ] Integrar ContainerCard em Containers.tsx
 - [ ] Testar em 3 larguras (375px, 390px, 430px)
 - [ ] Revisar e validar antes de passar para Sessão 3

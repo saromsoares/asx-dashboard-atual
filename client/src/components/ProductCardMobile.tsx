@@ -15,7 +15,7 @@ interface ProductCardProps {
   fotoUrl?: string;
 }
 
-export function ProductCard({
+export function ProductCardMobile({
   codigo,
   descricao,
   precoVenda,
