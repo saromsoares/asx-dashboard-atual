@@ -117,6 +117,10 @@
 - [ ] Revisar e validar antes de passar para Sessão 4
 
 ### Sessão 4: Refinamento + Testes Completos
+- [ ] Integrar FormInput em Home.tsx (search input)
+- [ ] Integrar FormInput em Compras.tsx (novo pedido)
+- [ ] Integrar FormInput em Containers.tsx (novo container)
+- [ ] Integrar FormInput em Desenvolvimento.tsx (search + novo produto)
 - [ ] Pull-to-refresh
 - [ ] Infinite scroll
 - [ ] Toasts de feedback
