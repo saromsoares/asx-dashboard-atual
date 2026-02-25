@@ -134,14 +134,14 @@ export default function Compras() {
           {/* Criar novo pedido */}
           <div className="border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
             <p className="text-xs uppercase tracking-wider mb-3" style={{ color: 'oklch(0.45 0.010 285)' }}>GERAR NOVO PEDIDO</p>
-            <div className="flex gap-2">
+            <div className="flex gap-2 md:flex-row flex-col">
               <input
                 type="text"
                 placeholder="Nome do pedido..."
                 value={novoNomePedido}
                 onChange={e => setNovoNomePedido(e.target.value)}
                 onKeyPress={e => e.key === 'Enter' && handleCriarPedido()}
-                className="flex-1 px-4 py-2 rounded-md border text-sm"
+                className="flex-1 px-4 py-2 md:py-2 py-3 rounded-md border text-sm md:h-auto h-11"
                 style={{
                   background: 'oklch(0.18 0.005 285)',
                   borderColor: 'oklch(0.28 0.005 285)',
@@ -150,7 +150,7 @@ export default function Compras() {
               />
               <button
                 onClick={handleCriarPedido}
-                className="px-4 py-2 rounded-md font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-2 md:py-2 py-3 rounded-md font-medium transition-colors flex items-center gap-2 md:h-auto h-11 md:w-auto w-full justify-center"
                 style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
               >
                 <Plus className="w-4 h-4" />

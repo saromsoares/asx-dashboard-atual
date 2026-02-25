@@ -200,7 +200,7 @@ export default function Home() {
         <div className="flex-1" />
 
         {/* Search */}
-        <div className="relative w-80">
+        <div className="relative w-80 md:w-80 md:block hidden">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
           <input
             type="text"
@@ -208,6 +208,30 @@ export default function Home() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-8 py-2 text-sm rounded-md border"
+            style={{
+              background: 'oklch(0.18 0.005 285)',
+              borderColor: 'oklch(0.28 0.005 285)',
+              color: 'oklch(0.90 0.005 65)',
+              outline: 'none',
+            }}
+            onFocus={e => (e.target.style.borderColor = 'oklch(0.48 0.22 25)')}
+            onBlur={e => (e.target.style.borderColor = 'oklch(0.28 0.005 285)')}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+              <X className="w-3.5 h-3.5" style={{ color: 'oklch(0.60 0.010 285)' }} />
+            </button>
+          )}
+        </div>
+        {/* Search Mobile */}
+        <div className="relative flex-1 md:hidden">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-8 py-3 text-sm rounded-md border h-11"
             style={{
               background: 'oklch(0.18 0.005 285)',
               borderColor: 'oklch(0.28 0.005 285)',
@@ -736,8 +760,8 @@ const InlinePrecoInput = React.memo(function InlinePrecoInput({
 
   if (editing) {
     return (
-      <div className="flex items-center gap-1 justify-end">
-        <span className="text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>R$</span>
+      <div className="flex items-center gap-1 justify-end md:flex-row flex-col md:w-auto w-full">
+        <span className="text-xs font-bold md:block hidden" style={{ color: 'oklch(0.48 0.22 25)' }}>R$</span>
         <input
           type="number"
           value={inputVal}
@@ -746,7 +770,7 @@ const InlinePrecoInput = React.memo(function InlinePrecoInput({
           onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false); }}
           autoFocus
           step="0.01"
-          className="asx-input-usd w-24"
+          className="asx-input-usd w-24 md:h-auto h-11 md:py-2 py-3 md:px-2 px-3"
         />
       </div>
     );
