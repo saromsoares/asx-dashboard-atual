@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Link, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
-import { NotificacoesPedidos } from '@/components/NotificacoesPedidos';
+import { NotificacoesPedidos, type Notificacao } from '@/components/NotificacoesPedidos';
 import { ContainerCard } from '@/components/ContainerCard';
 import {
   Plus,
@@ -12,9 +12,6 @@ import {
   ChevronUp,
   Link2,
   Unlink2,
-  AlertCircle,
-  LayoutGrid,
-  List,
 } from 'lucide-react';
 
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -25,26 +22,18 @@ const statusColors: Record<string, { bg: string; text: string; border: string }>
   'Entregue': { bg: 'oklch(0.20 0.10 145 / 0.3)', text: 'oklch(0.72 0.17 145)', border: 'oklch(0.50 0.17 145)' },
 };
 
-interface Notificacao {
-  id: string;
-  tipo: 'sucesso' | 'erro' | 'info';
-  mensagem: string;
-}
-
 export default function Containers() {
   const [, setLocation] = useLocation();
-  const [novoNumeroContainer, setNovoNumeroContainer] = useState<string>('');
+  const [novoNumeroContainer, setNovoNumeroContainer] = useState('');
   const [containerExpandido, setContainerExpandido] = useState<number | null>(null);
-  const [containerSelecionado, setContainerSelecionado] = useState<number | null>(null);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
-  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
 
   // Queries e mutations
   const { data: containers = [], isLoading: carregandoContainers, refetch: recarregarContainers } = trpc.container.getAllComPedidos.useQuery();
-  const { data: pedidosConfirmados = [] } = trpc.pedido.getAll.useQuery();
-  const { data: pedidosDoContainer = [] } = trpc.containerPedido.getPedidos.useQuery(
-    { containerId: containerSelecionado || 0 },
-    { enabled: containerSelecionado !== null }
+  const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
+  const { data: pedidosDoContainer = [], refetch: recarregarPedidosContainer } = trpc.containerPedido.getPedidos.useQuery(
+    { containerId: containerExpandido || 0 },
+    { enabled: containerExpandido !== null && containerExpandido > 0 }
   );
   const criarContainerMutation = trpc.container.criar.useMutation();
   const vincularPedidoMutation = trpc.containerPedido.vincular.useMutation();
@@ -52,7 +41,7 @@ export default function Containers() {
   const atualizarStatusContainerMutation = trpc.container.atualizarStatus.useMutation();
   const deletarContainerMutation = trpc.container.deletar.useMutation();
 
-  // Adicionar notificação
+  // Notificações
   const adicionarNotificacao = useCallback((tipo: 'sucesso' | 'erro' | 'info', mensagem: string) => {
     const id = `notif_${Date.now()}`;
     setNotificacoes(prev => [...prev, { id, tipo, mensagem }]);
@@ -67,7 +56,6 @@ export default function Containers() {
       adicionarNotificacao('erro', 'Digite um número para o container');
       return;
     }
-
     try {
       await criarContainerMutation.mutateAsync({ numero: novoNumeroContainer });
       adicionarNotificacao('sucesso', `Container ${novoNumeroContainer} criado com sucesso!`);
@@ -84,10 +72,11 @@ export default function Containers() {
       await vincularPedidoMutation.mutateAsync({ containerId, pedidoId });
       adicionarNotificacao('sucesso', 'Pedido vinculado ao container!');
       recarregarContainers();
+      recarregarPedidosContainer();
     } catch (error) {
       adicionarNotificacao('erro', 'Erro ao vincular pedido');
     }
-  }, [vincularPedidoMutation, adicionarNotificacao, recarregarContainers]);
+  }, [vincularPedidoMutation, adicionarNotificacao, recarregarContainers, recarregarPedidosContainer]);
 
   // Desvincular pedido
   const handleDesvincularPedido = useCallback(async (containerPedidoId: number) => {
@@ -95,10 +84,11 @@ export default function Containers() {
       await desvincularPedidoMutation.mutateAsync({ containerPedidoId });
       adicionarNotificacao('sucesso', 'Pedido desvinculado do container');
       recarregarContainers();
+      recarregarPedidosContainer();
     } catch (error) {
       adicionarNotificacao('erro', 'Erro ao desvincular pedido');
     }
-  }, [desvincularPedidoMutation, adicionarNotificacao, recarregarContainers]);
+  }, [desvincularPedidoMutation, adicionarNotificacao, recarregarContainers, recarregarPedidosContainer]);
 
   // Atualizar status do container
   const handleAtualizarStatus = useCallback(async (containerId: number, novoStatus: string) => {
@@ -117,25 +107,28 @@ export default function Containers() {
   // Deletar container
   const handleDeletarContainer = useCallback(async (containerId: number) => {
     if (!confirm('Tem certeza que deseja deletar este container?')) return;
-
     try {
       await deletarContainerMutation.mutateAsync({ containerId });
       adicionarNotificacao('sucesso', 'Container deletado com sucesso');
+      if (containerExpandido === containerId) setContainerExpandido(null);
       recarregarContainers();
     } catch (error) {
       adicionarNotificacao('erro', 'Erro ao deletar container');
     }
-  }, [deletarContainerMutation, adicionarNotificacao, recarregarContainers]);
+  }, [deletarContainerMutation, adicionarNotificacao, recarregarContainers, containerExpandido]);
 
-  // Filtrar pedidos confirmados que não estão vinculados
+  // Pedidos confirmados disponíveis para vincular (excluindo os já vinculados ao container expandido)
   const pedidosDisponiveis = useMemo(() => {
-    return pedidosConfirmados.filter((p: any) => p.status === 'Confirmado');
-  }, [pedidosConfirmados]);
+    const pedidosConfirmados = pedidosDb.filter((p: any) => p.status === 'Confirmado');
+    if (!containerExpandido) return pedidosConfirmados;
+    const idsVinculados = new Set(pedidosDoContainer.map((pc: any) => pc.pedidoId));
+    return pedidosConfirmados.filter((p: any) => !idsVinculados.has(p.id));
+  }, [pedidosDb, pedidosDoContainer, containerExpandido]);
 
   return (
     <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* Botão Voltar */}
-      <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+      <div className="px-4 md:px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         <button
           onClick={() => setLocation('/')}
           className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
@@ -144,20 +137,16 @@ export default function Containers() {
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm font-medium">Menu</span>
         </button>
-      </div>
-
-      {/* Header */}
-      <header className="z-40 border-b px-6 h-14 flex items-center gap-4 flex-shrink-0" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-        <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
+        <span className="ml-3 font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
           GERENCIAMENTO DE CONTAINERS
         </span>
-      </header>
+      </div>
 
       {/* Conteúdo Principal */}
-      <main className="flex-1 overflow-auto p-6">
+      <main className="flex-1 overflow-auto p-4 md:p-6">
         {/* Seção de Criar Container */}
-        <div className="mb-8 p-6 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-          <h2 className="text-lg font-semibold mb-4" style={{ color: 'oklch(0.85 0.005 65)' }}>Criar Novo Container</h2>
+        <div className="mb-6 p-4 md:p-6 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+          <h2 className="text-sm font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>Criar Novo Container</h2>
           <div className="flex gap-3 md:flex-row flex-col">
             <input
               type="text"
@@ -165,7 +154,7 @@ export default function Containers() {
               value={novoNumeroContainer}
               onChange={e => setNovoNumeroContainer(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCriarContainer()}
-              className="flex-1 px-4 py-2 md:py-2 py-3 rounded-md border md:h-auto h-11"
+              className="flex-1 px-4 py-3 rounded-md border h-11 text-sm"
               style={{
                 background: 'oklch(0.18 0.005 285)',
                 borderColor: 'oklch(0.28 0.005 285)',
@@ -175,7 +164,7 @@ export default function Containers() {
             <button
               onClick={handleCriarContainer}
               disabled={criarContainerMutation.isPending}
-              className="px-6 py-2 md:py-2 py-3 rounded-md font-semibold flex items-center gap-2 transition-colors md:h-auto h-11 md:w-auto w-full justify-center"
+              className="px-6 py-3 rounded-md font-semibold flex items-center gap-2 transition-colors h-11 md:w-auto w-full justify-center"
               style={{
                 background: 'oklch(0.48 0.22 25)',
                 color: 'white',
@@ -188,48 +177,19 @@ export default function Containers() {
           </div>
         </div>
 
-        {/* Containers - Mobile Cards */}
-        <div className="md:hidden space-y-3">
-          {carregandoContainers ? (
-            <div className="text-center py-12" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              Carregando containers...
-            </div>
-          ) : containers.length === 0 ? (
-            <div className="text-center py-12 flex flex-col items-center gap-3" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              <Package className="w-12 h-12" />
-              <p>Nenhum container criado ainda</p>
-            </div>
-          ) : (
-            containers.map((container: any) => (
-              <ContainerCard
-                key={container.id}
-                id={container.id}
-                numero={container.numero}
-                status={container.status}
-                capacidadeMaxima={container.capacidade_maxima}
-                pesoMaximo={container.peso_maximo}
-                pedidosCount={container.pedidosCount || 0}
-                onEdit={() => setContainerSelecionado(container.id)}
-                onDelete={() => handleDeletarContainer(container.id)}
-                onManagePedidos={() => setContainerSelecionado(container.id)}
-              />
-            ))
-          )}
-        </div>
-
-        {/* Containers - Desktop */}
-        <div className="hidden md:block space-y-4">
-          {carregandoContainers ? (
-            <div className="text-center py-12" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              Carregando containers...
-            </div>
-          ) : containers.length === 0 ? (
-            <div className="text-center py-12 flex flex-col items-center gap-3" style={{ color: 'oklch(0.50 0.010 285)' }}>
-              <Package className="w-12 h-12" />
-              <p>Nenhum container criado ainda</p>
-            </div>
-          ) : (
-            containers.map((container: any) => {
+        {/* Lista de Containers */}
+        {carregandoContainers ? (
+          <div className="text-center py-12" style={{ color: 'oklch(0.50 0.010 285)' }}>
+            Carregando containers...
+          </div>
+        ) : containers.length === 0 ? (
+          <div className="text-center py-12 flex flex-col items-center gap-3" style={{ color: 'oklch(0.50 0.010 285)' }}>
+            <Package className="w-12 h-12" />
+            <p>Nenhum container criado ainda</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {containers.map((container: any) => {
               const cores = statusColors[container.status] || statusColors['Vazio'];
               const isExpanded = containerExpandido === container.id;
 
@@ -242,7 +202,9 @@ export default function Containers() {
                   {/* Header do Container */}
                   <div
                     className="p-4 flex items-center justify-between cursor-pointer hover:brightness-110 transition-all"
-                    onClick={() => setContainerExpandido(isExpanded ? null : container.id)}
+                    onClick={() => {
+                      setContainerExpandido(isExpanded ? null : container.id);
+                    }}
                     style={{ background: cores.bg, borderBottom: `1px solid ${cores.border}` }}
                   >
                     <div className="flex items-center gap-4 flex-1">
@@ -252,7 +214,7 @@ export default function Containers() {
                           {container.numero}
                         </p>
                         <p className="text-xs" style={{ color: cores.text, opacity: 0.7 }}>
-                          {container.pedidosCount || 0} pedido(s) vinculado(s)
+                          {container.pedidosCount || 0} pedido(s) vinculado(s) • Criado em {new Date(container.dataCreacao).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
                     </div>
@@ -264,6 +226,7 @@ export default function Containers() {
                           e.stopPropagation();
                           handleAtualizarStatus(container.id, e.target.value);
                         }}
+                        onClick={e => e.stopPropagation()}
                         className="px-3 py-1 rounded text-xs font-semibold"
                         style={{
                           background: cores.bg,
@@ -298,53 +261,107 @@ export default function Containers() {
                     <div className="p-4 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
                       {/* Pedidos Vinculados */}
                       <div className="mb-6">
-                        <h3 className="text-sm font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                          Pedidos Vinculados ({container.pedidosCount || 0})
+                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
+                          <Link2 className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 250)' }} />
+                          Pedidos Vinculados ({pedidosDoContainer.length})
                         </h3>
-                        {container.pedidosCount === 0 ? (
-                          <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                            Nenhum pedido vinculado ainda
+
+                        {pedidosDoContainer.length === 0 ? (
+                          <p className="text-xs py-4 text-center" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                            Nenhum pedido vinculado. Vincule pedidos confirmados abaixo.
                           </p>
                         ) : (
                           <div className="space-y-2">
-                            {/* Aqui você pode adicionar a lista de pedidos vinculados */}
+                            {pedidosDoContainer.map((pc: any) => {
+                              const statusColor = pc.pedidoStatus === 'Pendente' ? 'oklch(0.65 0.22 25)' :
+                                pc.pedidoStatus === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'oklch(0.72 0.17 145)';
+
+                              return (
+                                <div
+                                  key={pc.id}
+                                  className="flex items-center justify-between p-3 rounded-md"
+                                  style={{ background: 'oklch(0.16 0.005 285)', border: '1px solid oklch(0.24 0.005 285)' }}
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div
+                                      className="px-2 py-0.5 rounded text-[10px] font-semibold flex-shrink-0"
+                                      style={{ background: statusColor, color: 'white' }}
+                                    >
+                                      {pc.pedidoStatus}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                                        #{pc.pedidoId} - {pc.pedidoNome}
+                                      </p>
+                                      <p className="text-[10px]" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                                        Vinculado em {new Date(pc.dataVinculacao).toLocaleDateString('pt-BR')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleDesvincularPedido(pc.id)}
+                                    className="p-2 rounded-md transition-colors hover:opacity-75 flex items-center gap-1 text-xs flex-shrink-0"
+                                    style={{ color: 'oklch(0.65 0.22 25)' }}
+                                    title="Desvincular pedido"
+                                  >
+                                    <Unlink2 className="w-3.5 h-3.5" />
+                                    <span className="hidden md:inline">Desvincular</span>
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
 
                       {/* Vincular Novo Pedido */}
-                      {pedidosDisponiveis.length > 0 && (
-                        <div>
-                          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                            <Link2 className="w-4 h-4" />
-                            Vincular Pedido
-                          </h3>
+                      <div>
+                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
+                          <Plus className="w-4 h-4" style={{ color: 'oklch(0.72 0.17 145)' }} />
+                          Vincular Pedido Confirmado
+                        </h3>
+
+                        {pedidosDisponiveis.length === 0 ? (
+                          <p className="text-xs py-4 text-center" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                            Nenhum pedido confirmado disponível para vincular.
+                            {pedidosDb.filter((p: any) => p.status === 'Pendente').length > 0 && (
+                              <span> Confirme pedidos pendentes na página de Compras.</span>
+                            )}
+                          </p>
+                        ) : (
                           <div className="space-y-2">
                             {pedidosDisponiveis.map((pedido: any) => (
                               <button
                                 key={pedido.id}
                                 onClick={() => handleVincularPedido(container.id, pedido.id)}
-                                className="w-full p-3 rounded text-left text-sm transition-colors flex items-center justify-between"
+                                disabled={vincularPedidoMutation.isPending}
+                                className="w-full p-3 rounded-md text-left text-sm transition-colors flex items-center justify-between hover:brightness-110"
                                 style={{
                                   background: 'oklch(0.18 0.005 285)',
                                   color: 'oklch(0.80 0.005 65)',
                                   border: '1px solid oklch(0.28 0.005 285)',
+                                  opacity: vincularPedidoMutation.isPending ? 0.6 : 1,
                                 }}
                               >
-                                <span>{pedido.nome}</span>
-                                <Plus className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 25)' }} />
+                                <div>
+                                  <span className="font-medium">#{pedido.id} - {pedido.nome}</span>
+                                  <p className="text-[10px] mt-0.5" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                                    {new Date(pedido.dataCreacao).toLocaleDateString('pt-BR')}
+                                  </p>
+                                </div>
+                                <Plus className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.48 0.22 25)' }} />
                               </button>
                             ))}
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </main>
 
       {/* Notificações */}

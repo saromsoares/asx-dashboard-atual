@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 
 export const appRouter = router({
@@ -121,6 +121,41 @@ export const appRouter = router({
           userAgent,
         });
         return result;
+      }),
+  }),
+
+  itemPedido: router({
+    adicionar: protectedProcedure
+      .input(z.object({
+        pedidoId: z.number().int().positive(),
+        produtoId: z.string().min(1).max(100).trim(),
+        quantidadeSarom: z.number().int().min(0).max(999999),
+        quantidadeAlexandre: z.number().int().min(0).max(999999),
+        precoUnitario: z.number().min(0).max(999999.99),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await adicionarItemPedido(
+          input.pedidoId,
+          input.produtoId,
+          input.quantidadeSarom,
+          input.quantidadeAlexandre,
+          input.precoUnitario
+        );
+        return result;
+      }),
+    remover: protectedProcedure
+      .input(z.object({ itemId: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        return await removerItemPedido(input.itemId);
+      }),
+    getByPedido: protectedProcedure
+      .input(z.object({ pedidoId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        return await getItensDoPedido(input.pedidoId);
+      }),
+    getAll: protectedProcedure
+      .query(async () => {
+        return await getAllItensPedidos();
       }),
   }),
 

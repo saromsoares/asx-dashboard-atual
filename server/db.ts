@@ -309,6 +309,92 @@ export async function deletarPedido(pedidoId: number) {
 }
 
 
+// ============= ITENS DE PEDIDO =============
+
+export async function adicionarItemPedido(pedidoId: number, produtoId: string, quantidadeSarom: number, quantidadeAlexandre: number, precoUnitario: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot add item to pedido: database not available");
+    return null;
+  }
+
+  try {
+    // Verificar se o item já existe no pedido
+    const existente = await db.select().from(itens_pedidos)
+      .where(sql`${itens_pedidos.pedidoId} = ${pedidoId} AND ${itens_pedidos.produtoId} = ${produtoId}`)
+      .limit(1);
+
+    if (existente.length > 0) {
+      // Atualizar quantidades
+      await db.update(itens_pedidos).set({
+        quantidadeSarom,
+        quantidadeAlexandre,
+        precoUnitario: String(precoUnitario),
+      }).where(eq(itens_pedidos.id, existente[0].id));
+      return { id: existente[0].id, updated: true };
+    } else {
+      // Inserir novo item
+      const result = await db.insert(itens_pedidos).values({
+        pedidoId,
+        produtoId,
+        quantidadeSarom,
+        quantidadeAlexandre,
+        precoUnitario: String(precoUnitario),
+      });
+      return { id: result[0].insertId, updated: false };
+    }
+  } catch (error) {
+    console.error("[Database] Failed to add item to pedido:", error);
+    throw error;
+  }
+}
+
+export async function removerItemPedido(itemId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot remove item from pedido: database not available");
+    return;
+  }
+
+  try {
+    await db.delete(itens_pedidos).where(eq(itens_pedidos.id, itemId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to remove item from pedido:", error);
+    throw error;
+  }
+}
+
+export async function getItensDoPedido(pedidoId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get items of pedido: database not available");
+    return [];
+  }
+
+  try {
+    return await db.select().from(itens_pedidos).where(eq(itens_pedidos.pedidoId, pedidoId));
+  } catch (error) {
+    console.error("[Database] Failed to get items of pedido:", error);
+    return [];
+  }
+}
+
+export async function getAllItensPedidos() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get all itens pedidos: database not available");
+    return [];
+  }
+
+  try {
+    return await db.select().from(itens_pedidos);
+  } catch (error) {
+    console.error("[Database] Failed to get all itens pedidos:", error);
+    return [];
+  }
+}
+
 // ============= CONTAINERS =============
 
 export async function criarContainer(numero: string, capacidadeMaxima?: number, pesoMaximo?: number) {
@@ -447,7 +533,21 @@ export async function getPedidosDoContainer(containerId: number) {
   }
 
   try {
-    return await db.select().from(container_pedidos).where(eq(container_pedidos.containerId, containerId));
+    // JOIN com pedidos para retornar nome e status do pedido
+    const result = await db
+      .select({
+        id: container_pedidos.id,
+        containerId: container_pedidos.containerId,
+        pedidoId: container_pedidos.pedidoId,
+        sequencia: container_pedidos.sequencia,
+        dataVinculacao: container_pedidos.dataVinculacao,
+        pedidoNome: pedidos.nome,
+        pedidoStatus: pedidos.status,
+      })
+      .from(container_pedidos)
+      .innerJoin(pedidos, eq(container_pedidos.pedidoId, pedidos.id))
+      .where(eq(container_pedidos.containerId, containerId));
+    return result;
   } catch (error) {
     console.error("[Database] Failed to get container pedidos:", error);
     return [];

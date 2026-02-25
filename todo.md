@@ -36,7 +36,7 @@
 ## 📊 Status Atual
 
 - **Servidor**: ✅ Rodando sem erros
-- **Testes**: ✅ 18 testes passando
+- **Testes**: ✅ 27 testes passando
 - **GitHub**: ⚠️ Requer reconexão
 - **Banco de Dados**: ✅ Schema atualizado com containers
 
@@ -139,3 +139,12 @@
 - [ ] Abrir campo Compras para preenchimento/edição
 - [ ] Testar edição em CentralSarom.tsx
 - [ ] Testar edição em CentralAlexandre.tsx
+
+
+## 🚨 BUGS CRÍTICOS (Sessão Atual)
+
+- [x] BUG: Compras.tsx - Ao criar pedido ou clicar em pedido, NÃO abre painel de detalhes para adicionar itens
+- [x] BUG: Compras.tsx - Falta toda a UI de detalhes do pedido (adicionar itens, mudar status, ver itens)
+- [x] BUG: Compras.tsx - Itens de pedido salvos apenas em memória local, não persistem no banco
+- [x] BUG: Containers.tsx - Pedidos vinculados não aparecem quando expande container (seção vazia)
+- [x] BUG: Containers.tsx - Falta mostrar nomes dos pedidos vinculados com opção de desvincular
