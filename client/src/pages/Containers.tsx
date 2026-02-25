@@ -158,14 +158,14 @@ export default function Containers() {
         {/* Seção de Criar Container */}
         <div className="mb-8 p-6 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
           <h2 className="text-lg font-semibold mb-4" style={{ color: 'oklch(0.85 0.005 65)' }}>Criar Novo Container</h2>
-          <div className="flex gap-3">
+          <div className="flex gap-3 md:flex-row flex-col">
             <input
               type="text"
               placeholder="Ex: CONT-001, CONT-002..."
               value={novoNumeroContainer}
               onChange={e => setNovoNumeroContainer(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCriarContainer()}
-              className="flex-1 px-4 py-2 rounded-md border"
+              className="flex-1 px-4 py-2 md:py-2 py-3 rounded-md border md:h-auto h-11"
               style={{
                 background: 'oklch(0.18 0.005 285)',
                 borderColor: 'oklch(0.28 0.005 285)',
@@ -175,7 +175,7 @@ export default function Containers() {
             <button
               onClick={handleCriarContainer}
               disabled={criarContainerMutation.isPending}
-              className="px-6 py-2 rounded-md font-semibold flex items-center gap-2 transition-colors"
+              className="px-6 py-2 md:py-2 py-3 rounded-md font-semibold flex items-center gap-2 transition-colors md:h-auto h-11 md:w-auto w-full justify-center"
               style={{
                 background: 'oklch(0.48 0.22 25)',
                 color: 'white',

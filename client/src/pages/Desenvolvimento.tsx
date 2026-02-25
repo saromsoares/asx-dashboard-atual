@@ -234,17 +234,17 @@ export default function Desenvolvimento() {
             </button>
 
             <div className="flex-1 min-w-48">
-              <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>
+              <label className="text-sm font-semibold md:block hidden" style={{ color: 'oklch(0.70 0.010 285)' }}>
                 {t('buscar') || 'Buscar'}
               </label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-2.5 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
+              <div className="relative md:mt-1 mt-0">
+                <Search className="absolute left-3 md:top-2.5 top-3 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
                 <input
                   type="text"
                   placeholder={t('codigo_ou_descricao') || 'Código ou descrição...'}
                   value={busca}
                   onChange={e => setBusca(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 rounded-md border text-sm"
+                  className="w-full pl-10 pr-3 py-2 md:py-2 py-3 rounded-md border text-sm md:h-auto h-11"
                   style={{
                     background: 'oklch(0.14 0.005 285)',
                     borderColor: 'oklch(0.26 0.005 285)',
@@ -260,7 +260,7 @@ export default function Desenvolvimento() {
               </div>
               <button
                 onClick={() => setMostrarModalNovoProduto(true)}
-                className="px-4 py-2 rounded-md font-semibold text-sm transition-colors flex-shrink-0"
+                className="px-4 py-2 md:py-2 py-3 rounded-md font-semibold text-sm transition-colors flex-shrink-0 md:h-auto h-11 md:w-auto w-full"
                 style={{ background: "oklch(0.48 0.22 25)", color: "white" }}
               >
                 + Novo Produto
