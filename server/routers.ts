@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 
 export const appRouter = router({
@@ -230,8 +230,75 @@ export const appRouter = router({
       .input(z.object({ containerId: z.number() }))
       .query(async ({ input }) => {
         return await getPedidosDoContainer(input.containerId);
+       }),
+  }),
+
+  produto: router({
+    importarDoArquivo: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const result = await importarProdutosDoArquivo();
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'importou_produtos',
+          entidade: 'produto',
+          entidadeId: 'batch',
+          dadosNovos: JSON.stringify({ sucessoCount: result.sucesso, erroCount: result.erro }),
+          descricao: criarDescricaoAcao('importou', 'produtos', { total: result.sucesso }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    listar: protectedProcedure
+      .query(async () => {
+        return await listarProdutos();
+      }),
+    get: protectedProcedure
+      .input(z.object({ produtoId: z.number() }))
+      .query(async ({ input }) => {
+        return await getProduto(input.produtoId);
+      }),
+    criar: protectedProcedure
+      .input(z.object({
+        codigo: z.string(),
+        descricao: z.string(),
+        categoria: z.string(),
+        unidade: z.string().optional(),
+        caixa: z.string().optional(),
+        voltagem: z.string().optional(),
+        codigoBarras: z.string().optional(),
+        ncm: z.string().optional(),
+        custoUsd: z.number().optional(),
+        precoVendaBrl: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await criarProduto({
+          codigo: input.codigo,
+          descricao: input.descricao,
+          categoria: input.categoria,
+          unidade: input.unidade || 'UND',
+          caixa: input.caixa || 'PAR',
+          voltagem: input.voltagem || 'BIVOLT',
+          codigoBarras: input.codigoBarras || null,
+          ncm: input.ncm || null,
+          custoUsd: String(input.custoUsd || 0),
+          precoVendaBrl: String(input.precoVendaBrl || 0),
+          ativo: 'true',
+        });
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'criou',
+          entidade: 'produto',
+          entidadeId: String(result?.id),
+          dadosNovos: JSON.stringify({ codigo: input.codigo, descricao: input.descricao }),
+          descricao: criarDescricaoAcao('criou', 'produto', { codigo: input.codigo }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
       }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

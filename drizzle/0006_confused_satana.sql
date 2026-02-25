@@ -1,0 +1,22 @@
+CREATE TABLE `produtos` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`codigo` varchar(64) NOT NULL,
+	`descricao` text NOT NULL,
+	`categoria` varchar(128) NOT NULL,
+	`unidade` varchar(32) NOT NULL DEFAULT 'UND',
+	`caixa` varchar(32) NOT NULL DEFAULT 'PAR',
+	`voltagem` varchar(32) DEFAULT 'BIVOLT',
+	`codigoBarras` varchar(64),
+	`ncm` varchar(12),
+	`custoUsd` decimal(10,2) NOT NULL DEFAULT '0',
+	`precoVendaBrl` decimal(10,2) NOT NULL DEFAULT '0',
+	`descricaoCompleta` text,
+	`observacoes` text,
+	`fotoUrl` varchar(512),
+	`ativo` varchar(10) NOT NULL DEFAULT 'true',
+	`criadoEm` timestamp NOT NULL DEFAULT (now()),
+	`atualizadoEm` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `produtos_id` PRIMARY KEY(`id`),
+	CONSTRAINT `produtos_codigo_unique` UNIQUE(`codigo`),
+	CONSTRAINT `produtos_codigoBarras_unique` UNIQUE(`codigoBarras`)
+);

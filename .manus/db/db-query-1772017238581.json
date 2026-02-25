@@ -1,0 +1,13 @@
+{
+  "query": "DELETE FROM produtos;\nINSERT INTO produtos (codigo, descricao, categoria, unidade, caixa, voltagem, codigoBarras, ncm, custoUsd, precoVendaBrl, ativo) VALUES \n('ASX1001', 'ULTRA LED CSP H1 - 70W - 10.000 LUMENS - BIVOLT', 'Linha Mini Led', 'KIT', 'PAR', 'BIVOLT', '9000000021013', '85395200', 3.4, 105.0, 'true'),\n('ASX1003', 'ULTRA LED CSP H3 - 70W - 10.000 LUMENS - BIVOLT', 'Linha Headlight', 'KIT', 'PAR', 'BIVOLT', '9000000009615', '85395200', 3.4, 105.0, 'true'),\n('ASX1004', 'ULTRA LED CSP H4 - 70W - 10.000 LUMENS - BIVOLT', 'Linha Headlight', 'KIT', 'PAR', 'BIVOLT', '9000000009585', '85395200', 4.66, 105.0, 'true');\nSELECT COUNT(*) as total FROM produtos;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute DELETE FROM produtos;\nINSERT INTO produtos (codigo, descricao, categoria, unidade, caixa, voltagem, codigoBarras, ncm, custoUsd, precoVendaBrl, ativo) VALUES \n('ASX1001', 'ULTRA LED CSP H1 - 70W - 10.000 LUMENS - BIVOLT', 'Linha Mini Led', 'KIT', 'PAR', 'BIVOLT', '9000000021013', '85395200', 3.4, 105.0, 'true'),\n('ASX1003', 'ULTRA LED CSP H3 - 70W - 10.000 LUMENS - BIVOLT', 'Linha Headlight', 'KIT', 'PAR', 'BIVOLT', '9000000009615', '85395200', 3.4, 105.0, 'true'),\n('ASX1004', 'ULTRA LED CSP H4 - 70W - 10.000 LUMENS - BIVOLT', 'Linha Headlight', 'KIT', 'PAR', 'BIVOLT', '9000000009585', '85395200', 4.66, 105.0, 'true');\nSELECT COUNT(*) as total FROM produtos;",
+  "rows": [
+    {
+      "total": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n3\n",
+  "stderr": "",
+  "execution_time_ms": 202
+}

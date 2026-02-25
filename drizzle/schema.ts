@@ -56,6 +56,34 @@ export const precos = mysqlTable("precos", {
 
 export type Preco = typeof precos.$inferSelect;
 export type InsertPreco = typeof precos.$inferInsert;
+
+/**
+ * Tabela de produtos
+ * Armazena informações completas de todos os produtos
+ */
+export const produtos = mysqlTable("produtos", {
+  id: int("id").autoincrement().primaryKey(),
+  codigo: varchar("codigo", { length: 64 }).notNull().unique(), // Ex: ASX1001
+  descricao: text("descricao").notNull(),
+  categoria: varchar("categoria", { length: 128 }).notNull(),
+  unidade: varchar("unidade", { length: 32 }).default("UND").notNull(),
+  caixa: varchar("caixa", { length: 32 }).default("PAR").notNull(),
+  voltagem: varchar("voltagem", { length: 32 }).default("BIVOLT"),
+  codigoBarras: varchar("codigoBarras", { length: 64 }).unique(),
+  ncm: varchar("ncm", { length: 12 }),
+  custoUsd: decimal("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
+  precoVendaBrl: decimal("precoVendaBrl", { precision: 10, scale: 2 }).default("0").notNull(),
+  descricaoCompleta: text("descricaoCompleta"),
+  observacoes: text("observacoes"),
+  fotoUrl: varchar("fotoUrl", { length: 512 }),
+  ativo: varchar("ativo", { length: 10 }).default("true").notNull(), // true or false
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Produto = typeof produtos.$inferSelect;
+export type InsertProduto = typeof produtos.$inferInsert;
+
 /**
  * Tabela de pedidos de compra
  * Armazena informações dos pedidos com status de progresso

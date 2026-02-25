@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc } from 'drizzle-orm';
 
@@ -462,5 +462,111 @@ export async function getContainersComPedidos() {
   } catch (error) {
     console.error("[Database] Failed to get containers with pedidos:", error);
     return [];
+  }
+}
+
+
+// Produtos queries
+export async function importarProdutosDoArquivo() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot import produtos: database not available");
+    return { sucesso: 0, erro: 0 };
+  }
+
+  try {
+    // Importar dados de produtos do arquivo local
+    // Usar require dinâmico para evitar problemas de TypeScript
+    const produtosData = require('../client/src/data/produtos');
+    const produtos = produtosData.produtos || [];
+
+    if (!Array.isArray(produtos) || produtos.length === 0) {
+      console.error("[Database] No produtos found in data file");
+      return { sucesso: 0, erro: 0 };
+    }
+
+    // Limpar tabela de produtos
+    await db.delete(produtos as any);
+
+    // Inserir produtos
+    let sucessoCount = 0;
+    let erroCount = 0;
+
+    for (const p of produtos) {
+      try {
+        await db.insert(produtos as any).values({
+          codigo: p.codigo,
+          descricao: p.descricao,
+          categoria: p.categoria,
+          unidade: p.unid || 'UND',
+          caixa: p.caixa || 'PAR',
+          voltagem: p.volt || 'BIVOLT',
+          codigoBarras: p.cod_barras || null,
+          ncm: p.ncm || null,
+          custoUsd: parseFloat(p.custo_usd) || 0,
+          precoVendaBrl: parseFloat(p.preco_venda) || 0,
+          ativo: 'true',
+        });
+        sucessoCount++;
+      } catch (error) {
+        console.error(`[Database] Failed to insert produto ${p.codigo}:`, error);
+        erroCount++;
+      }
+    }
+
+    console.log(`[Database] Importação concluída: ${sucessoCount} sucesso, ${erroCount} erro`);
+    return { sucesso: sucessoCount, erro: erroCount };
+  } catch (error) {
+    console.error("[Database] Failed to import produtos:", error);
+    return { sucesso: 0, erro: 0 };
+  }
+}
+
+export async function listarProdutos() {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot list produtos: database not available");
+    return [];
+  }
+
+  try {
+    return await db.select().from(produtos);
+  } catch (error) {
+    console.error("[Database] Failed to list produtos:", error);
+    return [];
+  }
+}
+
+export async function getProduto(produtoId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get produto: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.select().from(produtos).where(eq(produtos.id, produtoId)).limit(1);
+    return result.length > 0 ? result[0] : undefined;
+  } catch (error) {
+    console.error("[Database] Failed to get produto:", error);
+    return undefined;
+  }
+}
+
+export async function criarProduto(data: InsertProduto) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create produto: database not available");
+    return undefined;
+  }
+
+  try {
+    const result = await db.insert(produtos).values(data);
+    // Retornar o produto criado
+    const produtoCriado = await db.select().from(produtos).where(eq(produtos.codigo, data.codigo)).limit(1);
+    return produtoCriado[0];
+  } catch (error) {
+    console.error("[Database] Failed to create produto:", error);
+    throw error;
   }
 }
