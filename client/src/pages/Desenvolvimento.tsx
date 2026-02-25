@@ -254,11 +254,13 @@ export default function Desenvolvimento() {
               </div>
             </div>
 
-            <div className="text-xs" style={{ color: 'oklch(0.60 0.010 285)' }}>
-              {produtosFiltrados.length} {produtosFiltrados.length === 1 ? 'produto' : 'produtos'}
+            <div className="flex items-center justify-between" style={{ color: 'oklch(0.60 0.010 285)' }}>
+              <div className="text-xs">
+                {produtosFiltrados.length} {produtosFiltrados.length === 1 ? 'produto' : 'produtos'}
+              </div>
               <button
                 onClick={() => setMostrarModalNovoProduto(true)}
-                className="px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                className="px-4 py-2 rounded-md font-semibold text-sm transition-colors flex-shrink-0"
                 style={{ background: "oklch(0.48 0.22 25)", color: "white" }}
               >
                 + Novo Produto

@@ -79,3 +79,13 @@
 ## Melhorias de UI/UX
 
 - [x] Adicionar coluna MARKUP MÉDIO na barra de estatísticas do dashboard de produtos
+
+
+## 🐛 Correções de Layout e Estrutura
+
+- [x] Corrigir status "Confirmado" cortado na aba de pedidos (Gerenciador de Compras) - Aumentado padding (px-5, py-2) e tamanho de fonte
+- [x] Corrigir "Novo Produto" sobrepondo "415 produtos" na página de Desenvolvimento - Usado flex justify-between
+- [x] Aumentar padding dos inputs de quantidade (py-1 → py-2)
+- [ ] Revisar e ajustar espaçamento geral do layout
+- [ ] Verificar overflow de elementos em todas as páginas
+- [ ] Validar responsividade em diferentes resoluções

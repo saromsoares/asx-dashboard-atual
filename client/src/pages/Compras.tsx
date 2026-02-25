@@ -258,7 +258,7 @@ export default function Compras() {
               <button
                 key={tab.value}
                 onClick={() => setFiltroStatus(tab.value)}
-                className="px-4 py-1.5 rounded text-xs font-semibold transition-colors whitespace-nowrap"
+                className="px-5 py-2 rounded text-sm font-semibold transition-colors whitespace-nowrap flex-shrink-0"
                 style={{
                   background: filtroStatus === tab.value ? tab.color : 'oklch(0.18 0.005 285)',
                   color: filtroStatus === tab.value ? 'white' : 'oklch(0.65 0.010 285)',
@@ -508,7 +508,7 @@ export default function Compras() {
                                     });
                                   }
                                 }}
-                                className="w-16 px-2 py-1 rounded text-sm text-center"
+                                className="w-16 px-2 py-2 rounded text-sm text-center border"
                                 style={{
                                   background: 'oklch(0.18 0.005 285)',
                                   borderColor: 'oklch(0.28 0.005 285)',
@@ -537,7 +537,7 @@ export default function Compras() {
                                     });
                                   }
                                 }}
-                                className="w-16 px-2 py-1 rounded text-sm text-center"
+                                className="w-16 px-2 py-2 rounded text-sm text-center border"
                                 style={{
                                   background: 'oklch(0.18 0.005 285)',
                                   borderColor: 'oklch(0.28 0.005 285)',
