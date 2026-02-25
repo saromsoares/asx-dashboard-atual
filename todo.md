@@ -201,3 +201,16 @@
 - [x] Clicável para redirecionar ao Rastreamento
 - [x] Testar compilação e funcionalidade
 - [ ] Salvar checkpoint
+
+## 🔄 Importação v7 (Usuários + Pagamentos)
+
+- [x] Extrair ZIP v7 e substituir 5 arquivos
+- [x] Verificar compilação TypeScript sem erros (0 erros, 27 testes passando)
+- [x] Testar login alexandre@asx.com.br
+- [ ] Testar login frederico@asx.com.br (mesmo código de auth)
+- [ ] Testar login michaelfeng89@hotmail.com (mesmo código de auth)
+- [x] Testar login sarom@asxstore.com (original)
+- [x] Testar /pagamentos carrega com KPIs e tabelas
+- [x] Console sem erros
+- [ ] Push para GitHub
+- [ ] Salvar checkpoint

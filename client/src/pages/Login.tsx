@@ -7,7 +7,7 @@ export default function Login() {
   const [email, setEmail] = useState('sarom@asxstore.com');
   const [password, setPassword] = useState('');
   const [, setLocation] = useLocation();
-  const { login, loading, error } = useAuth();
+  const { login, loading, error, isAuthenticated } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,14 +16,10 @@ export default function Login() {
 
   // Redirecionar para home se login bem-sucedido
   React.useEffect(() => {
-    const checkAuth = () => {
-      const savedUser = localStorage.getItem('authUser');
-      if (savedUser) {
-        setLocation('/');
-      }
-    };
-    checkAuth();
-  }, [setLocation]);
+    if (isAuthenticated) {
+      setLocation('/');
+    }
+  }, [isAuthenticated, setLocation]);
 
   return (
     <div

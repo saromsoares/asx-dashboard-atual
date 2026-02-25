@@ -14,6 +14,7 @@ import Desenvolvimento from "./pages/Desenvolvimento";
 import Containers from "./pages/Containers";
 import Conteiner from "./pages/Conteiner";
 import Rastreamento from "./pages/Rastreamento";
+import Pagamentos from "./pages/Pagamentos";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
 import { MobileMenu } from "./components/MobileMenu";
@@ -47,6 +48,7 @@ function AuthenticatedRouter() {
     if (location === "/containers") return "containers";
     if (location === "/conteiner") return "conteiner";
     if (location === "/rastreamento") return "rastreamento";
+    if (location === "/pagamentos") return "pagamentos";
     if (location === "/central-sarom") return "central-sarom";
     if (location === "/central-alexandre") return "central-alexandre";
     if (location === "/desenvolvimento") return "desenvolvimento";
@@ -69,6 +71,7 @@ function AuthenticatedRouter() {
           { label: 'Containers', href: '/containers' },
           { label: 'Contêiner SR', href: '/conteiner' },
           { label: 'Rastreamento', href: '/rastreamento' },
+          { label: 'Pagamentos', href: '/pagamentos' },
           { label: 'Desenvolvimento', href: '/desenvolvimento' },
           { label: 'Central Sarom', href: '/central-sarom' },
           { label: 'Central Alexandre', href: '/central-alexandre' },
@@ -83,6 +86,7 @@ function AuthenticatedRouter() {
           <Route path="/containers" component={Containers} />
           <Route path="/conteiner" component={Conteiner} />
           <Route path="/rastreamento" component={Rastreamento} />
+          <Route path="/pagamentos" component={Pagamentos} />
           <Route path="/central-sarom" component={CentralSarom} />
           <Route path="/central-alexandre" component={CentralAlexandre} />
           <Route path="/desenvolvimento" component={Desenvolvimento} />

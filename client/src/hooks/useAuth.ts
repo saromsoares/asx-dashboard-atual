@@ -3,13 +3,35 @@ import { useState, useEffect, useCallback } from 'react';
 export interface AuthUser {
   email: string;
   name: string;
+  role: 'admin' | 'user';
 }
 
-const DEFAULT_USER = {
-  email: 'sarom@asxstore.com',
-  password: 'Asxx@China',
-  name: 'Sarom',
-};
+const USERS = [
+  {
+    email: 'sarom@asxstore.com',
+    password: 'Asxx@China',
+    name: 'Sarom',
+    role: 'admin' as const,
+  },
+  {
+    email: 'alexandre@asx.com.br',
+    password: 'China@2013',
+    name: 'Alexandre',
+    role: 'user' as const,
+  },
+  {
+    email: 'frederico@asx.com.br',
+    password: 'China@2013',
+    name: 'Frederico',
+    role: 'user' as const,
+  },
+  {
+    email: 'michaelfeng89@hotmail.com',
+    password: 'China@2013',
+    name: 'Michael',
+    role: 'user' as const,
+  },
+];
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -35,10 +57,15 @@ export function useAuth() {
 
     // Simular delay de requisição
     setTimeout(() => {
-      if (email === DEFAULT_USER.email && password === DEFAULT_USER.password) {
+      const found = USERS.find(
+        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+      );
+
+      if (found) {
         const userData: AuthUser = {
-          email: DEFAULT_USER.email,
-          name: DEFAULT_USER.name,
+          email: found.email,
+          name: found.name,
+          role: found.role,
         };
         setUser(userData);
         localStorage.setItem('authUser', JSON.stringify(userData));
