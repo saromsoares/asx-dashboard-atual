@@ -130,3 +130,12 @@
 ## 🎨 Ajustes Visuais
 
 - [x] Remover logo "ASX" do header mobile
+
+
+## 📊 Central de Compras - Campos Editáveis
+
+- [ ] Abrir campo Estoque Atual para preenchimento/edição
+- [ ] Abrir campo Duração (6 meses / 3 meses) para preenchimento/edição
+- [ ] Abrir campo Compras para preenchimento/edição
+- [ ] Testar edição em CentralSarom.tsx
+- [ ] Testar edição em CentralAlexandre.tsx
