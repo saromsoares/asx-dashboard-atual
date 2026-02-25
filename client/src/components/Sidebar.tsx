@@ -7,11 +7,12 @@
 */
 
 import { Link, useLocation } from "wouter";
-import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle, LogOut } from "lucide-react";
+import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle, LogOut, Ship } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useEstoque } from "@/hooks/useEstoque";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdioma } from "@/hooks/useIdioma";
+import { trpc } from "@/lib/trpc";
 
 // Logo removido
 
@@ -50,6 +51,38 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   // Dados de estoque para alertas
   const { kpis: kpisSarom } = useEstoque('sarom');
   const { kpis: kpisAlexandre } = useEstoque('alexandre');
+
+  // Dados de pedidos para alerta de saldo pendente
+  const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
+  const { data: todosItensDb = [] } = trpc.itemPedido.getAll.useQuery();
+
+  const pedidosPendentes = useMemo(() => {
+    const STORAGE_SALDO = 'asx_saldo_embarques';
+    let saldo: Record<string, Record<string, { sarom: number; alexandre: number }>> = {};
+    try { const s = localStorage.getItem(STORAGE_SALDO); if (s) saldo = JSON.parse(s); } catch {}
+    const confirmados = pedidosDb.filter((p: any) => p.status === 'Confirmado');
+    let countPendentes = 0;
+    let totalUnidPend = 0;
+    let totalUsdPend = 0;
+    confirmados.forEach((pedido: any) => {
+      const itens = todosItensDb.filter((i: any) => i.pedidoId === pedido.id);
+      let temPendente = false;
+      itens.forEach((item: any) => {
+        const s = saldo[String(pedido.id)]?.[item.produtoId] || { sarom: 0, alexandre: 0 };
+        const pendS = Math.max(0, (item.quantidadeSarom || 0) - s.sarom);
+        const pendA = Math.max(0, (item.quantidadeAlexandre || 0) - s.alexandre);
+        const tPend = pendS + pendA;
+        if (tPend > 0) {
+          temPendente = true;
+          totalUnidPend += tPend;
+          const preco = parseFloat(item.precoUnitario) || 0;
+          totalUsdPend += tPend * preco;
+        }
+      });
+      if (temPendente) countPendentes++;
+    });
+    return { count: countPendentes, totalUnidPend, totalUsdPend };
+  }, [pedidosDb, todosItensDb]);
 
   const fetchCotacao = useCallback(async () => {
     setLoading(true);
@@ -397,6 +430,63 @@ export default function Sidebar({ currentPage }: SidebarProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Alerta de Saldo Pendente de Embarque */}
+      {!collapsed && pedidosPendentes.count > 0 && (
+        <Link href="/rastreamento">
+          <div
+            className="mx-3 mb-2 px-3 py-2.5 rounded-lg border cursor-pointer transition-all hover:brightness-110"
+            style={{
+              background: 'oklch(0.14 0.06 250 / 0.3)',
+              borderColor: 'oklch(0.40 0.18 250 / 0.5)',
+            }}
+          >
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Ship className="w-3.5 h-3.5" style={{ color: 'oklch(0.75 0.15 250)' }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.75 0.15 250)' }}>
+                Saldo Pendente
+              </span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px]">
+                <span style={{ color: 'oklch(0.80 0.005 65)' }}>
+                  {pedidosPendentes.count} pedido{pedidosPendentes.count > 1 ? 's' : ''}
+                </span>
+                <span className="font-rajdhani font-bold" style={{ color: 'oklch(0.70 0.15 250)' }}>
+                  {pedidosPendentes.totalUnidPend.toLocaleString('pt-BR')} un.
+                </span>
+              </div>
+              {pedidosPendentes.totalUsdPend > 0 && (
+                <div className="flex items-center justify-between text-[11px]">
+                  <span style={{ color: 'oklch(0.55 0.005 285)' }}>Valor pendente</span>
+                  <span className="font-rajdhani font-bold" style={{ color: 'oklch(0.80 0.18 85)' }}>
+                    ${pedidosPendentes.totalUsdPend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* Alerta compacto de saldo pendente quando colapsado */}
+      {collapsed && pedidosPendentes.count > 0 && (
+        <Link href="/rastreamento">
+          <div
+            className="mx-2 mb-2 py-2 rounded-lg border text-center cursor-pointer transition-all hover:brightness-110"
+            style={{
+              background: 'oklch(0.14 0.06 250 / 0.3)',
+              borderColor: 'oklch(0.40 0.18 250 / 0.5)',
+            }}
+            title={`${pedidosPendentes.count} pedido(s) com saldo pendente`}
+          >
+            <Ship className="w-4 h-4 mx-auto" style={{ color: 'oklch(0.75 0.15 250)' }} />
+            <span className="text-[10px] font-rajdhani font-bold block mt-0.5" style={{ color: 'oklch(0.70 0.15 250)' }}>
+              {pedidosPendentes.count}
+            </span>
+          </div>
+        </Link>
       )}
 
       {/* Cards de Porcentagem Total - Cobertura de Estoque */}

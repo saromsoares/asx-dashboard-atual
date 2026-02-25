@@ -193,3 +193,11 @@
 - [x] Criar alerta visual no cabeçalho da página inicial com quantidade de pedidos com saldo pendente
 - [x] Testar compilação e funcionalidade
 - [ ] Salvar checkpoint
+
+## 🆕 Alerta de Saldo Pendente no Menu Principal
+
+- [x] Adicionar alerta de saldo pendente no menu principal (tela de navegação)
+- [x] Mostrar quantidade de pedidos pendentes, unidades e valor USD
+- [x] Clicável para redirecionar ao Rastreamento
+- [x] Testar compilação e funcionalidade
+- [ ] Salvar checkpoint
