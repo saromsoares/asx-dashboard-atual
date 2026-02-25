@@ -1,8 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Search, ArrowLeft, Save, X } from 'lucide-react';
+import { Search, ArrowLeft, Save, X, Download, AlertCircle } from 'lucide-react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
 import { useIdioma } from '@/hooks/useIdioma';
+import { trpc } from '@/lib/trpc';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface ProdutoEditavel {
   id: number;
@@ -145,6 +148,26 @@ export default function Desenvolvimento() {
     return 'oklch(0.60 0.20 25)';                   // Vermelho
   };
 
+  // Importação de produtos
+  const importarProdutos = trpc.produto.importarDoArquivo.useMutation();
+  const [importStatus, setImportStatus] = useState<{ tipo: 'sucesso' | 'erro' | null; mensagem: string }>({ tipo: null, mensagem: '' });
+
+  const handleImportarProdutos = async () => {
+    try {
+      const result = await importarProdutos.mutateAsync();
+      setImportStatus({
+        tipo: 'sucesso',
+        mensagem: `✅ ${result.sucesso} produtos importados com sucesso!${result.erro > 0 ? ` (${result.erro} erros)` : ''}`,
+      });
+      setTimeout(() => setImportStatus({ tipo: null, mensagem: '' }), 5000);
+    } catch (error) {
+      setImportStatus({
+        tipo: 'erro',
+        mensagem: `❌ Erro ao importar produtos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+      });
+    }
+  };
+
   return (
     <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
       {/* Botão Voltar */}
@@ -194,6 +217,21 @@ export default function Desenvolvimento() {
                 ))}
               </select>
             </div>
+
+            <button
+              onClick={handleImportarProdutos}
+              disabled={importarProdutos.isPending}
+              className="px-4 py-2 rounded-md border transition-colors flex items-center gap-2"
+              style={{
+                background: importarProdutos.isPending ? 'oklch(0.40 0.010 285)' : 'oklch(0.48 0.22 25)',
+                borderColor: 'oklch(0.48 0.22 25)',
+                color: 'white',
+              }}
+              title="Importar todos os produtos do arquivo local para o banco de dados"
+            >
+              <Download className="w-4 h-4" />
+              {importarProdutos.isPending ? 'Importando...' : 'Importar Produtos'}
+            </button>
 
             <div className="flex-1 min-w-48">
               <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>
@@ -473,6 +511,16 @@ export default function Desenvolvimento() {
                 </button>
               </div>
             </div>
+
+            {importStatus.tipo && (
+              <div className="w-full p-3 rounded-md flex items-center gap-2" style={{
+                background: importStatus.tipo === 'sucesso' ? 'oklch(0.30 0.15 140)' : 'oklch(0.30 0.20 25)',
+                color: importStatus.tipo === 'sucesso' ? 'oklch(0.85 0.15 140)' : 'oklch(0.85 0.20 25)',
+              }}>
+                <AlertCircle className="w-4 h-4" />
+                {importStatus.mensagem}
+              </div>
+            )}
           </div>
         </div>
       )}
