@@ -16,6 +16,7 @@ import Containers from "./pages/Containers";
 import Rastreamento from "./pages/Rastreamento";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
+import { MobileMenu } from "./components/MobileMenu";
 
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
@@ -52,9 +53,27 @@ function AuthenticatedRouter() {
 
   // make sure to consider if you need authentication for certain routes
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)' }}>
-      <Sidebar currentPage={getCurrentPage()} />
-      <main className="flex-1 overflow-auto">
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)' }}>
+      {/* Sidebar - hidden on mobile */}
+      <div className="hidden md:block">
+        <Sidebar currentPage={getCurrentPage()} />
+      </div>
+      {/* Mobile Header */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 border-b px-4 flex items-center gap-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+        <MobileMenu items={[
+          { label: 'Dashboard', href: '/' },
+          { label: 'Pedidos', href: '/compras' },
+          { label: 'Containers', href: '/containers' },
+          { label: 'Rastreamento', href: '/rastreamento' },
+          { label: 'Desenvolvimento', href: '/desenvolvimento' },
+          { label: 'Central Sarom', href: '/central-sarom' },
+          { label: 'Central Alexandre', href: '/central-alexandre' },
+          { label: 'Configurações', href: '/configuracoes' },
+        ]} currentPath={location} />
+        <div className="flex-1" />
+        <span className="text-sm font-medium" style={{ color: 'oklch(0.80 0.005 65)' }}>ASX</span>
+      </header>
+      <main className="flex-1 overflow-auto md:mt-0 mt-14">
         <Switch>
           <Route path="/" component={Home} />
           <Route path="/compras" component={Compras} />

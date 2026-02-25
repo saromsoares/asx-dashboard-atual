@@ -89,3 +89,35 @@
 - [ ] Revisar e ajustar espaçamento geral do layout
 - [ ] Verificar overflow de elementos em todas as páginas
 - [ ] Validar responsividade em diferentes resoluções
+
+
+## 📱 Adaptação Mobile (4 Sessões Sequenciais)
+
+### Sessão 1: Mobile Navigation + Layout Base
+- [x] Criar componente MobileMenu (drawer hamburger)
+- [x] Header fixo 56px com logo e ícone hamburger
+- [x] Breakpoints Tailwind (mobile: <768px)
+- [x] Testar em 375px, 390px, 430px
+- [x] Revisar e validar antes de passar para Sessão 2
+
+### Sessão 2: Tabelas → Cards Mobile
+- [ ] Converter tabelas em cards empilhados
+- [ ] Badges coloridas para status
+- [ ] Ações (edit, delete) acessíveis
+- [ ] Testar em 3 larguras
+- [ ] Revisar e validar antes de passar para Sessão 3
+
+### Sessão 3: Formulários + Inputs Mobile
+- [ ] Inputs 100% width, 44px height
+- [ ] Labels acima dos inputs
+- [ ] Teclados numéricos (inputMode)
+- [ ] Botões 48px height
+- [ ] Testar em 3 larguras
+- [ ] Revisar e validar antes de passar para Sessão 4
+
+### Sessão 4: Refinamento + Testes Completos
+- [ ] Pull-to-refresh
+- [ ] Infinite scroll
+- [ ] Toasts de feedback
+- [ ] Testes completos em 375px, 390px, 430px
+- [ ] Validação final
