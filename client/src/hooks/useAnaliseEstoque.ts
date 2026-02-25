@@ -1,6 +1,7 @@
-import { useEmbarques } from './useEmbarques';
 import { usePedidos } from './usePedidos';
 import { useCustos } from './useCustos';
+import { useState, useEffect, useCallback } from 'react';
+import { produtos as produtosCatalogo } from '@/data/produtos';
 
 export interface AnaliseEstoqueItem {
   produtoId: number;
@@ -38,12 +39,95 @@ const VENDAS_HISTORICAS: Record<string, { vendas6m: number; vendas3m: number }> 
   'ASX1021': { vendas6m: 75, vendas3m: 40 },
 };
 
+// ===== Leitura dos Processos SR do Contêiner (fonte real do TOTAL EMBARCADO) =====
+const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
+const STORAGE_KEY_CONFIRMADOS = 'asx_processos_confirmados';
+
+interface ItemConteinerSR {
+  codigo: string;
+  quantidade: number;
+  pedidoSarom: number;
+  pedidoAlexandre: number;
+}
+
+interface ProcessoSR {
+  id: string;
+  itens: ItemConteinerSR[];
+  status: string;
+}
+
+/**
+ * Calcula total embarcado por produto a partir dos processos SR do Contêiner.
+ * Lê de asx_processos_sr (mesma fonte que useEstoque.calcularEmTransito).
+ * 
+ * Retorna Map<codigoUpperCase, { sarom: number, alexandre: number }>
+ */
+function calcularEmbarcadoPorProcessosSR(): Map<string, { sarom: number; alexandre: number }> {
+  const resultado = new Map<string, { sarom: number; alexandre: number }>();
+
+  try {
+    const dados = localStorage.getItem(STORAGE_KEY_PROCESSOS);
+    if (!dados) return resultado;
+    const processos: ProcessoSR[] = JSON.parse(dados);
+
+    // Carregar processos confirmados
+    let confirmados = new Set<string>();
+    try {
+      const confDados = localStorage.getItem(STORAGE_KEY_CONFIRMADOS);
+      if (confDados) confirmados = new Set(JSON.parse(confDados));
+    } catch { /* ignore */ }
+
+    // Incluir processos "Em andamento" ou confirmados (itens que estão em trânsito/embarcados)
+    const processosValidos = processos.filter(p =>
+      p.status === 'Em andamento' || p.status === 'Finalizado' || confirmados.has(p.id)
+    );
+
+    for (const processo of processosValidos) {
+      for (const item of processo.itens) {
+        const codigo = item.codigo.toUpperCase();
+        const atual = resultado.get(codigo) || { sarom: 0, alexandre: 0 };
+        atual.sarom += item.pedidoSarom || 0;
+        atual.alexandre += item.pedidoAlexandre || 0;
+        resultado.set(codigo, atual);
+      }
+    }
+  } catch (e) {
+    console.error('Erro ao calcular embarcado dos processos SR:', e);
+  }
+
+  return resultado;
+}
+
 export function useAnaliseEstoque() {
   const { pedidos } = usePedidos();
-  const { embarques } = useEmbarques();
   const { custos } = useCustos();
 
-  const analisarProduto = (
+  // Estado reativo para embarcados (lê do localStorage dos processos SR)
+  const [embarcadoMap, setEmbarcadoMap] = useState<Map<string, { sarom: number; alexandre: number }>>(
+    () => calcularEmbarcadoPorProcessosSR()
+  );
+
+  // Atualizar embarcado quando processos SR mudam
+  useEffect(() => {
+    const atualizar = () => setEmbarcadoMap(calcularEmbarcadoPorProcessosSR());
+
+    // Escutar evento customizado (mesma aba — disparado pelo Conteiner.tsx)
+    window.addEventListener('asx_processos_changed', atualizar);
+    // Escutar evento de storage (outra aba)
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_PROCESSOS || e.key === STORAGE_KEY_CONFIRMADOS) {
+        atualizar();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('asx_processos_changed', atualizar);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  const analisarProduto = useCallback((
     produtoId: number,
     codigo: string,
     descricao: string,
@@ -51,7 +135,7 @@ export function useAnaliseEstoque() {
     dataEstoque: string,
     filtroComprador?: 'sarom' | 'alexandre'
   ): AnaliseEstoqueItem => {
-    // Calcular total de ordens confirmadas
+    // ===== TOTAL ORDENS: pedidos confirmados do banco (tRPC) =====
     let totalOrdens = 0;
     pedidos.forEach(pedido => {
       if (pedido.confirmado) {
@@ -69,21 +153,18 @@ export function useAnaliseEstoque() {
       }
     });
 
-    // Calcular total embarcado
+    // ===== TOTAL EMBARCADO: itens dos processos SR do Contêiner =====
     let totalEmbarcado = 0;
-    embarques.forEach((embarque: any) => {
-      embarque.embarques.forEach((item: any) => {
-        if (item.produtoId === produtoId) {
-          if (filtroComprador === 'sarom') {
-            totalEmbarcado += item.qtdSaromEmbarque;
-          } else if (filtroComprador === 'alexandre') {
-            totalEmbarcado += item.qtdAlexandreEmbarque;
-          } else {
-            totalEmbarcado += item.qtdSaromEmbarque + item.qtdAlexandreEmbarque;
-          }
-        }
-      });
-    });
+    const embarcadoItem = embarcadoMap.get(codigo.toUpperCase());
+    if (embarcadoItem) {
+      if (filtroComprador === 'sarom') {
+        totalEmbarcado = embarcadoItem.sarom;
+      } else if (filtroComprador === 'alexandre') {
+        totalEmbarcado = embarcadoItem.alexandre;
+      } else {
+        totalEmbarcado = embarcadoItem.sarom + embarcadoItem.alexandre;
+      }
+    }
 
     // Obter vendas históricas
     const vendas = VENDAS_HISTORICAS[codigo] || { vendas6m: 50, vendas3m: 25 };
@@ -128,7 +209,7 @@ export function useAnaliseEstoque() {
       duracao6mesesCompras: Math.round(duracao6mesesCompras * 10) / 10,
       duracao3mesesCompras: Math.round(duracao3mesesCompras * 10) / 10,
     };
-  };
+  }, [pedidos, embarcadoMap]);
 
   return { analisarProduto, VENDAS_HISTORICAS };
 }

@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 
 export const appRouter = router({
@@ -164,18 +164,21 @@ export const appRouter = router({
         })).min(1).max(200),
       }))
       .mutation(async ({ input }) => {
-        const results = [];
-        for (const item of input.itens) {
-          const result = await adicionarItemPedido(
-            input.pedidoId,
-            item.produtoId,
-            item.quantidadeSarom,
-            item.quantidadeAlexandre,
-            item.precoUnitario
-          );
-          results.push(result);
-        }
-        return { added: results.length };
+        const { executeInTransaction } = await import("./db");
+        return await executeInTransaction(async () => {
+          const results = [];
+          for (const item of input.itens) {
+            const result = await adicionarItemPedido(
+              input.pedidoId,
+              item.produtoId,
+              item.quantidadeSarom,
+              item.quantidadeAlexandre,
+              item.precoUnitario
+            );
+            results.push(result);
+          }
+          return { added: results.length };
+        });
       }),
     getAll: protectedProcedure
       .query(async () => {
@@ -357,6 +360,183 @@ export const appRouter = router({
           userAgent,
         });
         return result;
+      }),
+  }),
+
+  processoSR: router({
+    criar: protectedProcedure
+      .input(z.object({
+        numeroProcesso: z.string().min(1).max(64).trim(),
+        nomeInvoice: z.string().max(255).trim().optional(),
+        dataProcesso: z.string().max(32).trim().optional(),
+        observacoes: z.string().max(2000).trim().optional(),
+        ncm: z.string().max(20).trim().optional(),
+        caixasPapelao: z.number().int().min(0).optional(),
+        pesoBrutoKg: z.number().min(0).optional(),
+        pesoLiquidoKg: z.number().min(0).optional(),
+        cbm: z.number().min(0).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await criarProcessoSR({
+          numeroProcesso: input.numeroProcesso,
+          nomeInvoice: input.nomeInvoice || '',
+          dataProcesso: input.dataProcesso || '',
+          observacoes: input.observacoes || null,
+          ncm: input.ncm || '',
+          caixasPapelao: input.caixasPapelao || 0,
+          pesoBrutoKg: input.pesoBrutoKg ? String(input.pesoBrutoKg) : '0',
+          pesoLiquidoKg: input.pesoLiquidoKg ? String(input.pesoLiquidoKg) : '0',
+          cbm: input.cbm ? String(input.cbm) : '0',
+        });
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'criou',
+          entidade: 'processo_sr',
+          entidadeId: String(result?.id),
+          dadosNovos: JSON.stringify({ numeroProcesso: input.numeroProcesso }),
+          descricao: criarDescricaoAcao('criou', 'processo_sr', { numero: input.numeroProcesso }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    get: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        return await getProcessoSR(input.processoId);
+      }),
+    getAll: protectedProcedure
+      .query(async () => {
+        return await getAllProcessosSR();
+      }),
+    atualizar: protectedProcedure
+      .input(z.object({
+        processoId: z.number().int().positive(),
+        nomeInvoice: z.string().max(255).trim().optional(),
+        dataProcesso: z.string().max(32).trim().optional(),
+        observacoes: z.string().max(2000).trim().optional(),
+        ncm: z.string().max(20).trim().optional(),
+        caixasPapelao: z.number().int().min(0).optional(),
+        pesoBrutoKg: z.number().min(0).optional(),
+        pesoLiquidoKg: z.number().min(0).optional(),
+        cbm: z.number().min(0).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { processoId, ...data } = input;
+        const updateData: any = {};
+        if (data.nomeInvoice !== undefined) updateData.nomeInvoice = data.nomeInvoice;
+        if (data.dataProcesso !== undefined) updateData.dataProcesso = data.dataProcesso;
+        if (data.observacoes !== undefined) updateData.observacoes = data.observacoes;
+        if (data.ncm !== undefined) updateData.ncm = data.ncm;
+        if (data.caixasPapelao !== undefined) updateData.caixasPapelao = data.caixasPapelao;
+        if (data.pesoBrutoKg !== undefined) updateData.pesoBrutoKg = String(data.pesoBrutoKg);
+        if (data.pesoLiquidoKg !== undefined) updateData.pesoLiquidoKg = String(data.pesoLiquidoKg);
+        if (data.cbm !== undefined) updateData.cbm = String(data.cbm);
+        const result = await atualizarProcessoSR(processoId, updateData);
+        return result;
+      }),
+    atualizarStatus: protectedProcedure
+      .input(z.object({
+        processoId: z.number().int().positive(),
+        novoStatus: z.enum(["Em andamento", "Finalizado", "Cancelado"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await atualizarStatusProcessoSR(input.processoId, input.novoStatus);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'alterou_status',
+          entidade: 'processo_sr',
+          entidadeId: String(input.processoId),
+          dadosNovos: JSON.stringify({ status: input.novoStatus }),
+          descricao: criarDescricaoAcao('alterou_status', 'processo_sr', { novoStatus: input.novoStatus }),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+    deletar: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .mutation(async ({ input, ctx }) => {
+        const processo = await getProcessoSR(input.processoId);
+        const result = await deletarProcessoSR(input.processoId);
+        const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
+        await registrarAuditoria({
+          userId: ctx.user.id,
+          acao: 'deletou',
+          entidade: 'processo_sr',
+          entidadeId: String(input.processoId),
+          dadosAntigos: JSON.stringify({ numero: processo?.numeroProcesso, status: processo?.status }),
+          descricao: criarDescricaoAcao('deletou', 'processo_sr'),
+          ipAddress,
+          userAgent,
+        });
+        return result;
+      }),
+  }),
+
+  itemProcesso: router({
+    adicionar: protectedProcedure
+      .input(z.object({
+        processoId: z.number().int().positive(),
+        codigo: z.string().min(1).max(64).trim(),
+        descricao: z.string().min(1).max(500).trim(),
+        unidade: z.string().max(32).trim().optional(),
+        quantidade: z.number().int().min(0).max(999999),
+        precoUnitarioDolar: z.number().min(0).max(999999.99),
+        pedidoSarom: z.number().int().min(0).max(999999).optional(),
+        pedidoAlexandre: z.number().int().min(0).max(999999).optional(),
+        ordemCompra: z.string().max(64).trim().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const precoTotal = input.quantidade * input.precoUnitarioDolar;
+        return await adicionarItemProcesso(input.processoId, {
+          codigo: input.codigo,
+          descricao: input.descricao,
+          unidade: input.unidade || 'UND',
+          quantidade: input.quantidade,
+          precoUnitarioDolar: String(input.precoUnitarioDolar),
+          precoTotalDolar: String(Math.round(precoTotal * 100) / 100),
+          pedidoSarom: input.pedidoSarom || 0,
+          pedidoAlexandre: input.pedidoAlexandre || 0,
+          ordemCompra: input.ordemCompra || '',
+        });
+      }),
+    getByProcesso: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        return await getItensDoProcesso(input.processoId);
+      }),
+    atualizar: protectedProcedure
+      .input(z.object({
+        itemId: z.number().int().positive(),
+        quantidade: z.number().int().min(0).max(999999).optional(),
+        precoUnitarioDolar: z.number().min(0).max(999999.99).optional(),
+        pedidoSarom: z.number().int().min(0).max(999999).optional(),
+        pedidoAlexandre: z.number().int().min(0).max(999999).optional(),
+        ordemCompra: z.string().max(64).trim().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { itemId, ...data } = input;
+        const updateData: any = {};
+        if (data.quantidade !== undefined) updateData.quantidade = data.quantidade;
+        if (data.precoUnitarioDolar !== undefined) updateData.precoUnitarioDolar = String(data.precoUnitarioDolar);
+        if (data.pedidoSarom !== undefined) updateData.pedidoSarom = data.pedidoSarom;
+        if (data.pedidoAlexandre !== undefined) updateData.pedidoAlexandre = data.pedidoAlexandre;
+        if (data.ordemCompra !== undefined) updateData.ordemCompra = data.ordemCompra;
+        // Recalcular preço total se quantidade ou preço unitário mudaram
+        if (data.quantidade !== undefined || data.precoUnitarioDolar !== undefined) {
+          const qty = data.quantidade ?? 0;
+          const price = data.precoUnitarioDolar ?? 0;
+          updateData.precoTotalDolar = String(Math.round(qty * price * 100) / 100);
+        }
+        return await atualizarItemProcesso(itemId, updateData);
+      }),
+    remover: protectedProcedure
+      .input(z.object({ itemId: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        return await removerItemProcesso(input.itemId);
       }),
   }),
 });

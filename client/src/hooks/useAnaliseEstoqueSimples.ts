@@ -1,6 +1,6 @@
-import { useEmbarques } from './useEmbarques';
 import { usePedidos } from './usePedidos';
 import { useCustos } from './useCustos';
+import { useState, useEffect, useCallback } from 'react';
 
 export interface AnaliseEstoqueItem {
   produtoId: number;
@@ -19,12 +19,60 @@ export interface AnaliseEstoqueItem {
   investimentoEstoque: number;
 }
 
+// ===== Leitura dos Processos SR do Contêiner =====
+const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
+const STORAGE_KEY_CONFIRMADOS = 'asx_processos_confirmados';
+
+function calcularEmbarcadoSR(): Map<string, { sarom: number; alexandre: number }> {
+  const resultado = new Map<string, { sarom: number; alexandre: number }>();
+  try {
+    const dados = localStorage.getItem(STORAGE_KEY_PROCESSOS);
+    if (!dados) return resultado;
+    const processos: any[] = JSON.parse(dados);
+
+    let confirmados = new Set<string>();
+    try {
+      const confDados = localStorage.getItem(STORAGE_KEY_CONFIRMADOS);
+      if (confDados) confirmados = new Set(JSON.parse(confDados));
+    } catch { /* ignore */ }
+
+    const validos = processos.filter(p =>
+      p.status === 'Em andamento' || p.status === 'Finalizado' || confirmados.has(p.id)
+    );
+
+    for (const processo of validos) {
+      for (const item of processo.itens) {
+        const codigo = item.codigo.toUpperCase();
+        const atual = resultado.get(codigo) || { sarom: 0, alexandre: 0 };
+        atual.sarom += item.pedidoSarom || 0;
+        atual.alexandre += item.pedidoAlexandre || 0;
+        resultado.set(codigo, atual);
+      }
+    }
+  } catch { /* ignore */ }
+  return resultado;
+}
+
 export function useAnaliseEstoqueSimples() {
   const { pedidos } = usePedidos();
-  const { embarques } = useEmbarques();
   const { taxaCambio } = useCustos();
 
-  const analisarProduto = (
+  const [embarcadoMap, setEmbarcadoMap] = useState(() => calcularEmbarcadoSR());
+
+  useEffect(() => {
+    const atualizar = () => setEmbarcadoMap(calcularEmbarcadoSR());
+    window.addEventListener('asx_processos_changed', atualizar);
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_PROCESSOS || e.key === STORAGE_KEY_CONFIRMADOS) atualizar();
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('asx_processos_changed', atualizar);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
+  const analisarProduto = useCallback((
     produtoId: number,
     codigo: string,
     descricao: string,
@@ -34,7 +82,7 @@ export function useAnaliseEstoqueSimples() {
     precoVenda: number,
     filtroComprador?: 'sarom' | 'alexandre'
   ): AnaliseEstoqueItem => {
-    // Calcular total de ordens confirmadas
+    // TOTAL ORDENS: pedidos confirmados do banco (tRPC)
     let totalOrdens = 0;
     pedidos.forEach(pedido => {
       if (pedido.confirmado) {
@@ -52,21 +100,18 @@ export function useAnaliseEstoqueSimples() {
       }
     });
 
-    // Calcular total embarcado
+    // TOTAL EMBARCADO: itens dos processos SR do Contêiner
     let totalEmbarcado = 0;
-    embarques.forEach((embarque: any) => {
-      embarque.embarques.forEach((item: any) => {
-        if (item.produtoId === produtoId) {
-          if (filtroComprador === 'sarom') {
-            totalEmbarcado += item.qtdSaromEmbarque;
-          } else if (filtroComprador === 'alexandre') {
-            totalEmbarcado += item.qtdAlexandreEmbarque;
-          } else {
-            totalEmbarcado += item.qtdSaromEmbarque + item.qtdAlexandreEmbarque;
-          }
-        }
-      });
-    });
+    const embarcadoItem = embarcadoMap.get(codigo.toUpperCase());
+    if (embarcadoItem) {
+      if (filtroComprador === 'sarom') {
+        totalEmbarcado = embarcadoItem.sarom;
+      } else if (filtroComprador === 'alexandre') {
+        totalEmbarcado = embarcadoItem.alexandre;
+      } else {
+        totalEmbarcado = embarcadoItem.sarom + embarcadoItem.alexandre;
+      }
+    }
 
     // Cálculos de preço e margem
     const taxa = taxaCambio || 8.5;
@@ -94,7 +139,7 @@ export function useAnaliseEstoqueSimples() {
       markupPct: Math.round(markupPct * 100) / 100,
       investimentoEstoque: Math.round(investimentoEstoque * 100) / 100,
     };
-  };
+  }, [pedidos, embarcadoMap, taxaCambio]);
 
   return { analisarProduto };
 }

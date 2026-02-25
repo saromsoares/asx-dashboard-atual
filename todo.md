@@ -162,3 +162,15 @@
 - [x] Ao selecionar categoria, mostrar TODOS os produtos da categoria com campos Sarom/Alexandre
 - [x] Permitir preencher quantidades e adicionar múltiplos produtos de uma vez (batch save)
 - [x] Manter busca por código como opção secundária
+
+## 🔄 Importação v4 (Modificações do Usuário via Claude)
+
+- [x] Substituir 11 arquivos do ZIP v4
+- [x] Deletar usePedidosSync.ts (código morto)
+- [x] Executar migration 0007_indexes_and_processos_sr.sql
+- [x] Verificar compilação TypeScript sem erros
+- [x] Testar /conteiner carrega sem 404
+- [x] Testar Central de Compras campos editáveis
+- [x] Testar Contêiner SR importar de pedido
+- [ ] Push para GitHub
+- [ ] Salvar checkpoint

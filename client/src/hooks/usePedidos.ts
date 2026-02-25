@@ -1,7 +1,24 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useMemo } from 'react';
+import { trpc } from '@/lib/trpc';
+import { produtos as produtosCatalogo } from '@/data/produtos';
+
+/**
+ * usePedidos — Hook de leitura de pedidos via tRPC (banco de dados)
+ * 
+ * MIGRADO: Anteriormente usava localStorage, agora busca do banco via tRPC.
+ * 
+ * Interface mantida compatível com os consumers existentes:
+ * - useAnaliseEstoque
+ * - useAnaliseEstoqueSimples
+ * - VinculadorEmbarques
+ * 
+ * Para CRIAR/DELETAR/ATUALIZAR pedidos, use as mutations tRPC diretamente
+ * em cada página (Compras.tsx já faz isso).
+ */
 
 export interface ItemPedido {
-  produtoId: number;
+  produtoId: number;      // ID numérico do produto (do catálogo estático)
+  produtoCodigo: string;  // Código do produto (ex: "ASX1001") — usado internamente para match com tRPC
   codigo: string;
   nome: string;
   precoUSD: number;
@@ -10,7 +27,8 @@ export interface ItemPedido {
 }
 
 export interface Pedido {
-  id: string;
+  id: string;             // String para compatibilidade com useEmbarques
+  idNumerico: number;     // ID numérico original do banco
   nome: string;
   items: ItemPedido[];
   confirmado: boolean;
@@ -19,118 +37,52 @@ export interface Pedido {
   dataAtualizacao: string;
 }
 
-const STORAGE_KEY = 'asx_pedidos';
-
 export function usePedidos() {
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [carregado, setCarregado] = useState(false);
+  // Buscar pedidos e itens do banco via tRPC
+  const { data: pedidosDb = [], isLoading: carregandoPedidos } = trpc.pedido.getAll.useQuery();
+  const { data: todosItensDb = [], isLoading: carregandoItens } = trpc.itemPedido.getAll.useQuery();
 
-  // Carregar do localStorage
-  useEffect(() => {
-    const salvo = localStorage.getItem(STORAGE_KEY);
-    if (salvo) {
-      try {
-        setPedidos(JSON.parse(salvo));
-      } catch (e) {
-        console.error('Erro ao carregar pedidos:', e);
-      }
-    }
-    setCarregado(true);
-  }, []);
+  // Montar pedidos com itens embarcados no formato esperado pelos consumers
+  const pedidos: Pedido[] = useMemo(() => {
+    if (!pedidosDb.length) return [];
 
-  // Salvar no localStorage
-  const salvarPedidos = useCallback((novos: Pedido[]) => {
-    setPedidos(novos);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(novos));
-  }, []);
+    // Criar mapa de código do produto → dados do catálogo
+    const catalogoMap = new Map(produtosCatalogo.map(p => [p.codigo, p]));
 
-  // Criar novo pedido
-  const criarPedido = useCallback((nome: string) => {
-    const novoPedido: Pedido = {
-      id: `pedido_${Date.now()}`,
-      nome,
-      items: [],
-      confirmado: false,
-      status: 'Pendente',
-      dataCriacao: new Date().toISOString(),
-      dataAtualizacao: new Date().toISOString(),
-    };
-    salvarPedidos([...pedidos, novoPedido]);
-    return novoPedido;
-  }, [pedidos, salvarPedidos]);
+    return pedidosDb.map((p: any) => {
+      // Filtrar itens deste pedido
+      const itensDestePedido = todosItensDb.filter((i: any) => i.pedidoId === p.id);
 
-  // Deletar pedido
-  const deletarPedido = useCallback((id: string) => {
-    salvarPedidos(pedidos.filter(p => p.id !== id));
-  }, [pedidos, salvarPedidos]);
-
-  // Atualizar nome do pedido
-  const atualizarNomePedido = useCallback((id: string, novoNome: string) => {
-    salvarPedidos(pedidos.map(p =>
-      p.id === id
-        ? { ...p, nome: novoNome, dataAtualizacao: new Date().toISOString() }
-        : p
-    ));
-  }, [pedidos, salvarPedidos]);
-
-  // Adicionar item ao pedido
-  const adicionarItem = useCallback((pedidoId: string, item: ItemPedido) => {
-    salvarPedidos(pedidos.map(p => {
-      if (p.id === pedidoId) {
-        const existente = p.items.find(i => i.produtoId === item.produtoId);
-        if (existente) {
-          return {
-            ...p,
-            items: p.items.map(i =>
-              i.produtoId === item.produtoId
-                ? { ...i, qtdSarom: item.qtdSarom, qtdAlexandre: item.qtdAlexandre }
-                : i
-            ),
-            dataAtualizacao: new Date().toISOString(),
-          };
-        }
+      // Mapear itens para o formato esperado
+      const items: ItemPedido[] = itensDestePedido.map((item: any) => {
+        const prodCatalogo = catalogoMap.get(item.produtoId);
         return {
-          ...p,
-          items: [...p.items, item],
-          dataAtualizacao: new Date().toISOString(),
+          produtoId: prodCatalogo?.id ?? 0,
+          produtoCodigo: item.produtoId, // Código string do banco (ex: "ASX1001")
+          codigo: item.produtoId,
+          nome: prodCatalogo?.descricao ?? item.produtoId,
+          precoUSD: parseFloat(item.precoUnitario) || prodCatalogo?.custo_usd || 0,
+          qtdSarom: item.quantidadeSarom ?? 0,
+          qtdAlexandre: item.quantidadeAlexandre ?? 0,
         };
-      }
-      return p;
-    }));
-  }, [pedidos, salvarPedidos]);
+      });
 
-  // Remover item do pedido
-  const removerItem = useCallback((pedidoId: string, produtoId: number) => {
-    salvarPedidos(pedidos.map(p =>
-      p.id === pedidoId
-        ? {
-            ...p,
-            items: p.items.filter(i => i.produtoId !== produtoId),
-            dataAtualizacao: new Date().toISOString(),
-          }
-        : p
-    ));
-  }, [pedidos, salvarPedidos]);
+      return {
+        id: String(p.id),           // String para compatibilidade com useEmbarques
+        idNumerico: p.id,
+        nome: p.nome,
+        items,
+        confirmado: p.status === 'Confirmado',
+        status: p.status as 'Pendente' | 'Confirmado' | 'Recebido',
+        dataCriacao: p.dataCreacao ? new Date(p.dataCreacao).toISOString() : new Date().toISOString(),
+        dataAtualizacao: p.dataAtualizacao ? new Date(p.dataAtualizacao).toISOString() : new Date().toISOString(),
+      };
+    });
+  }, [pedidosDb, todosItensDb]);
 
-  // Confirmar/desconfirmar pedido
-  const toggleConfirmacao = useCallback((id: string) => {
-    salvarPedidos(pedidos.map(p =>
-      p.id === id
-        ? { ...p, confirmado: !p.confirmado, dataAtualizacao: new Date().toISOString() }
-        : p
-    ));
-  }, [pedidos, salvarPedidos]);
+  const carregado = !carregandoPedidos && !carregandoItens;
 
-  // Atualizar status do pedido
-  const atualizarStatusPedido = useCallback((id: string, novoStatus: 'Pendente' | 'Confirmado' | 'Recebido') => {
-    salvarPedidos(pedidos.map(p =>
-      p.id === id
-        ? { ...p, status: novoStatus, dataAtualizacao: new Date().toISOString() }
-        : p
-    ));
-  }, [pedidos, salvarPedidos]);
-
-  // Calcular totais
+  // Calcular totais (mantido para compatibilidade)
   const calcularTotais = (pedido: Pedido) => {
     let totalSarom = 0;
     let totalAlexandre = 0;
@@ -150,13 +102,6 @@ export function usePedidos() {
   return {
     pedidos,
     carregado,
-    criarPedido,
-    deletarPedido,
-    atualizarNomePedido,
-    adicionarItem,
-    removerItem,
-    toggleConfirmacao,
-    atualizarStatusPedido,
     calcularTotais,
   };
 }

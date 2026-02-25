@@ -169,3 +169,51 @@ export const container_pedidos = mysqlTable("container_pedidos", {
 
 export type ContainerPedido = typeof container_pedidos.$inferSelect;
 export type InsertContainerPedido = typeof container_pedidos.$inferInsert;
+
+/**
+ * Tabela de processos de importação SR
+ * Armazena processos com invoice, NCM e dados de embarque
+ * (Migração de localStorage para banco de dados)
+ */
+export const processos_sr = mysqlTable("processos_sr", {
+  id: int("id").autoincrement().primaryKey(),
+  numeroProcesso: varchar("numeroProcesso", { length: 64 }).notNull().unique(),
+  nomeInvoice: varchar("nomeInvoice", { length: 255 }).default("").notNull(),
+  dataProcesso: varchar("dataProcesso", { length: 32 }).default("").notNull(),
+  observacoes: text("observacoes"),
+  ncm: varchar("ncm", { length: 20 }).default(""),
+  status: mysqlEnum("status", ["Em andamento", "Finalizado", "Cancelado"]).default("Em andamento").notNull(),
+  confirmado: int("confirmado").default(0).notNull(), // 0 = false, 1 = true
+  caixasPapelao: int("caixasPapelao").default(0).notNull(),
+  pesoBrutoKg: decimal("pesoBrutoKg", { precision: 10, scale: 2 }).default("0").notNull(),
+  pesoLiquidoKg: decimal("pesoLiquidoKg", { precision: 10, scale: 2 }).default("0").notNull(),
+  cbm: decimal("cbm", { precision: 10, scale: 4 }).default("0").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProcessoSR = typeof processos_sr.$inferSelect;
+export type InsertProcessoSR = typeof processos_sr.$inferInsert;
+
+/**
+ * Tabela de itens de processos de importação
+ * Armazena os produtos incluídos em cada processo SR
+ */
+export const itens_processo = mysqlTable("itens_processo", {
+  id: int("id").autoincrement().primaryKey(),
+  processoId: int("processoId").notNull(), // Referência ao processo SR
+  codigo: varchar("codigo", { length: 64 }).notNull(),
+  descricao: text("descricao").notNull(),
+  unidade: varchar("unidade", { length: 32 }).default("UND").notNull(),
+  quantidade: int("quantidade").default(0).notNull(),
+  precoUnitarioDolar: decimal("precoUnitarioDolar", { precision: 10, scale: 2 }).default("0").notNull(),
+  precoTotalDolar: decimal("precoTotalDolar", { precision: 10, scale: 2 }).default("0").notNull(),
+  pedidoSarom: int("pedidoSarom").default(0).notNull(),
+  pedidoAlexandre: int("pedidoAlexandre").default(0).notNull(),
+  ordemCompra: varchar("ordemCompra", { length: 64 }).default("").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ItemProcesso = typeof itens_processo.$inferSelect;
+export type InsertItemProcesso = typeof itens_processo.$inferInsert;

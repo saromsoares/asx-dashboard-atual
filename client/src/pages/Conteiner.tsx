@@ -3,13 +3,14 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle, Link2 } from 'lucide-react';
+import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle, Link2, ShoppingCart, Check } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
 import { dispatchProcessosChange } from '../hooks/useEstoque';
 import { VinculadorEmbarques } from '../components/VinculadorEmbarques';
 import { useEmbarques } from '../hooks/useEmbarques';
 import { useIdioma } from '../hooks/useIdioma';
+import { trpc } from '../lib/trpc';
 
 interface ItemConteiner {
   id: string;
@@ -76,6 +77,85 @@ export default function Conteiner() {
   const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Em andamento' | 'Finalizado' | 'Cancelado'>('Todos');
   const [showVinculador, setShowVinculador] = useState(false);
   const { obterEmbarquesProcesso } = useEmbarques();
+
+  // ===== IMPORTAR DE PEDIDO CONFIRMADO =====
+  const [showImportarPedido, setShowImportarPedido] = useState(false);
+  const [pedidoSelecionadoImport, setPedidoSelecionadoImport] = useState<number | null>(null);
+  const [itensCheckados, setItensCheckados] = useState<Set<string>>(new Set());
+
+  // Queries tRPC para pedidos confirmados
+  const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
+  const { data: todosItensDb = [] } = trpc.itemPedido.getAll.useQuery();
+
+  // Filtrar apenas pedidos confirmados
+  const pedidosConfirmadosDb = useMemo(() => {
+    return pedidosDb.filter((p: any) => p.status === 'Confirmado');
+  }, [pedidosDb]);
+
+  // Itens do pedido selecionado para importação
+  const itensDoSelecionado = useMemo(() => {
+    if (!pedidoSelecionadoImport) return [];
+    return todosItensDb
+      .filter((i: any) => i.pedidoId === pedidoSelecionadoImport)
+      .map((item: any) => {
+        const prod = produtos.find(p => p.codigo === item.produtoId);
+        return {
+          produtoId: item.produtoId,
+          descricao: prod?.descricao || item.produtoId,
+          unidade: prod?.unid || 'UND',
+          quantidadeSarom: item.quantidadeSarom || 0,
+          quantidadeAlexandre: item.quantidadeAlexandre || 0,
+          precoUnitario: parseFloat(item.precoUnitario) || prod?.custo_usd || 0,
+        };
+      });
+  }, [pedidoSelecionadoImport, todosItensDb]);
+
+  // Handler: importar itens selecionados do pedido para a invoice
+  const handleImportarItensDoPedido = useCallback(() => {
+    if (!processoSelecionado || itensCheckados.size === 0) return;
+
+    const itensParaImportar = itensDoSelecionado.filter(i => itensCheckados.has(i.produtoId));
+    const novosItens: ItemConteiner[] = itensParaImportar.map(item => ({
+      id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      codigo: item.produtoId,
+      descricao: item.descricao,
+      unidade: item.unidade,
+      quantidade: item.quantidadeSarom + item.quantidadeAlexandre,
+      precoUnitarioDolar: item.precoUnitario,
+      precoTotalDolar: (item.quantidadeSarom + item.quantidadeAlexandre) * item.precoUnitario,
+      pedidoSarom: item.quantidadeSarom,
+      pedidoAlexandre: item.quantidadeAlexandre,
+      ordemCompra: pedidosDb.find((p: any) => p.id === pedidoSelecionadoImport)?.nome || '',
+    }));
+
+    // Verificar duplicatas (itens com mesmo código já existentes)
+    const codigosExistentes = new Set(processoSelecionado.itens.map(i => i.codigo));
+    const itensNovos = novosItens.filter(i => !codigosExistentes.has(i.codigo));
+    const itensDuplicados = novosItens.filter(i => codigosExistentes.has(i.codigo));
+
+    if (itensDuplicados.length > 0 && itensNovos.length === 0) {
+      alert(`Todos os ${itensDuplicados.length} item(ns) já existem no processo. Nenhum item importado.`);
+      return;
+    }
+
+    const processoAtualizado = {
+      ...processoSelecionado,
+      itens: [...processoSelecionado.itens, ...itensNovos],
+    };
+
+    setProcessos(prev => prev.map(p => p.id === processoSelecionado.id ? processoAtualizado : p));
+    setProcessoSelecionado(processoAtualizado);
+
+    const msg = itensDuplicados.length > 0
+      ? `${itensNovos.length} item(ns) importado(s). ${itensDuplicados.length} ignorado(s) (já existiam).`
+      : `${itensNovos.length} item(ns) importado(s) com sucesso!`;
+    alert(msg);
+
+    // Limpar estados
+    setShowImportarPedido(false);
+    setPedidoSelecionadoImport(null);
+    setItensCheckados(new Set());
+  }, [processoSelecionado, itensDoSelecionado, itensCheckados, pedidosDb, pedidoSelecionadoImport, processos]);
 
   // Persistir processos no localStorage sempre que mudar
   useEffect(() => {
@@ -1327,9 +1407,141 @@ export default function Conteiner() {
 
             {/* Form para Adicionar Item */}
             <div className="mt-4 border rounded-lg p-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
-              <h3 className="font-rajdhani font-bold text-sm mb-3" style={{ color: 'oklch(0.85 0.005 65)' }}>
-                Adicionar Item
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                  Adicionar Item
+                </h3>
+                <button
+                  onClick={() => setShowImportarPedido(!showImportarPedido)}
+                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5"
+                  style={{
+                    background: showImportarPedido ? 'oklch(0.30 0.15 145)' : 'oklch(0.25 0.12 200)',
+                    color: 'white',
+                  }}
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  {showImportarPedido ? 'Fechar Import' : 'Importar de Pedido'}
+                </button>
+              </div>
+
+              {/* ===== PAINEL: IMPORTAR DE PEDIDO CONFIRMADO ===== */}
+              {showImportarPedido && (
+                <div className="mb-4 p-3 rounded-lg border" style={{ background: 'oklch(0.12 0.005 285)', borderColor: 'oklch(0.30 0.12 200)' }}>
+                  <p className="text-xs font-bold mb-2" style={{ color: 'oklch(0.70 0.12 200)' }}>
+                    IMPORTAR ITENS DE PEDIDO CONFIRMADO
+                  </p>
+
+                  {/* Select de pedido */}
+                  <select
+                    value={pedidoSelecionadoImport || ''}
+                    onChange={(e) => {
+                      const val = e.target.value ? Number(e.target.value) : null;
+                      setPedidoSelecionadoImport(val);
+                      setItensCheckados(new Set());
+                    }}
+                    className="w-full px-3 py-2 rounded-md border text-sm mb-2"
+                    style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  >
+                    <option value="">— Selecione um pedido confirmado —</option>
+                    {pedidosConfirmadosDb.map((p: any) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nome} (#{p.id})
+                      </option>
+                    ))}
+                  </select>
+
+                  {pedidosConfirmadosDb.length === 0 && (
+                    <p className="text-xs py-2" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      Nenhum pedido confirmado encontrado. Confirme pedidos no Gerenciador de Compras primeiro.
+                    </p>
+                  )}
+
+                  {/* Lista de itens do pedido selecionado */}
+                  {pedidoSelecionadoImport && itensDoSelecionado.length > 0 && (
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs" style={{ color: 'oklch(0.55 0.010 285)' }}>
+                          {itensDoSelecionado.length} item(ns) — {itensCheckados.size} selecionado(s)
+                        </span>
+                        <button
+                          onClick={() => {
+                            if (itensCheckados.size === itensDoSelecionado.length) {
+                              setItensCheckados(new Set());
+                            } else {
+                              setItensCheckados(new Set(itensDoSelecionado.map(i => i.produtoId)));
+                            }
+                          }}
+                          className="text-xs px-2 py-1 rounded transition-colors"
+                          style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.75 0.005 65)' }}
+                        >
+                          {itensCheckados.size === itensDoSelecionado.length ? 'Desmarcar Todos' : 'Selecionar Todos'}
+                        </button>
+                      </div>
+
+                      <div className="max-h-48 overflow-y-auto rounded border" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+                        {itensDoSelecionado.map(item => {
+                          const checked = itensCheckados.has(item.produtoId);
+                          const jaExiste = processoSelecionado?.itens.some(i => i.codigo === item.produtoId);
+                          return (
+                            <div
+                              key={item.produtoId}
+                              onClick={() => {
+                                if (jaExiste) return;
+                                const next = new Set(itensCheckados);
+                                if (checked) next.delete(item.produtoId);
+                                else next.add(item.produtoId);
+                                setItensCheckados(next);
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors text-xs"
+                              style={{
+                                background: checked ? 'oklch(0.20 0.08 200 / 0.3)' : 'transparent',
+                                borderBottom: '1px solid oklch(0.18 0.005 285)',
+                                opacity: jaExiste ? 0.4 : 1,
+                              }}
+                            >
+                              <div
+                                className="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0"
+                                style={{
+                                  borderColor: checked ? 'oklch(0.55 0.15 200)' : 'oklch(0.35 0.005 285)',
+                                  background: checked ? 'oklch(0.35 0.15 200)' : 'transparent',
+                                }}
+                              >
+                                {checked && <Check className="w-3 h-3" style={{ color: 'white' }} />}
+                              </div>
+                              <span className="font-mono font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>{item.produtoId}</span>
+                              <span className="flex-1 truncate" style={{ color: 'oklch(0.75 0.005 65)' }}>{item.descricao}</span>
+                              <span style={{ color: 'oklch(0.60 0.15 200)' }}>S:{item.quantidadeSarom}</span>
+                              <span style={{ color: 'oklch(0.60 0.15 145)' }}>A:{item.quantidadeAlexandre}</span>
+                              <span className="font-mono" style={{ color: 'oklch(0.65 0.010 285)' }}>${item.precoUnitario.toFixed(2)}</span>
+                              {jaExiste && <span className="text-[10px] px-1 rounded" style={{ background: 'oklch(0.30 0.15 50)', color: 'oklch(0.80 0.15 50)' }}>Já existe</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        onClick={handleImportarItensDoPedido}
+                        disabled={itensCheckados.size === 0}
+                        className="mt-2 w-full px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-40"
+                        style={{ background: 'oklch(0.35 0.15 200)', color: 'white' }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        Importar {itensCheckados.size} item(ns) para Invoice
+                      </button>
+                    </div>
+                  )}
+
+                  {pedidoSelecionadoImport && itensDoSelecionado.length === 0 && (
+                    <p className="text-xs py-2" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      Este pedido não possui itens.
+                    </p>
+                  )}
+                </div>
+              )}
+              {/* Ou adicionar manualmente */}
+              <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: 'oklch(0.45 0.010 285)' }}>
+                {showImportarPedido ? 'Ou adicionar manualmente:' : 'Adicionar manualmente:'}
+              </p>
 <div className="grid grid-cols-9 gap-2">
                 <div className="relative">
                   <input

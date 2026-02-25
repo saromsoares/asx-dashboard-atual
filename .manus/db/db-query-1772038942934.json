@@ -1,0 +1,9 @@
+{
+  "query": "CREATE INDEX `idx_itens_pedidos_produtoId` ON `itens_pedidos` (`produtoId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute CREATE INDEX `idx_itens_pedidos_produtoId` ON `itens_pedidos` (`produtoId`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 567
+}

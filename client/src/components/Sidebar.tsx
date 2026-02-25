@@ -399,7 +399,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         </div>
       )}
 
-      {/* Cards de Porcentagem Total */}
+      {/* Cards de Porcentagem Total - Cobertura de Estoque */}
       {!collapsed && (
         <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg border space-y-2" style={{
           background: 'oklch(0.14 0.005 285)',
@@ -408,13 +408,13 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           <div>
             <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Sarom</span>
             <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.72 0.17 145)' }}>
-              {kpisSarom ? Math.round((kpisSarom.skusCriticos / Math.max(kpisSarom.skusCriticos + 1, 1)) * 100) : 0}%
+              {kpisSarom && kpisSarom.totalSkus > 0 ? Math.round((kpisSarom.skusOk / kpisSarom.totalSkus) * 100) : 0}%
             </p>
           </div>
           <div>
             <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Alexandre</span>
             <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.55 0.15 270)' }}>
-              {kpisAlexandre ? Math.round((kpisAlexandre.skusCriticos / Math.max(kpisAlexandre.skusCriticos + 1, 1)) * 100) : 0}%
+              {kpisAlexandre && kpisAlexandre.totalSkus > 0 ? Math.round((kpisAlexandre.skusOk / kpisAlexandre.totalSkus) * 100) : 0}%
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc, sql } from 'drizzle-orm';
 
@@ -300,7 +300,15 @@ export async function deletarPedido(pedidoId: number) {
   }
 
   try {
-    await db.delete(pedidos).where(eq(pedidos.id, pedidoId));
+    // Envolver em transação para garantir atomicidade (igual deletarContainer)
+    await db.transaction(async (tx) => {
+      // 1. Remover vínculos com containers
+      await tx.delete(container_pedidos).where(eq(container_pedidos.pedidoId, pedidoId));
+      // 2. Remover itens do pedido
+      await tx.delete(itens_pedidos).where(eq(itens_pedidos.pedidoId, pedidoId));
+      // 3. Remover o pedido
+      await tx.delete(pedidos).where(eq(pedidos.id, pedidoId));
+    });
     return { success: true };
   } catch (error) {
     console.error("[Database] Failed to delete pedido:", error);
@@ -577,9 +585,9 @@ export async function getContainersComPedidos() {
       .from(containers)
       .leftJoin(container_pedidos, eq(containers.id, container_pedidos.containerId))
       .groupBy(containers.id)
-      .orderBy(desc(containers.dataCreacao)) as any;
+      .orderBy(desc(containers.dataCreacao));
     
-    return result as any[];
+    return result;
   } catch (error) {
     console.error("[Database] Failed to get containers with pedidos:", error);
     return [];
@@ -597,43 +605,45 @@ export async function importarProdutosDoArquivo() {
 
   try {
     // Importar dados de produtos do arquivo local
-    // Usar require dinâmico para evitar problemas de TypeScript
     const produtosData = require('../client/src/data/produtos');
-    const produtos = produtosData.produtos || [];
+    const produtosList = produtosData.produtos || [];
 
-    if (!Array.isArray(produtos) || produtos.length === 0) {
+    if (!Array.isArray(produtosList) || produtosList.length === 0) {
       console.error("[Database] No produtos found in data file");
       return { sucesso: 0, erro: 0 };
     }
 
-    // Limpar tabela de produtos
-    await db.delete(produtos as any);
-
-    // Inserir produtos
     let sucessoCount = 0;
     let erroCount = 0;
 
-    for (const p of produtos) {
-      try {
-        await db.insert(produtos as any).values({
-          codigo: p.codigo,
-          descricao: p.descricao,
-          categoria: p.categoria,
-          unidade: p.unid || 'UND',
-          caixa: p.caixa || 'PAR',
-          voltagem: p.volt || 'BIVOLT',
-          codigoBarras: p.cod_barras || null,
-          ncm: p.ncm || null,
-          custoUsd: parseFloat(p.custo_usd) || 0,
-          precoVendaBrl: parseFloat(p.preco_venda) || 0,
-          ativo: 'true',
-        });
-        sucessoCount++;
-      } catch (error) {
-        console.error(`[Database] Failed to insert produto ${p.codigo}:`, error);
-        erroCount++;
+    // Envolver em transação para garantir atomicidade
+    await db.transaction(async (tx) => {
+      // Limpar tabela de produtos
+      await tx.delete(produtos);
+
+      // Inserir produtos
+      for (const p of produtosList) {
+        try {
+          await tx.insert(produtos).values({
+            codigo: p.codigo,
+            descricao: p.descricao,
+            categoria: p.categoria,
+            unidade: p.unid || 'UND',
+            caixa: p.caixa || 'PAR',
+            voltagem: p.volt || 'BIVOLT',
+            codigoBarras: p.cod_barras || null,
+            ncm: p.ncm || null,
+            custoUsd: String(parseFloat(p.custo_usd) || 0),
+            precoVendaBrl: String(parseFloat(p.preco_venda) || 0),
+            ativo: 'true',
+          });
+          sucessoCount++;
+        } catch (error) {
+          console.error(`[Database] Failed to insert produto ${p.codigo}:`, error);
+          erroCount++;
+        }
       }
-    }
+    });
 
     console.log(`[Database] Importação concluída: ${sucessoCount} sucesso, ${erroCount} erro`);
     return { sucesso: sucessoCount, erro: erroCount };
@@ -683,11 +693,154 @@ export async function criarProduto(data: InsertProduto) {
 
   try {
     const result = await db.insert(produtos).values(data);
-    // Retornar o produto criado
-    const produtoCriado = await db.select().from(produtos).where(eq(produtos.codigo, data.codigo)).limit(1);
+    // Usar insertId em vez de buscar por código (evita race condition)
+    const insertId = result[0].insertId;
+    const produtoCriado = await db.select().from(produtos).where(eq(produtos.id, insertId)).limit(1);
     return produtoCriado[0];
   } catch (error) {
     console.error("[Database] Failed to create produto:", error);
+    throw error;
+  }
+}
+
+// ============= PROCESSOS SR (Importação) =============
+
+export async function criarProcessoSR(data: InsertProcessoSR) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create processo SR: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db.insert(processos_sr).values(data);
+    const insertId = result[0].insertId;
+    const processoCriado = await db.select().from(processos_sr).where(eq(processos_sr.id, insertId)).limit(1);
+    return processoCriado[0];
+  } catch (error) {
+    console.error("[Database] Failed to create processo SR:", error);
+    throw error;
+  }
+}
+
+export async function getProcessoSR(processoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(processos_sr).where(eq(processos_sr.id, processoId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get processo SR:", error);
+    return null;
+  }
+}
+
+export async function getAllProcessosSR() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(processos_sr).orderBy(desc(processos_sr.criadoEm));
+  } catch (error) {
+    console.error("[Database] Failed to get processos SR:", error);
+    return [];
+  }
+}
+
+export async function atualizarProcessoSR(processoId: number, data: Partial<InsertProcessoSR>) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.update(processos_sr).set(data).where(eq(processos_sr.id, processoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update processo SR:", error);
+    throw error;
+  }
+}
+
+export async function atualizarStatusProcessoSR(processoId: number, novoStatus: "Em andamento" | "Finalizado" | "Cancelado") {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.update(processos_sr).set({ status: novoStatus }).where(eq(processos_sr.id, processoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update processo SR status:", error);
+    throw error;
+  }
+}
+
+export async function deletarProcessoSR(processoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.transaction(async (tx) => {
+      // 1. Remover itens do processo
+      await tx.delete(itens_processo).where(eq(itens_processo.processoId, processoId));
+      // 2. Remover o processo
+      await tx.delete(processos_sr).where(eq(processos_sr.id, processoId));
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete processo SR:", error);
+    throw error;
+  }
+}
+
+// ============= ITENS DE PROCESSO SR =============
+
+export async function adicionarItemProcesso(processoId: number, data: Omit<InsertItemProcesso, 'processoId'>) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.insert(itens_processo).values({ ...data, processoId });
+    return { id: result[0].insertId, success: true };
+  } catch (error) {
+    console.error("[Database] Failed to add item to processo:", error);
+    throw error;
+  }
+}
+
+export async function getItensDoProcesso(processoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(itens_processo).where(eq(itens_processo.processoId, processoId));
+  } catch (error) {
+    console.error("[Database] Failed to get items of processo:", error);
+    return [];
+  }
+}
+
+export async function atualizarItemProcesso(itemId: number, data: Partial<InsertItemProcesso>) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.update(itens_processo).set(data).where(eq(itens_processo.id, itemId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update item processo:", error);
+    throw error;
+  }
+}
+
+export async function removerItemProcesso(itemId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.delete(itens_processo).where(eq(itens_processo.id, itemId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to remove item from processo:", error);
     throw error;
   }
 }

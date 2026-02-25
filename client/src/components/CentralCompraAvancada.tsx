@@ -41,7 +41,7 @@ const LOGO_URL = '/logo-asx-black.svg'; // Logo SVG simples em preto
 
 export default function CentralCompraAvancada({ comprador, titulo, corAcento }: CentralCompraAvancadaProps) {
   const [, setLocation] = useLocation();
-  const { analisarProduto } = useAnaliseEstoque();
+  const { analisarProduto, VENDAS_HISTORICAS } = useAnaliseEstoque();
   const { produtosComEstoque } = useEstoque(comprador);
   const { t } = useIdioma();
 
@@ -51,6 +51,41 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const [dataEstoque, setDataEstoque] = useState(new Date().toISOString().split('T')[0]);
   const [showModalEstoque, setShowModalEstoque] = useState(false);
   const [estoqueEditando, setEstoqueEditando] = useState<{[key: string]: number}>({});
+
+  // ===== ESTADOS EDITÁVEIS: Vendas manuais e Compras =====
+  const STORAGE_VENDAS = `asx_central_vendas_${comprador}`;
+  const STORAGE_COMPRAS = `asx_central_compras_${comprador}`;
+
+  const [vendasEditando, setVendasEditando] = useState<{[codigo: string]: { vendas6m: number; vendas3m: number }}>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_VENDAS);
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
+  const [comprasEditando, setComprasEditando] = useState<{[codigo: string]: number}>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_COMPRAS);
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
+  // Persistir vendas e compras editadas
+  const updateVendas = useCallback((codigo: string, campo: 'vendas6m' | 'vendas3m', valor: number) => {
+    setVendasEditando(prev => {
+      const next = { ...prev, [codigo]: { ...prev[codigo], [campo]: valor } };
+      try { localStorage.setItem(STORAGE_VENDAS, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [STORAGE_VENDAS]);
+
+  const updateCompras = useCallback((codigo: string, valor: number) => {
+    setComprasEditando(prev => {
+      const next = { ...prev, [codigo]: valor };
+      try { localStorage.setItem(STORAGE_COMPRAS, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [STORAGE_COMPRAS]);
 
   const handleSaveManualEstoque = useCallback((codigo: string, quantidade: number) => {
     console.log(`Estoque adicionado: ${codigo} = ${quantidade}`);
@@ -64,10 +99,56 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
     return produtos
       .map(p => {
         const estoque = produtosComEstoque.find(pe => pe.id === p.id)?.estoqueInicial || 0;
-        return analisarProduto(p.id, p.codigo, p.descricao, estoque, dataEstoque, comprador);
+        const base = analisarProduto(p.id, p.codigo, p.descricao, estoque, dataEstoque, comprador);
+
+        // Sobrescrever estoque se editado manualmente
+        const estoqueReal = estoqueEditando[p.codigo] ?? base.estoqueAtual;
+
+        // Sobrescrever vendas se editadas manualmente
+        const vendasDefault = VENDAS_HISTORICAS[p.codigo] || { vendas6m: 50, vendas3m: 25 };
+        const vendas6m = vendasEditando[p.codigo]?.vendas6m ?? vendasDefault.vendas6m;
+        const vendas3m = vendasEditando[p.codigo]?.vendas3m ?? vendasDefault.vendas3m;
+
+        // Médias mensais
+        const media6m = vendas6m / 6;
+        const media3m = vendas3m / 3;
+
+        // Recalcular tudo com valores editados
+        const estoquePlusPedidos = estoqueReal + base.totalOrdens;
+        const duracao6meses = media6m > 0 ? estoquePlusPedidos / media6m : 0;
+        const duracao3meses = media3m > 0 ? estoquePlusPedidos / media3m : 0;
+
+        const estoqueComEmbarque = estoqueReal + base.totalEmbarcado;
+        const duracao6mesesEmbarc = media6m > 0 ? estoqueComEmbarque / media6m : 0;
+        const duracao3mesesEmbarc = media3m > 0 ? estoqueComEmbarque / media3m : 0;
+
+        // Compras: editado manualmente ou auto-calculado
+        const comprasManual = comprasEditando[p.codigo];
+        const sugestaoCompra = comprasManual ?? base.sugestaoCompra;
+
+        // DUR COMP = (estoque + todas as ordens + compras) / média mensal
+        // Conforme regra: "Compras está ligado ao estoque + todas as ordens (independente se ja foi embarcado ou nao)"
+        const estoqueComCompra = estoquePlusPedidos + sugestaoCompra;
+        const duracao6mesesCompras = media6m > 0 ? estoqueComCompra / media6m : 0;
+        const duracao3mesesCompras = media3m > 0 ? estoqueComCompra / media3m : 0;
+
+        return {
+          ...base,
+          estoqueAtual: estoqueReal,
+          vendas6meses: vendas6m,
+          vendas3meses: vendas3m,
+          estoquePlusPedidos,
+          duracao6meses: Math.round(duracao6meses * 10) / 10,
+          duracao3meses: Math.round(duracao3meses * 10) / 10,
+          duracao6mesesEmbarc: Math.round(duracao6mesesEmbarc * 10) / 10,
+          duracao3mesesEmbarc: Math.round(duracao3mesesEmbarc * 10) / 10,
+          sugestaoCompra,
+          duracao6mesesCompras: Math.round(duracao6mesesCompras * 10) / 10,
+          duracao3mesesCompras: Math.round(duracao3mesesCompras * 10) / 10,
+        };
       })
       .filter(a => !search.trim() || a.codigo.toLowerCase().includes(search.toLowerCase()) || a.descricao.toLowerCase().includes(search.toLowerCase()));
-  }, [produtosComEstoque, search, dataEstoque, comprador, analisarProduto]);
+  }, [produtosComEstoque, search, dataEstoque, comprador, analisarProduto, estoqueEditando, vendasEditando, comprasEditando, VENDAS_HISTORICAS]);
 
   const kpis = useMemo(() => {
     const totalProdutos = analise.length;
@@ -96,7 +177,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
     const dados = sorted.map(item => ({
       'COD': item.codigo, 'DESCRIÇÃO': item.descricao, 'ESTOQUE': item.estoqueAtual,
       'TOTAL ORDENS': item.totalOrdens, 'ESTOQUE+PEDIDOS': item.estoquePlusPedidos,
-      'DURAÇÃO 6M': item.duracao6meses, 'DURAÇÃO 3M': item.duracao3meses,
+      'VENDAS 6M': item.vendas6meses, 'VENDAS 3M': item.vendas3meses,
       'TOTAL EMBARCADO': item.totalEmbarcado, 'DUR. 6M EMBARC.': item.duracao6mesesEmbarc,
       'DUR. 3M EMBARC.': item.duracao3mesesEmbarc, 'COMPRAS': item.sugestaoCompra,
       'DUR. 6M COMPRAS': item.duracao6mesesCompras, 'DUR. 3M COMPRAS': item.duracao3mesesCompras,
@@ -236,9 +317,11 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>{t('estoquePedidos') || 'EST.+PED.'}</th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.80 0.18 85)' }}>
                 <button onClick={() => handleSort('duracao6meses')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6m') || 'DUR. 6M'} <SortIcon field="duracao6meses" /></button>
+                <span className="text-[8px] block" style={{ color: 'oklch(0.50 0.010 285)' }}>vendas 6m</span>
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.80 0.18 85)' }}>
                 <button onClick={() => handleSort('duracao3meses')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3m') || 'DUR. 3M'} <SortIcon field="duracao3meses" /></button>
+                <span className="text-[8px] block" style={{ color: 'oklch(0.50 0.010 285)' }}>vendas 3m</span>
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
                 <button onClick={() => handleSort('totalEmbarcado')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('totalEmbarc') || 'TOTAL EMBARC.'} <SortIcon field="totalEmbarcado" /></button>
@@ -251,6 +334,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
                 <button onClick={() => handleSort('sugestaoCompra')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('compras') || 'COMPRAS'} <SortIcon field="sugestaoCompra" /></button>
+                <span className="text-[8px] block" style={{ color: 'oklch(0.50 0.010 285)' }}>editável</span>
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
                 <button onClick={() => handleSort('duracao6mesesCompras')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6mCompras') || 'DUR. 6M COMP.'} <SortIcon field="duracao6mesesCompras" /></button>
@@ -262,8 +346,6 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
           </thead>
           <tbody>
             {sorted.map((item, idx) => {
-              const dur6 = getDuracaoColor(item.duracao6meses);
-              const dur3 = getDuracaoColor(item.duracao3meses);
               const dur6e = getDuracaoColor(item.duracao6mesesEmbarc);
               const dur3e = getDuracaoColor(item.duracao3mesesEmbarc);
               const dur6c = getDuracaoColor(item.duracao6mesesCompras);
@@ -284,12 +366,42 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                   </td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalOrdens)}</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoquePlusPedidos)}</td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6.text, background: dur6.bg }}>{item.duracao6meses.toFixed(1)}m</td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3.text, background: dur3.bg }}>{item.duracao3meses.toFixed(1)}m</td>
+                  <td className="px-1 py-1 text-center" style={{ background: 'oklch(0.22 0.005 285)' }}>
+                    <input
+                      type="number"
+                      value={vendasEditando[item.codigo]?.vendas6m ?? item.vendas6meses}
+                      onChange={e => updateVendas(item.codigo, 'vendas6m', parseInt(e.target.value) || 0)}
+                      onFocus={e => e.target.select()}
+                      min="0"
+                      className="w-full px-1 py-0.5 text-center rounded border text-xs"
+                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.40 0.18 85 / 0.5)', color: 'oklch(0.80 0.18 85)', textAlign: 'center', width: '60px' }}
+                    />
+                  </td>
+                  <td className="px-1 py-1 text-center" style={{ background: 'oklch(0.22 0.005 285)' }}>
+                    <input
+                      type="number"
+                      value={vendasEditando[item.codigo]?.vendas3m ?? item.vendas3meses}
+                      onChange={e => updateVendas(item.codigo, 'vendas3m', parseInt(e.target.value) || 0)}
+                      onFocus={e => e.target.select()}
+                      min="0"
+                      className="w-full px-1 py-0.5 text-center rounded border text-xs"
+                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.40 0.18 85 / 0.5)', color: 'oklch(0.80 0.18 85)', textAlign: 'center', width: '60px' }}
+                    />
+                  </td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalEmbarcado)}</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6e.text, background: dur6e.bg }}>{item.duracao6mesesEmbarc.toFixed(1)}m</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3e.text, background: dur3e.bg }}>{item.duracao3mesesEmbarc.toFixed(1)}m</td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: item.sugestaoCompra > 0 ? 'oklch(0.65 0.22 25)' : 'oklch(0.50 0.010 285)', background: item.sugestaoCompra > 0 ? 'oklch(0.48 0.22 25 / 0.15)' : 'transparent' }}>{formatNum(item.sugestaoCompra)}</td>
+                  <td className="px-1 py-1 text-center" style={{ background: item.sugestaoCompra > 0 ? 'oklch(0.48 0.22 25 / 0.15)' : 'transparent' }}>
+                    <input
+                      type="number"
+                      value={comprasEditando[item.codigo] ?? item.sugestaoCompra}
+                      onChange={e => updateCompras(item.codigo, parseInt(e.target.value) || 0)}
+                      onFocus={e => e.target.select()}
+                      min="0"
+                      className="w-full px-1 py-0.5 text-center rounded border text-xs font-bold"
+                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.48 0.22 25 / 0.5)', color: 'oklch(0.65 0.22 25)', textAlign: 'center', width: '70px' }}
+                    />
+                  </td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6c.text, background: dur6c.bg }}>{item.duracao6mesesCompras.toFixed(1)}m</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3c.text, background: dur3c.bg }}>{item.duracao3mesesCompras.toFixed(1)}m</td>
                 </tr>
