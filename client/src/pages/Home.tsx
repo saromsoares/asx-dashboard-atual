@@ -7,6 +7,7 @@ import { useCustos } from '@/hooks/useCustos';
 import { useIdioma } from '@/hooks/useIdioma';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
+import { Ship } from 'lucide-react';
 import { ImageUploadButton } from '@/components/ImageUploadButton';
 import { CategoryAdjustmentPanel } from '@/components/CategoryAdjustmentPanel';
 import {
@@ -62,6 +63,38 @@ export default function Home() {
   const [apenasComCusto, setApenasComCusto] = useState(false);
 
   const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct, getMarkup } = useCustos();
+
+  // Dados de pedidos para alerta de saldo pendente
+  const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
+  const { data: todosItensDb = [] } = trpc.itemPedido.getAll.useQuery();
+
+  const STORAGE_SALDO = 'asx_saldo_embarques';
+  const pedidosPendentes = useMemo(() => {
+    let saldo: Record<string, Record<string, { sarom: number; alexandre: number }>> = {};
+    try { const s = localStorage.getItem(STORAGE_SALDO); if (s) saldo = JSON.parse(s); } catch {}
+    const confirmados = pedidosDb.filter((p: any) => p.status === 'Confirmado');
+    let countPendentes = 0;
+    let totalUnidPend = 0;
+    let totalUsdPend = 0;
+    confirmados.forEach((pedido: any) => {
+      const itens = todosItensDb.filter((i: any) => i.pedidoId === pedido.id);
+      let temPendente = false;
+      itens.forEach((item: any) => {
+        const s = saldo[String(pedido.id)]?.[item.produtoId] || { sarom: 0, alexandre: 0 };
+        const pendS = Math.max(0, (item.quantidadeSarom || 0) - s.sarom);
+        const pendA = Math.max(0, (item.quantidadeAlexandre || 0) - s.alexandre);
+        const tPend = pendS + pendA;
+        if (tPend > 0) {
+          temPendente = true;
+          totalUnidPend += tPend;
+          const preco = parseFloat(item.precoUnitario) || 0;
+          totalUsdPend += tPend * preco;
+        }
+      });
+      if (temPendente) countPendentes++;
+    });
+    return { count: countPendentes, totalConfirmados: confirmados.length, totalUnidPend, totalUsdPend };
+  }, [pedidosDb, todosItensDb]);
 
   const volts = useMemo(() => ['TODOS', ...Array.from(new Set(produtos.map(p => p.volt).filter(Boolean)))], []);
   const unids = useMemo(() => ['TODOS', ...Array.from(new Set(produtos.map(p => p.unid).filter(Boolean)))], []);
@@ -454,6 +487,34 @@ export default function Home() {
               </div>
               <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'oklch(0.50 0.22 25)', color: 'white' }}>
                 Filtrar
+              </span>
+            </div>
+          )}
+
+          {/* Alerta de pedidos com saldo pendente */}
+          {pedidosPendentes.count > 0 && (
+            <div
+              className="mx-6 mt-3 px-4 py-3 rounded-lg border flex items-center gap-3 cursor-pointer transition-all hover:brightness-110"
+              style={{
+                background: 'oklch(0.18 0.08 250 / 0.3)',
+                borderColor: 'oklch(0.50 0.18 250 / 0.5)',
+              }}
+              onClick={() => setLocation('/rastreamento')}
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'oklch(0.30 0.15 250)' }}>
+                <Ship className="w-5 h-5" style={{ color: 'oklch(0.90 0.10 250)' }} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{ color: 'oklch(0.90 0.10 250)' }}>
+                  {pedidosPendentes.count} pedido{pedidosPendentes.count > 1 ? 's' : ''} com saldo pendente de embarque
+                </p>
+                <p className="text-xs" style={{ color: 'oklch(0.65 0.08 250)' }}>
+                  {pedidosPendentes.totalUnidPend.toLocaleString('pt-BR')} unidades pendentes
+                  {pedidosPendentes.totalUsdPend > 0 && ` • $${pedidosPendentes.totalUsdPend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} em valor`}
+                </p>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'oklch(0.45 0.18 250)', color: 'white' }}>
+                Ver Rastreamento
               </span>
             </div>
           )}

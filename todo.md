@@ -185,5 +185,11 @@
 - [x] Testar /conteiner carrega sem 404
 - [x] Testar Central Sarom/Alexandre campos editáveis
 - [x] Console do browser sem erros
-- [ ] Push para GitHub
+- [x] Push para GitHub
+- [x] Salvar checkpoint
+
+## 🆕 Alerta de Pedidos Pendentes no Cabeçalho
+
+- [x] Criar alerta visual no cabeçalho da página inicial com quantidade de pedidos com saldo pendente
+- [x] Testar compilação e funcionalidade
 - [ ] Salvar checkpoint
