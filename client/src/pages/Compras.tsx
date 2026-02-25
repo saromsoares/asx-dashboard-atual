@@ -58,19 +58,33 @@ export default function Compras() {
     return matchStatus;
   });
 
-  const handleCriarPedido = () => {
+  const handleCriarPedido = async () => {
     if (novoNomePedido.trim()) {
-      criarPedido(novoNomePedido);
-      setNovoNomePedido('');
+      const novoPedido = await criarPedido(novoNomePedido);
+      if (novoPedido) {
+        setPedidoAtivo(novoPedido.id);
+        setNovoNomePedido('');
+      }
     }
   };
 
   const handleAdicionarItem = () => {
     if (pedidoAtivo && produtoSelecionado && (qtdSarom > 0 || qtdAlexandre > 0)) {
-      // adicionarItem(pedidoAtivo, produtoSelecionado, qtdSarom, qtdAlexandre);
-      setQtdSarom(0);
-      setQtdAlexandre(0);
-      setProdutoSelecionado(null);
+      const produto = produtos.find(p => p.id === produtoSelecionado);
+      if (produto) {
+        const item: ItemPedido = {
+          produtoId: produto.id,
+          codigo: produto.codigo,
+          nome: produto.descricao,
+          precoUSD: 0, // TODO: buscar do banco de dados
+          qtdSarom,
+          qtdAlexandre,
+        };
+        adicionarItem(pedidoAtivo, item);
+        setQtdSarom(0);
+        setQtdAlexandre(0);
+        setProdutoSelecionado(null);
+      }
     }
   };
 
