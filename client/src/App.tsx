@@ -17,6 +17,8 @@ import Rastreamento from "./pages/Rastreamento";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
 import { MobileMenu } from "./components/MobileMenu";
+import { ToastContainer } from "./components/Toast";
+import { useToast } from "./hooks/useToast";
 
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
@@ -38,6 +40,7 @@ function ProtectedRouter() {
 
 function AuthenticatedRouter() {
   const [location] = useLocation();
+  const { toasts, removeToast } = useToast();
 
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
@@ -87,17 +90,20 @@ function AuthenticatedRouter() {
           <Route component={NotFound} />
         </Switch>
       </main>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }
 
 function App() {
+  const { toasts, removeToast } = useToast();
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <ProtectedRouter />
+          <ToastContainer toasts={toasts} onClose={removeToast} />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
