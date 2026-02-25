@@ -153,6 +153,30 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await getItensDoPedido(input.pedidoId);
       }),
+    adicionarBatch: protectedProcedure
+      .input(z.object({
+        pedidoId: z.number().int().positive(),
+        itens: z.array(z.object({
+          produtoId: z.string().min(1).max(100).trim(),
+          quantidadeSarom: z.number().int().min(0).max(999999),
+          quantidadeAlexandre: z.number().int().min(0).max(999999),
+          precoUnitario: z.number().min(0).max(999999.99),
+        })).min(1).max(200),
+      }))
+      .mutation(async ({ input }) => {
+        const results = [];
+        for (const item of input.itens) {
+          const result = await adicionarItemPedido(
+            input.pedidoId,
+            item.produtoId,
+            item.quantidadeSarom,
+            item.quantidadeAlexandre,
+            item.precoUnitario
+          );
+          results.push(result);
+        }
+        return { added: results.length };
+      }),
     getAll: protectedProcedure
       .query(async () => {
         return await getAllItensPedidos();

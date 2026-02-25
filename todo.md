@@ -155,3 +155,10 @@
 - [x] REVISÃO: Revisar usabilidade completa de todas as páginas do site
 - [x] Rastreamento.tsx migrado de localStorage para tRPC (dados persistentes)
 - [x] Rota duplicada /conteiner removida (mantida apenas /containers com tRPC)
+
+## 🆕 Novo Fluxo de Pedido (Sessão 3)
+
+- [x] Redesenhar tela de detalhes do pedido: seletor de categoria em vez de busca por código
+- [x] Ao selecionar categoria, mostrar TODOS os produtos da categoria com campos Sarom/Alexandre
+- [x] Permitir preencher quantidades e adicionar múltiplos produtos de uma vez (batch save)
+- [x] Manter busca por código como opção secundária

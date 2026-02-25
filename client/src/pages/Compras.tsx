@@ -1,15 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { produtos } from '@/data/produtos';
+import { produtos, categorias } from '@/data/produtos';
 import { trpc } from '@/lib/trpc';
 import { NotificacoesPedidos, type Notificacao } from '@/components/NotificacoesPedidos';
 import { OrderCard } from '@/components/OrderCard';
 import {
   Plus,
   Trash2,
-  Edit2,
   X,
-  Download,
   ArrowLeft,
   Search,
   Package,
@@ -17,6 +15,9 @@ import {
   Send,
   CheckCheck,
   Clock,
+  FolderOpen,
+  Save,
+  Filter,
 } from 'lucide-react';
 
 const formatUSD = (v: number) =>
@@ -28,12 +29,12 @@ export default function Compras() {
   // Estado local
   const [pedidoAtivo, setPedidoAtivo] = useState<number | null>(null);
   const [novoNomePedido, setNovoNomePedido] = useState('');
-  const [editandoNome, setEditandoNome] = useState<number | null>(null);
-  const [nomeEditado, setNomeEditado] = useState('');
+  const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null);
   const [buscaProduto, setBuscaProduto] = useState('');
   const [qtdPorProduto, setQtdPorProduto] = useState<Record<number, { sarom: number; alexandre: number }>>({});
   const [statusFiltro, setStatusFiltro] = useState<'Todos' | 'Pendente' | 'Confirmado' | 'Recebido'>('Todos');
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const [salvandoBatch, setSalvandoBatch] = useState(false);
 
   // Queries tRPC
   const { data: pedidosDb = [], isLoading: carregandoPedidos, refetch: recarregarPedidos } = trpc.pedido.getAll.useQuery();
@@ -47,16 +48,17 @@ export default function Compras() {
   const deletarPedidoMutation = trpc.pedido.deletar.useMutation();
   const atualizarStatusMutation = trpc.pedido.atualizarStatus.useMutation();
   const adicionarItemMutation = trpc.itemPedido.adicionar.useMutation();
+  const adicionarBatchMutation = trpc.itemPedido.adicionarBatch.useMutation();
   const removerItemMutation = trpc.itemPedido.remover.useMutation();
 
   // Notificações
-  const adicionarNotificacao = (tipo: 'sucesso' | 'erro' | 'info', mensagem: string) => {
+  const adicionarNotificacao = useCallback((tipo: 'sucesso' | 'erro' | 'info', mensagem: string) => {
     const id = `notif_${Date.now()}`;
     setNotificacoes(prev => [...prev, { id, tipo, mensagem }]);
     setTimeout(() => {
       setNotificacoes(prev => prev.filter(n => n.id !== id));
     }, 5000);
-  };
+  }, []);
 
   // Pedidos filtrados
   const pedidosFiltrados = useMemo(() => {
@@ -70,16 +72,37 @@ export default function Compras() {
     return pedidosDb.find((p: any) => p.id === pedidoAtivo) || null;
   }, [pedidosDb, pedidoAtivo]);
 
-  // Produtos filtrados para busca
-  const produtosFiltrados = useMemo(() => {
-    if (!buscaProduto.trim()) return [];
-    const q = buscaProduto.toLowerCase();
-    return produtos.filter(p =>
-      p.codigo.toLowerCase().includes(q) ||
-      p.descricao.toLowerCase().includes(q) ||
-      p.cod_barras.toLowerCase().includes(q)
-    ).slice(0, 20);
-  }, [buscaProduto]);
+  // Produtos da categoria ativa (ou busca)
+  const produtosDaCategoria = useMemo(() => {
+    let list = produtos;
+
+    // Se há busca, filtrar por busca (ignora categoria)
+    if (buscaProduto.trim()) {
+      const q = buscaProduto.toLowerCase();
+      list = list.filter(p =>
+        p.codigo.toLowerCase().includes(q) ||
+        p.descricao.toLowerCase().includes(q) ||
+        p.cod_barras.toLowerCase().includes(q)
+      );
+    } else if (categoriaAtiva) {
+      // Filtrar por categoria
+      list = list.filter(p => p.categoria === categoriaAtiva);
+    } else {
+      return [];
+    }
+
+    return list;
+  }, [categoriaAtiva, buscaProduto]);
+
+  // Itens já no pedido (Set para lookup rápido)
+  const itensNoPedido = useMemo(() => {
+    return new Set(itensDoPedido.map((i: any) => i.produtoId));
+  }, [itensDoPedido]);
+
+  // Contagem de produtos com quantidade preenchida
+  const produtosComQtd = useMemo(() => {
+    return Object.entries(qtdPorProduto).filter(([_, v]) => v.sarom > 0 || v.alexandre > 0).length;
+  }, [qtdPorProduto]);
 
   // Handlers
   const handleCriarPedido = async () => {
@@ -93,6 +116,8 @@ export default function Compras() {
         adicionarNotificacao('sucesso', `Pedido "${novoNomePedido}" criado com sucesso!`);
         setPedidoAtivo(result.id);
         setNovoNomePedido('');
+        setCategoriaAtiva(null);
+        setQtdPorProduto({});
         recarregarPedidos();
       }
     } catch (error) {
@@ -129,14 +154,15 @@ export default function Compras() {
   };
 
   // Helpers para quantidades individuais por produto
-  const getQtd = (produtoId: number) => qtdPorProduto[produtoId] || { sarom: 0, alexandre: 0 };
-  const setQtdSarom = (produtoId: number, val: number) => {
-    setQtdPorProduto(prev => ({ ...prev, [produtoId]: { ...getQtd(produtoId), sarom: val } }));
-  };
-  const setQtdAlexandre = (produtoId: number, val: number) => {
-    setQtdPorProduto(prev => ({ ...prev, [produtoId]: { ...getQtd(produtoId), alexandre: val } }));
-  };
+  const getQtd = useCallback((produtoId: number) => qtdPorProduto[produtoId] || { sarom: 0, alexandre: 0 }, [qtdPorProduto]);
+  const setQtdSarom = useCallback((produtoId: number, val: number) => {
+    setQtdPorProduto(prev => ({ ...prev, [produtoId]: { sarom: val, alexandre: prev[produtoId]?.alexandre || 0 } }));
+  }, []);
+  const setQtdAlexandre = useCallback((produtoId: number, val: number) => {
+    setQtdPorProduto(prev => ({ ...prev, [produtoId]: { sarom: prev[produtoId]?.sarom || 0, alexandre: val } }));
+  }, []);
 
+  // Adicionar item individual
   const handleAdicionarItem = async (produtoId: number) => {
     if (!pedidoAtivo) return;
     const qtd = getQtd(produtoId);
@@ -156,7 +182,6 @@ export default function Compras() {
         precoUnitario: produto.custo_usd,
       });
       adicionarNotificacao('sucesso', `${produto.codigo} adicionado ao pedido!`);
-      // Limpar apenas este produto
       setQtdPorProduto(prev => {
         const copy = { ...prev };
         delete copy[produtoId];
@@ -165,6 +190,44 @@ export default function Compras() {
       recarregarItens();
     } catch (error) {
       adicionarNotificacao('erro', 'Erro ao adicionar item');
+    }
+  };
+
+  // Salvar todos os produtos com quantidade preenchida de uma vez
+  const handleSalvarTodos = async () => {
+    if (!pedidoAtivo) return;
+    const itensParaSalvar = Object.entries(qtdPorProduto)
+      .filter(([_, v]) => v.sarom > 0 || v.alexandre > 0)
+      .map(([produtoId, qtd]) => {
+        const produto = produtos.find(p => p.id === Number(produtoId));
+        if (!produto) return null;
+        return {
+          produtoId: produto.codigo,
+          quantidadeSarom: qtd.sarom,
+          quantidadeAlexandre: qtd.alexandre,
+          precoUnitario: produto.custo_usd,
+        };
+      })
+      .filter(Boolean) as { produtoId: string; quantidadeSarom: number; quantidadeAlexandre: number; precoUnitario: number }[];
+
+    if (itensParaSalvar.length === 0) {
+      adicionarNotificacao('erro', 'Preencha a quantidade de pelo menos um produto');
+      return;
+    }
+
+    setSalvandoBatch(true);
+    try {
+      await adicionarBatchMutation.mutateAsync({
+        pedidoId: pedidoAtivo,
+        itens: itensParaSalvar,
+      });
+      adicionarNotificacao('sucesso', `${itensParaSalvar.length} produto(s) adicionado(s) ao pedido!`);
+      setQtdPorProduto({});
+      recarregarItens();
+    } catch (error) {
+      adicionarNotificacao('erro', 'Erro ao salvar itens');
+    } finally {
+      setSalvandoBatch(false);
     }
   };
 
@@ -207,13 +270,22 @@ export default function Compras() {
     }
   };
 
+  // Contagem de produtos por categoria
+  const categoriaCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    categorias.forEach(cat => {
+      counts[cat] = produtos.filter(p => p.categoria === cat).length;
+    });
+    return counts;
+  }, []);
+
   return (
     <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
-      {/* Botão Voltar */}
+      {/* Header */}
       <div className="px-4 md:px-6 py-3 border-b flex items-center gap-3" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         {pedidoAtivo ? (
           <button
-            onClick={() => setPedidoAtivo(null)}
+            onClick={() => { setPedidoAtivo(null); setCategoriaAtiva(null); setQtdPorProduto({}); setBuscaProduto(''); }}
             className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
             style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
           >
@@ -235,7 +307,7 @@ export default function Compras() {
         </span>
       </div>
 
-      {/* ===== LISTA DE PEDIDOS (quando nenhum pedido está ativo) ===== */}
+      {/* ===== LISTA DE PEDIDOS ===== */}
       {!pedidoAtivo && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Criar novo pedido */}
@@ -271,88 +343,94 @@ export default function Compras() {
             </div>
           </div>
 
-          {/* Filtros de Status */}
-          <div className="border-b px-4 md:px-6 py-3 flex gap-2 flex-wrap" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
-            {(['Todos', 'Pendente', 'Confirmado', 'Recebido'] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setStatusFiltro(s)}
-                className="px-4 py-2 rounded-md text-sm font-medium transition-colors flex-shrink-0"
-                style={{
-                  background: statusFiltro === s ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-                  color: statusFiltro === s ? 'white' : 'oklch(0.80 0.005 65)',
-                  border: `1px solid ${statusFiltro === s ? 'oklch(0.48 0.22 25)' : 'oklch(0.26 0.005 285)'}`,
-                }}
-              >
-                {s} ({pedidosDb.filter((p: any) => s === 'Todos' || p.status === s).length})
-              </button>
-            ))}
+          {/* Filtros de status */}
+          <div className="border-b px-4 md:px-6 py-3 flex gap-2 flex-wrap" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+            {(['Todos', 'Pendente', 'Confirmado', 'Recebido'] as const).map(s => {
+              const count = s === 'Todos' ? pedidosDb.length : pedidosDb.filter((p: any) => p.status === s).length;
+              const isActive = statusFiltro === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFiltro(s)}
+                  className="px-4 py-2 rounded-md text-xs font-semibold transition-colors"
+                  style={{
+                    background: isActive ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
+                    color: isActive ? 'white' : 'oklch(0.60 0.010 285)',
+                  }}
+                >
+                  {s} ({count})
+                </button>
+              );
+            })}
           </div>
 
-          {/* Lista de Pedidos */}
+          {/* Lista de pedidos */}
           <div className="flex-1 overflow-auto p-4 md:p-6">
             {carregandoPedidos ? (
-              <div className="flex items-center justify-center h-40">
-                <p style={{ color: 'oklch(0.50 0.010 285)' }}>Carregando pedidos...</p>
+              <div className="text-center py-12">
+                <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>Carregando pedidos...</p>
               </div>
             ) : pedidosFiltrados.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 gap-3">
-                <Package className="w-12 h-12" style={{ color: 'oklch(0.30 0.010 285)' }} />
-                <p style={{ color: 'oklch(0.50 0.010 285)' }}>Nenhum pedido encontrado</p>
+              <div className="text-center py-12">
+                <Package className="w-12 h-12 mx-auto mb-3" style={{ color: 'oklch(0.30 0.010 285)' }} />
+                <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                  {statusFiltro === 'Todos' ? 'Nenhum pedido criado ainda.' : `Nenhum pedido com status "${statusFiltro}".`}
+                </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {pedidosFiltrados.map((p: any) => {
-                  const itemCount = getItemCount(p.id);
-                  const statusColor = p.status === 'Pendente' ? 'oklch(0.65 0.22 25)' : p.status === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'oklch(0.72 0.17 145)';
-
+              <div className="space-y-2">
+                {pedidosFiltrados.map((pedido: any) => {
+                  const itemCount = getItemCount(pedido.id);
+                  const statusColor = pedido.status === 'Pendente' ? 'oklch(0.65 0.22 25)' :
+                    pedido.status === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'oklch(0.72 0.17 145)';
                   return (
-                    <div
-                      key={p.id}
-                      className="p-4 rounded-lg border cursor-pointer transition-all hover:brightness-110"
-                      style={{
-                        background: 'oklch(0.14 0.005 285)',
-                        borderColor: 'oklch(0.26 0.005 285)',
-                      }}
-                      onClick={() => setPedidoAtivo(p.id)}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                              #{p.id}
-                            </span>
-                            <p className="font-medium truncate" style={{ color: 'oklch(0.90 0.005 65)' }}>
-                              {p.nome}
+                    <div key={pedido.id}>
+                      {/* Desktop */}
+                      <div
+                        className="hidden md:flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors hover:border-red-800"
+                        style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.24 0.005 285)' }}
+                        onClick={() => { setPedidoAtivo(pedido.id); setCategoriaAtiva(null); setQtdPorProduto({}); }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <span className="font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                            #{pedido.id}
+                          </span>
+                          <div>
+                            <p className="font-semibold text-sm" style={{ color: 'oklch(0.90 0.005 65)' }}>{pedido.nome}</p>
+                            <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                              {itemCount} {itemCount === 1 ? 'item' : 'itens'} • {new Date(pedido.dataCreacao).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
-                          <p className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                            {itemCount} {itemCount === 1 ? 'item' : 'itens'} • {new Date(p.dataCreacao).toLocaleDateString('pt-BR')}
-                          </p>
                         </div>
-
-                        <div className="flex items-center gap-2">
-                          {/* Status Badge */}
-                          <div
-                            className="px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 flex-shrink-0"
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1"
                             style={{ background: statusColor, color: 'white' }}
                           >
-                            {getStatusIcon(p.status)}
-                            {p.status}
-                          </div>
-
-                          {/* Botão Deletar */}
+                            {getStatusIcon(pedido.status)}
+                            {pedido.status}
+                          </span>
                           <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleDeletarPedido(p.id);
-                            }}
-                            className="p-2 rounded-md transition-colors hover:opacity-75"
-                            style={{ color: 'oklch(0.65 0.22 25)' }}
+                            onClick={e => { e.stopPropagation(); handleDeletarPedido(pedido.id); }}
+                            className="p-2 rounded transition-colors hover:opacity-75"
+                            style={{ color: 'oklch(0.50 0.010 285)' }}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
+                      </div>
+
+                      {/* Mobile */}
+                      <div className="md:hidden">
+                        <OrderCard
+                          id={pedido.id}
+                          nome={pedido.nome}
+                          status={pedido.status}
+                          dataCreacao={pedido.dataCreacao}
+                          itemCount={itemCount}
+                          onView={() => { setPedidoAtivo(pedido.id); setCategoriaAtiva(null); setQtdPorProduto({}); }}
+                          onDelete={() => handleDeletarPedido(pedido.id)}
+                        />
                       </div>
                     </div>
                   );
@@ -363,7 +441,7 @@ export default function Compras() {
         </div>
       )}
 
-      {/* ===== DETALHES DO PEDIDO (quando um pedido está ativo) ===== */}
+      {/* ===== DETALHES DO PEDIDO ===== */}
       {pedidoAtivo && pedidoAtivoObj && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Info do Pedido */}
@@ -378,7 +456,7 @@ export default function Compras() {
                 </p>
               </div>
 
-              {/* Status + Ações */}
+              {/* Status */}
               <div className="flex items-center gap-2 flex-wrap">
                 {(['Pendente', 'Confirmado', 'Recebido'] as const).map(s => {
                   const isActive = pedidoAtivoObj.status === s;
@@ -427,22 +505,23 @@ export default function Compras() {
 
           {/* Conteúdo do Pedido */}
           <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6">
-            {/* Adicionar Produto */}
+
+            {/* ===== SELETOR DE CATEGORIA + BUSCA ===== */}
             <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
                 <Plus className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 25)' }} />
-                Adicionar Produto ao Pedido
+                Adicionar Produtos ao Pedido
               </h3>
 
-              {/* Busca de produto */}
-              <div className="relative mb-3">
+              {/* Busca rápida por código */}
+              <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
                 <input
                   type="text"
-                  placeholder="Buscar por código, nome ou cód. barras..."
+                  placeholder="Busca rápida por código, nome ou cód. barras..."
                   value={buscaProduto}
-                  onChange={e => setBuscaProduto(e.target.value)}
-                  className="w-full pl-9 pr-4 py-3 rounded-md border text-sm h-11"
+                  onChange={e => { setBuscaProduto(e.target.value); if (e.target.value.trim()) setCategoriaAtiva(null); }}
+                  className="w-full pl-9 pr-10 py-3 rounded-md border text-sm h-11"
                   style={{
                     background: 'oklch(0.18 0.005 285)',
                     borderColor: 'oklch(0.28 0.005 285)',
@@ -456,86 +535,277 @@ export default function Compras() {
                 )}
               </div>
 
-              {/* Resultados da busca */}
-              {produtosFiltrados.length > 0 && (
-                <div className="space-y-2 max-h-60 overflow-auto mb-3">
-                  {produtosFiltrados.map(produto => (
-                    <div
-                      key={produto.id}
-                      className="p-3 rounded-md border"
-                      style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.24 0.005 285)' }}
-                    >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.48 0.22 25)' }}>
-                            {produto.codigo}
-                          </p>
-                          <p className="text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>
-                            {produto.descricao}
-                          </p>
-                          <p className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                            Custo: {formatUSD(produto.custo_usd)} • Venda: R$ {produto.preco_venda.toFixed(2)}
-                          </p>
-                        </div>
+              {/* Separador */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px" style={{ background: 'oklch(0.24 0.005 285)' }} />
+                <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'oklch(0.40 0.010 285)' }}>ou selecione uma categoria</span>
+                <div className="flex-1 h-px" style={{ background: 'oklch(0.24 0.005 285)' }} />
+              </div>
 
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className="flex flex-col items-center">
-                            <label className="text-[10px] uppercase" style={{ color: 'oklch(0.45 0.010 285)' }}>Sarom</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={getQtd(produto.id).sarom}
-                              onChange={e => setQtdSarom(produto.id, parseInt(e.target.value) || 0)}
-                              className="w-16 px-2 py-1.5 rounded border text-center text-sm"
-                              style={{
-                                background: 'oklch(0.18 0.005 285)',
-                                borderColor: 'oklch(0.28 0.005 285)',
-                                color: 'oklch(0.90 0.005 65)',
-                              }}
-                            />
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <label className="text-[10px] uppercase" style={{ color: 'oklch(0.45 0.010 285)' }}>Alexandre</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={getQtd(produto.id).alexandre}
-                              onChange={e => setQtdAlexandre(produto.id, parseInt(e.target.value) || 0)}
-                              className="w-16 px-2 py-1.5 rounded border text-center text-sm"
-                              style={{
-                                background: 'oklch(0.18 0.005 285)',
-                                borderColor: 'oklch(0.28 0.005 285)',
-                                color: 'oklch(0.90 0.005 65)',
-                              }}
-                            />
-                          </div>
-                          <button
-                            onClick={() => handleAdicionarItem(produto.id)}
-                            disabled={adicionarItemMutation.isPending}
-                            className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors mt-3"
-                            style={{
-                              background: 'oklch(0.48 0.22 25)',
-                              color: 'white',
-                              opacity: adicionarItemMutation.isPending ? 0.6 : 1,
-                            }}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
+              {/* Grid de Categorias */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mb-4">
+                {categorias.map(cat => {
+                  const isActive = categoriaAtiva === cat && !buscaProduto.trim();
+                  const count = categoriaCount[cat] || 0;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => { setCategoriaAtiva(cat); setBuscaProduto(''); }}
+                      className="p-3 rounded-lg border text-left transition-all"
+                      style={{
+                        background: isActive ? 'oklch(0.48 0.22 25)' : 'oklch(0.16 0.005 285)',
+                        borderColor: isActive ? 'oklch(0.48 0.22 25)' : 'oklch(0.24 0.005 285)',
+                        color: isActive ? 'white' : 'oklch(0.70 0.010 285)',
+                      }}
+                    >
+                      <FolderOpen className="w-4 h-4 mb-1" style={{ opacity: 0.7 }} />
+                      <p className="text-xs font-semibold truncate">{cat.replace('Linha ', '')}</p>
+                      <p className="text-[10px] mt-0.5" style={{ opacity: 0.6 }}>{count} produtos</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* ===== LISTA DE PRODUTOS DA CATEGORIA ===== */}
+              {produtosDaCategoria.length > 0 && (
+                <>
+                  {/* Header com botão Salvar Todos */}
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold" style={{ color: 'oklch(0.60 0.010 285)' }}>
+                      {buscaProduto.trim() ? (
+                        <>Resultados para "{buscaProduto}" — {produtosDaCategoria.length} produto(s)</>
+                      ) : (
+                        <>{categoriaAtiva} — {produtosDaCategoria.length} produtos</>
+                      )}
+                    </p>
+                    {produtosComQtd > 0 && (
+                      <button
+                        onClick={handleSalvarTodos}
+                        disabled={salvandoBatch}
+                        className="px-4 py-2 rounded-md text-xs font-semibold transition-colors flex items-center gap-2"
+                        style={{
+                          background: 'oklch(0.72 0.17 145)',
+                          color: 'white',
+                          opacity: salvandoBatch ? 0.6 : 1,
+                        }}
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        {salvandoBatch ? 'Salvando...' : `Salvar ${produtosComQtd} produto(s)`}
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Tabela de produtos */}
+                  <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'oklch(0.24 0.005 285)' }}>
+                    {/* Header Desktop */}
+                    <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold"
+                      style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.45 0.010 285)' }}>
+                      <div className="col-span-2">Código</div>
+                      <div className="col-span-4">Produto</div>
+                      <div className="col-span-1 text-center">Custo USD</div>
+                      <div className="col-span-1 text-center">Venda R$</div>
+                      <div className="col-span-1 text-center">Sarom</div>
+                      <div className="col-span-1 text-center">Alexandre</div>
+                      <div className="col-span-2 text-center">Ação</div>
                     </div>
-                  ))}
+
+                    <div className="max-h-[400px] overflow-auto divide-y" style={{ borderColor: 'oklch(0.20 0.005 285)' }}>
+                      {produtosDaCategoria.map(produto => {
+                        const qtd = getQtd(produto.id);
+                        const jaAdicionado = itensNoPedido.has(produto.codigo);
+                        const temQtd = qtd.sarom > 0 || qtd.alexandre > 0;
+
+                        return (
+                          <div key={produto.id}>
+                            {/* Desktop */}
+                            <div
+                              className="hidden md:grid grid-cols-12 gap-2 px-4 py-3 items-center transition-colors"
+                              style={{
+                                background: jaAdicionado ? 'oklch(0.16 0.04 145 / 0.15)' : temQtd ? 'oklch(0.16 0.04 250 / 0.15)' : 'oklch(0.13 0.005 285)',
+                              }}
+                            >
+                              <div className="col-span-2">
+                                <span className="font-rajdhani font-bold text-sm" style={{ color: jaAdicionado ? 'oklch(0.72 0.17 145)' : 'oklch(0.48 0.22 25)' }}>
+                                  {produto.codigo}
+                                </span>
+                                {jaAdicionado && (
+                                  <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'oklch(0.72 0.17 145)', color: 'white' }}>
+                                    ✓ no pedido
+                                  </span>
+                                )}
+                              </div>
+                              <div className="col-span-4 text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>
+                                {produto.descricao}
+                              </div>
+                              <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.80 0.005 65)' }}>
+                                {formatUSD(produto.custo_usd)}
+                              </div>
+                              <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.60 0.010 285)' }}>
+                                R$ {produto.preco_venda.toFixed(2)}
+                              </div>
+                              <div className="col-span-1 text-center">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={qtd.sarom || ''}
+                                  placeholder="0"
+                                  onChange={e => setQtdSarom(produto.id, parseInt(e.target.value) || 0)}
+                                  className="w-full px-2 py-1.5 rounded border text-center text-sm"
+                                  style={{
+                                    background: 'oklch(0.18 0.005 285)',
+                                    borderColor: qtd.sarom > 0 ? 'oklch(0.48 0.22 250)' : 'oklch(0.28 0.005 285)',
+                                    color: 'oklch(0.90 0.005 65)',
+                                  }}
+                                />
+                              </div>
+                              <div className="col-span-1 text-center">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={qtd.alexandre || ''}
+                                  placeholder="0"
+                                  onChange={e => setQtdAlexandre(produto.id, parseInt(e.target.value) || 0)}
+                                  className="w-full px-2 py-1.5 rounded border text-center text-sm"
+                                  style={{
+                                    background: 'oklch(0.18 0.005 285)',
+                                    borderColor: qtd.alexandre > 0 ? 'oklch(0.48 0.22 145)' : 'oklch(0.28 0.005 285)',
+                                    color: 'oklch(0.90 0.005 65)',
+                                  }}
+                                />
+                              </div>
+                              <div className="col-span-2 text-center">
+                                <button
+                                  onClick={() => handleAdicionarItem(produto.id)}
+                                  disabled={adicionarItemMutation.isPending || (!qtd.sarom && !qtd.alexandre)}
+                                  className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                  style={{
+                                    background: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'oklch(0.48 0.22 25)' : 'oklch(0.20 0.005 285)',
+                                    color: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'white' : 'oklch(0.40 0.010 285)',
+                                    opacity: adicionarItemMutation.isPending ? 0.6 : 1,
+                                  }}
+                                >
+                                  <Plus className="w-3 h-3 inline mr-1" />
+                                  Adicionar
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Mobile */}
+                            <div
+                              className="md:hidden p-3 space-y-2"
+                              style={{
+                                background: jaAdicionado ? 'oklch(0.16 0.04 145 / 0.15)' : temQtd ? 'oklch(0.16 0.04 250 / 0.15)' : 'oklch(0.13 0.005 285)',
+                              }}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-rajdhani font-bold text-sm" style={{ color: jaAdicionado ? 'oklch(0.72 0.17 145)' : 'oklch(0.48 0.22 25)' }}>
+                                      {produto.codigo}
+                                    </span>
+                                    {jaAdicionado && (
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'oklch(0.72 0.17 145)', color: 'white' }}>
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>{produto.descricao}</p>
+                                  <p className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                                    Custo: {formatUSD(produto.custo_usd)} • Venda: R$ {produto.preco_venda.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1">
+                                  <label className="text-[10px] uppercase block mb-1" style={{ color: 'oklch(0.45 0.010 285)' }}>Sarom</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={qtd.sarom || ''}
+                                    placeholder="0"
+                                    onChange={e => setQtdSarom(produto.id, parseInt(e.target.value) || 0)}
+                                    className="w-full px-2 py-2 rounded border text-center text-sm"
+                                    style={{
+                                      background: 'oklch(0.18 0.005 285)',
+                                      borderColor: qtd.sarom > 0 ? 'oklch(0.48 0.22 250)' : 'oklch(0.28 0.005 285)',
+                                      color: 'oklch(0.90 0.005 65)',
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-[10px] uppercase block mb-1" style={{ color: 'oklch(0.45 0.010 285)' }}>Alexandre</label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={qtd.alexandre || ''}
+                                    placeholder="0"
+                                    onChange={e => setQtdAlexandre(produto.id, parseInt(e.target.value) || 0)}
+                                    className="w-full px-2 py-2 rounded border text-center text-sm"
+                                    style={{
+                                      background: 'oklch(0.18 0.005 285)',
+                                      borderColor: qtd.alexandre > 0 ? 'oklch(0.48 0.22 145)' : 'oklch(0.28 0.005 285)',
+                                      color: 'oklch(0.90 0.005 65)',
+                                    }}
+                                  />
+                                </div>
+                                <button
+                                  onClick={() => handleAdicionarItem(produto.id)}
+                                  disabled={adicionarItemMutation.isPending || (!qtd.sarom && !qtd.alexandre)}
+                                  className="px-3 py-2 rounded-md text-xs font-medium transition-colors mt-4"
+                                  style={{
+                                    background: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'oklch(0.48 0.22 25)' : 'oklch(0.20 0.005 285)',
+                                    color: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'white' : 'oklch(0.40 0.010 285)',
+                                  }}
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Botão Salvar Todos (fixo no final) */}
+                  {produtosComQtd > 0 && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={handleSalvarTodos}
+                        disabled={salvandoBatch}
+                        className="px-6 py-3 rounded-md text-sm font-semibold transition-colors flex items-center gap-2"
+                        style={{
+                          background: 'oklch(0.72 0.17 145)',
+                          color: 'white',
+                          opacity: salvandoBatch ? 0.6 : 1,
+                        }}
+                      >
+                        <Save className="w-4 h-4" />
+                        {salvandoBatch ? 'Salvando...' : `Salvar ${produtosComQtd} produto(s) ao pedido`}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Mensagem quando nenhuma categoria selecionada */}
+              {!categoriaAtiva && !buscaProduto.trim() && (
+                <div className="text-center py-6">
+                  <Filter className="w-8 h-8 mx-auto mb-2" style={{ color: 'oklch(0.30 0.010 285)' }} />
+                  <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                    Selecione uma categoria acima ou use a busca rápida para encontrar produtos
+                  </p>
                 </div>
               )}
 
-              {buscaProduto.trim() && produtosFiltrados.length === 0 && (
+              {buscaProduto.trim() && produtosDaCategoria.length === 0 && (
                 <p className="text-xs text-center py-4" style={{ color: 'oklch(0.50 0.010 285)' }}>
                   Nenhum produto encontrado para "{buscaProduto}"
                 </p>
               )}
             </div>
 
-            {/* Lista de Itens do Pedido */}
+            {/* ===== ITENS JÁ NO PEDIDO ===== */}
             <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
               <h3 className="text-sm font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>
                 Itens do Pedido ({itensDoPedido.length})
@@ -545,7 +815,7 @@ export default function Compras() {
                 <div className="text-center py-8">
                   <Package className="w-10 h-10 mx-auto mb-2" style={{ color: 'oklch(0.30 0.010 285)' }} />
                   <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
-                    Nenhum item adicionado ainda. Use a busca acima para adicionar produtos.
+                    Nenhum item adicionado ainda. Selecione uma categoria e preencha as quantidades.
                   </p>
                 </div>
               ) : (
