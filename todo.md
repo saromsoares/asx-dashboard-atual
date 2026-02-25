@@ -74,3 +74,8 @@
 - [ ] Teste manual: Criar, editar, deletar container
 - [ ] Teste manual: Vincular/desvincular pedidos de containers
 - [ ] Teste manual: Verificar auditoria registrada corretamente
+
+
+## Melhorias de UI/UX
+
+- [x] Adicionar coluna MARKUP MÉDIO na barra de estatísticas do dashboard de produtos

@@ -133,7 +133,10 @@ export default function Home() {
     const avgLucroPct = comCusto.length > 0
       ? comCusto.reduce((s, p) => s + getLucroPct(p.id, p.preco_venda), 0) / comCusto.length
       : 0;
-    return { total: filtered.length, comCusto: comCusto.length, semCusto: semCusto.length, avgLucroPct };
+    const avgMarkup = comCusto.length > 0
+      ? comCusto.reduce((s, p) => s + getMarkup(p.id, p.preco_venda), 0) / comCusto.length
+      : 0;
+    return { total: filtered.length, comCusto: comCusto.length, semCusto: semCusto.length, avgLucroPct, avgMarkup };
   }, [filtered, custos, taxaCambio]);
 
   const toggleSort = useCallback((field: SortField) => {
@@ -393,6 +396,12 @@ export default function Home() {
               <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Margem Média</p>
               <p className="font-rajdhani font-bold text-xl" style={{ color: stats.avgLucroPct >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
                 {stats.avgLucroPct.toFixed(1)}%
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Markup Médio</p>
+              <p className="font-rajdhani font-bold text-xl" style={{ color: stats.avgMarkup >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
+                {stats.avgMarkup.toFixed(1)}%
               </p>
             </div>
           </div>
