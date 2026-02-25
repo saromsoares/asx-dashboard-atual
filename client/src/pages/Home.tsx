@@ -6,6 +6,7 @@ import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
 import { useIdioma } from '@/hooks/useIdioma';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { trpc } from '@/lib/trpc';
 import { ImageUploadButton } from '@/components/ImageUploadButton';
 import { CategoryAdjustmentPanel } from '@/components/CategoryAdjustmentPanel';
 import {
@@ -56,6 +57,8 @@ export default function Home() {
   const [unidFilter, setUnidFilter] = useState<string>('TODOS');
   const [showOnlySemCusto, setShowOnlySemCusto] = useState(false);
   const [showCategoryPanel, setShowCategoryPanel] = useState(false);
+  const [markupFilter, setMarkupFilter] = useState<'TODOS' | '0-20' | '20-50' | '50+'>('TODOS');
+  const [apenasComCusto, setApenasComCusto] = useState(false);
 
   const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct, getMarkup } = useCustos();
 
@@ -74,6 +77,28 @@ export default function Home() {
     if (unidFilter !== 'TODOS') {
       list = list.filter(p => p.unid === unidFilter);
     }
+    
+    // Filtro por faixa de markup
+    if (markupFilter !== 'TODOS') {
+      list = list.filter(p => {
+        const custoUsd = getCusto(p.id);
+        const precoVenda = p.preco_venda;
+        if (custoUsd === 0) return false;
+        const custoBrl = custoUsd * 8.5;
+        const markup = ((precoVenda - custoBrl) / custoBrl) * 100;
+        
+        if (markupFilter === '0-20') return markup >= 0 && markup <= 20;
+        if (markupFilter === '20-50') return markup > 20 && markup <= 50;
+        if (markupFilter === '50+') return markup > 50;
+        return true;
+      });
+    }
+    
+    // Filtro por disponibilidade de custo
+    if (apenasComCusto) {
+      list = list.filter(p => getCusto(p.id) > 0);
+    }
+    
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(p =>
@@ -100,7 +125,7 @@ export default function Home() {
       }
       return sortDir === 'asc' ? (va as number) - (vb as number) : (vb as number) - (va as number);
     });
-  }, [search, categoriaAtiva, voltFilter, unidFilter, sortField, sortDir, custos, taxaCambio, showOnlySemCusto]);
+  }, [search, categoriaAtiva, voltFilter, unidFilter, sortField, sortDir, custos, taxaCambio, showOnlySemCusto, markupFilter, apenasComCusto]);
 
   const stats = useMemo(() => {
     const comCusto = filtered.filter(p => getCusto(p.id) > 0);
@@ -221,6 +246,38 @@ export default function Home() {
         >
           {unids.map(u => <option key={u} value={u}>{u === 'TODOS' ? 'Unid: Todas' : u}</option>)}
         </select>
+
+        {/* Filtro de Markup */}
+        <select
+          value={markupFilter}
+          onChange={e => setMarkupFilter(e.target.value as any)}
+          className="px-3 py-2 text-sm rounded-md border"
+          style={{
+            background: 'oklch(0.18 0.005 285)',
+            borderColor: 'oklch(0.28 0.005 285)',
+            color: 'oklch(0.80 0.005 65)',
+          }}
+          title="Filtrar por faixa de markup"
+        >
+          <option value="TODOS">Markup: Todos</option>
+          <option value="0-20">Markup: 0-20%</option>
+          <option value="20-50">Markup: 20-50%</option>
+          <option value="50+">Markup: 50%+</option>
+        </select>
+
+        {/* Filtro de Custo */}
+        <button
+          onClick={() => setApenasComCusto(!apenasComCusto)}
+          className="px-3 py-2 text-sm rounded-md border transition-colors"
+          style={{
+            background: apenasComCusto ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
+            borderColor: apenasComCusto ? 'oklch(0.48 0.22 25)' : 'oklch(0.26 0.005 285)',
+            color: apenasComCusto ? 'white' : 'oklch(0.80 0.005 65)',
+          }}
+          title="Mostrar apenas produtos com custo em USD"
+        >
+          {apenasComCusto ? '✓ Com Custo' : 'Com Custo'}
+        </button>
 
         {/* View toggle */}
         <div className="flex rounded-md overflow-hidden border" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
