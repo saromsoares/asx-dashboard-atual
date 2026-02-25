@@ -122,3 +122,7 @@
 - [ ] Toasts de feedback
 - [ ] Testes completos em 375px, 390px, 430px
 - [ ] Validação final
+
+## 🎨 Ajustes Visuais
+
+- [x] Remover logo "ASX" do header mobile

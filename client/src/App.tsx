@@ -71,7 +71,6 @@ function AuthenticatedRouter() {
           { label: 'Configurações', href: '/configuracoes' },
         ]} currentPath={location} />
         <div className="flex-1" />
-        <span className="text-sm font-medium" style={{ color: 'oklch(0.80 0.005 65)' }}>ASX</span>
       </header>
       <main className="flex-1 overflow-auto md:mt-0 mt-14">
         <Switch>
