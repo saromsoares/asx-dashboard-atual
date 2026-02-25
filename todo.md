@@ -101,10 +101,11 @@
 - [x] Revisar e validar antes de passar para Sessão 2
 
 ### Sessão 2: Tabelas → Cards Mobile
-- [ ] Converter tabelas em cards empilhados
-- [ ] Badges coloridas para status
-- [ ] Ações (edit, delete) acessíveis
-- [ ] Testar em 3 larguras
+- [x] Criar ProductCard, OrderCard, ContainerCard
+- [ ] Integrar ProductCard em Home.tsx
+- [ ] Integrar OrderCard em Compras.tsx
+- [ ] Integrar ContainerCard em Containers.tsx
+- [ ] Testar em 3 larguras (375px, 390px, 430px)
 - [ ] Revisar e validar antes de passar para Sessão 3
 
 ### Sessão 3: Formulários + Inputs Mobile
