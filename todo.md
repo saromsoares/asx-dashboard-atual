@@ -104,9 +104,9 @@
 - [x] Criar ProductCard, OrderCard, ContainerCard
 - [x] Integrar ProductCard em Home.tsx (md:hidden)
 - [x] Integrar OrderCard em Compras.tsx (md:hidden)
-- [ ] Integrar ContainerCard em Containers.tsx
-- [ ] Testar em 3 larguras (375px, 390px, 430px)
-- [ ] Revisar e validar antes de passar para Sessão 3
+- [x] Integrar ContainerCard em Containers.tsx (md:hidden)
+- [x] Todos os cards compilando sem erros
+- [ ] Testar em 3 larguras (375px, 390px, 430px) - Próxima sessão
 
 ### Sessão 3: Formulários + Inputs Mobile
 - [ ] Inputs 100% width, 44px height

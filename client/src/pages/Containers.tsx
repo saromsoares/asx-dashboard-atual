@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { Link, useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { NotificacoesPedidos } from '@/components/NotificacoesPedidos';
+import { ContainerCard } from '@/components/ContainerCard';
 import {
   Plus,
   Trash2,
@@ -12,6 +13,8 @@ import {
   Link2,
   Unlink2,
   AlertCircle,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 
 const statusColors: Record<string, { bg: string; text: string; border: string }> = {
@@ -30,10 +33,11 @@ interface Notificacao {
 
 export default function Containers() {
   const [, setLocation] = useLocation();
-  const [novoNumeroContainer, setNovoNumeroContainer] = useState('');
+  const [novoNumeroContainer, setNovoNumeroContainer] = useState<string>('');
   const [containerExpandido, setContainerExpandido] = useState<number | null>(null);
   const [containerSelecionado, setContainerSelecionado] = useState<number | null>(null);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards');
 
   // Queries e mutations
   const { data: containers = [], isLoading: carregandoContainers, refetch: recarregarContainers } = trpc.container.getAllComPedidos.useQuery();
@@ -184,8 +188,37 @@ export default function Containers() {
           </div>
         </div>
 
-        {/* Lista de Containers */}
-        <div className="space-y-4">
+        {/* Containers - Mobile Cards */}
+        <div className="md:hidden space-y-3">
+          {carregandoContainers ? (
+            <div className="text-center py-12" style={{ color: 'oklch(0.50 0.010 285)' }}>
+              Carregando containers...
+            </div>
+          ) : containers.length === 0 ? (
+            <div className="text-center py-12 flex flex-col items-center gap-3" style={{ color: 'oklch(0.50 0.010 285)' }}>
+              <Package className="w-12 h-12" />
+              <p>Nenhum container criado ainda</p>
+            </div>
+          ) : (
+            containers.map((container: any) => (
+              <ContainerCard
+                key={container.id}
+                id={container.id}
+                numero={container.numero}
+                status={container.status}
+                capacidadeMaxima={container.capacidade_maxima}
+                pesoMaximo={container.peso_maximo}
+                pedidosCount={container.pedidosCount || 0}
+                onEdit={() => setContainerSelecionado(container.id)}
+                onDelete={() => handleDeletarContainer(container.id)}
+                onManagePedidos={() => setContainerSelecionado(container.id)}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Containers - Desktop */}
+        <div className="hidden md:block space-y-4">
           {carregandoContainers ? (
             <div className="text-center py-12" style={{ color: 'oklch(0.50 0.010 285)' }}>
               Carregando containers...
