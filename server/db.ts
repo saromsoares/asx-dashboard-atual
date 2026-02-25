@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/mysql2';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
 let _db: MySql2Database | null = null;
 
@@ -235,8 +235,9 @@ export async function criarPedido(nome: string) {
     };
 
     const result = await db.insert(pedidos).values(values);
-    // Retornar o pedido criado
-    const pedidoCriado = await db.select().from(pedidos).where(eq(pedidos.nome, nome)).orderBy(desc(pedidos.dataCreacao)).limit(1);
+    // Usar insertId em vez de buscar por nome (evita duplicatas)
+    const insertId = result[0].insertId;
+    const pedidoCriado = await db.select().from(pedidos).where(eq(pedidos.id, insertId)).limit(1);
     return pedidoCriado[0];
   } catch (error) {
     console.error("[Database] Failed to create pedido:", error);
@@ -386,10 +387,13 @@ export async function deletarContainer(containerId: number) {
   }
 
   try {
-    // Primeiro, remover todos os pedidos vinculados
-    await db.delete(container_pedidos).where(eq(container_pedidos.containerId, containerId));
-    // Depois, deletar o container
-    await db.delete(containers).where(eq(containers.id, containerId));
+    // Envolver em transação para garantir atomicidade
+    await db.transaction(async (tx) => {
+      // Primeiro, remover todos os pedidos vinculados
+      await tx.delete(container_pedidos).where(eq(container_pedidos.containerId, containerId));
+      // Depois, deletar o container
+      await tx.delete(containers).where(eq(containers.id, containerId));
+    });
     return { success: true };
   } catch (error) {
     console.error("[Database] Failed to delete container:", error);
@@ -458,19 +462,24 @@ export async function getContainersComPedidos() {
   }
 
   try {
-    // Retorna todos os containers com contagem de pedidos
-    const allContainers = await db.select().from(containers);
-    const result = [];
+    // Usar LEFT JOIN + COUNT agrupado em vez de loop N+1
+    const result = await db
+      .select({
+        id: containers.id,
+        numero: containers.numero,
+        status: containers.status,
+        capacidadeMaxima: containers.capacidadeMaxima,
+        pesoMaximo: containers.pesoMaximo,
+        dataCreacao: containers.dataCreacao,
+        dataAtualizacao: containers.dataAtualizacao,
+        pedidosCount: sql<number>`COUNT(${container_pedidos.containerId})`,
+      })
+      .from(containers)
+      .leftJoin(container_pedidos, eq(containers.id, container_pedidos.containerId))
+      .groupBy(containers.id)
+      .orderBy(desc(containers.dataCreacao)) as any;
     
-    for (const container of allContainers) {
-      const pedidosCount = await db.select().from(container_pedidos).where(eq(container_pedidos.containerId, container.id));
-      result.push({
-        ...container,
-        pedidosCount: pedidosCount.length,
-      });
-    }
-    
-    return result;
+    return result as any[];
   } catch (error) {
     console.error("[Database] Failed to get containers with pedidos:", error);
     return [];

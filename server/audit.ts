@@ -1,23 +1,28 @@
-import { getDb } from './db';
+import { getDb, type Transaction } from './db';
 import { auditLogs } from '../drizzle/schema';
 import type { InsertAuditLog } from '../drizzle/schema';
 
 /**
  * Registra uma ação de auditoria no banco de dados
+ * @param tx - Transação opcional (se fornecida, usa a transação; caso contrário, usa db padrão)
  */
-export async function registrarAuditoria({
-  userId,
-  acao,
-  entidade,
-  entidadeId,
-  dadosAntigos,
-  dadosNovos,
-  descricao,
-  ipAddress,
-  userAgent,
-}: Omit<InsertAuditLog, 'criadoEm'>) {
+export async function registrarAuditoria(
+  {
+    userId,
+    acao,
+    entidade,
+    entidadeId,
+    dadosAntigos,
+    dadosNovos,
+    descricao,
+    ipAddress,
+    userAgent,
+  }: Omit<InsertAuditLog, 'criadoEm'>,
+  tx?: Transaction
+) {
   try {
-    const db = await getDb();
+    // Se tx foi fornecida, usar a transação; caso contrário, usar db padrão
+    const db = tx || (await getDb());
     if (!db) {
       console.warn('[Auditoria] Database não disponível');
       return;
