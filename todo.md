@@ -214,3 +214,9 @@
 - [x] Console sem erros
 - [ ] Push para GitHub
 - [ ] Salvar checkpoint
+
+## 🆕 Dados Iniciais de Pagamentos
+
+- [x] Inserir débito: "Saldo da planilha anterior" - data hoje - $56.069,63
+- [x] Inserir pagamento: "Prosper ASX" - data hoje - $48.444,30
+- [ ] Testar e salvar checkpoint

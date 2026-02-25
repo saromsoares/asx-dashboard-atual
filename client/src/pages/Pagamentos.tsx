@@ -56,11 +56,37 @@ function parseFloatSafe(str: string): number {
 }
 
 // ─── Load/Save ───────────────────────────────────────────────────────
+const INITIAL_DEBITOS: Debito[] = [
+  {
+    id: 'init_debito_001',
+    data: '2026-02-25',
+    ordem: 'Saldo da planilha anterior',
+    valor: 56069.63,
+  },
+];
+
+const INITIAL_PAGAMENTOS: Pagamento[] = [
+  {
+    id: 'init_pag_001',
+    data: '2026-02-25',
+    remetente: 'Prosper ASX',
+    valor: 48444.30,
+    tipo: 'TT',
+  },
+];
+
 function loadDebitos(): Debito[] {
   try {
     const raw = localStorage.getItem(STORAGE_DEBITOS);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Garantir que o registro inicial existe
+      const hasInitial = parsed.some((d: Debito) => d.id === 'init_debito_001');
+      if (!hasInitial) return [...INITIAL_DEBITOS, ...parsed];
+      return parsed;
+    }
+    return [...INITIAL_DEBITOS];
+  } catch { return [...INITIAL_DEBITOS]; }
 }
 
 function saveDebitos(data: Debito[]) {
@@ -70,8 +96,15 @@ function saveDebitos(data: Debito[]) {
 function loadPagamentos(): Pagamento[] {
   try {
     const raw = localStorage.getItem(STORAGE_PAGAMENTOS);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Garantir que o registro inicial existe
+      const hasInitial = parsed.some((p: Pagamento) => p.id === 'init_pag_001');
+      if (!hasInitial) return [...INITIAL_PAGAMENTOS, ...parsed];
+      return parsed;
+    }
+    return [...INITIAL_PAGAMENTOS];
+  } catch { return [...INITIAL_PAGAMENTOS]; }
 }
 
 function savePagamentos(data: Pagamento[]) {
