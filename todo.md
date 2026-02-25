@@ -148,3 +148,10 @@
 - [x] BUG: Compras.tsx - Itens de pedido salvos apenas em memória local, não persistem no banco
 - [x] BUG: Containers.tsx - Pedidos vinculados não aparecem quando expande container (seção vazia)
 - [x] BUG: Containers.tsx - Falta mostrar nomes dos pedidos vinculados com opção de desvincular
+
+## 🚨 BUGS CRÍTICOS (Sessão 2)
+
+- [x] BUG: Compras.tsx - Quantidades Sarom/Alexandre compartilhadas entre todos os produtos da busca (mudar um muda todos)
+- [x] REVISÃO: Revisar usabilidade completa de todas as páginas do site
+- [x] Rastreamento.tsx migrado de localStorage para tRPC (dados persistentes)
+- [x] Rota duplicada /conteiner removida (mantida apenas /containers com tRPC)

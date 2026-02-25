@@ -31,8 +31,7 @@ export default function Compras() {
   const [editandoNome, setEditandoNome] = useState<number | null>(null);
   const [nomeEditado, setNomeEditado] = useState('');
   const [buscaProduto, setBuscaProduto] = useState('');
-  const [qtdSarom, setQtdSarom] = useState(0);
-  const [qtdAlexandre, setQtdAlexandre] = useState(0);
+  const [qtdPorProduto, setQtdPorProduto] = useState<Record<number, { sarom: number; alexandre: number }>>({});
   const [statusFiltro, setStatusFiltro] = useState<'Todos' | 'Pendente' | 'Confirmado' | 'Recebido'>('Todos');
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
 
@@ -129,9 +128,19 @@ export default function Compras() {
     }
   };
 
+  // Helpers para quantidades individuais por produto
+  const getQtd = (produtoId: number) => qtdPorProduto[produtoId] || { sarom: 0, alexandre: 0 };
+  const setQtdSarom = (produtoId: number, val: number) => {
+    setQtdPorProduto(prev => ({ ...prev, [produtoId]: { ...getQtd(produtoId), sarom: val } }));
+  };
+  const setQtdAlexandre = (produtoId: number, val: number) => {
+    setQtdPorProduto(prev => ({ ...prev, [produtoId]: { ...getQtd(produtoId), alexandre: val } }));
+  };
+
   const handleAdicionarItem = async (produtoId: number) => {
     if (!pedidoAtivo) return;
-    if (qtdSarom <= 0 && qtdAlexandre <= 0) {
+    const qtd = getQtd(produtoId);
+    if (qtd.sarom <= 0 && qtd.alexandre <= 0) {
       adicionarNotificacao('erro', 'Informe pelo menos uma quantidade');
       return;
     }
@@ -142,14 +151,17 @@ export default function Compras() {
       await adicionarItemMutation.mutateAsync({
         pedidoId: pedidoAtivo,
         produtoId: produto.codigo,
-        quantidadeSarom: qtdSarom,
-        quantidadeAlexandre: qtdAlexandre,
+        quantidadeSarom: qtd.sarom,
+        quantidadeAlexandre: qtd.alexandre,
         precoUnitario: produto.custo_usd,
       });
       adicionarNotificacao('sucesso', `${produto.codigo} adicionado ao pedido!`);
-      setQtdSarom(0);
-      setQtdAlexandre(0);
-      setBuscaProduto('');
+      // Limpar apenas este produto
+      setQtdPorProduto(prev => {
+        const copy = { ...prev };
+        delete copy[produtoId];
+        return copy;
+      });
       recarregarItens();
     } catch (error) {
       adicionarNotificacao('erro', 'Erro ao adicionar item');
@@ -472,8 +484,8 @@ export default function Compras() {
                             <input
                               type="number"
                               min="0"
-                              value={qtdSarom}
-                              onChange={e => setQtdSarom(parseInt(e.target.value) || 0)}
+                              value={getQtd(produto.id).sarom}
+                              onChange={e => setQtdSarom(produto.id, parseInt(e.target.value) || 0)}
                               className="w-16 px-2 py-1.5 rounded border text-center text-sm"
                               style={{
                                 background: 'oklch(0.18 0.005 285)',
@@ -487,8 +499,8 @@ export default function Compras() {
                             <input
                               type="number"
                               min="0"
-                              value={qtdAlexandre}
-                              onChange={e => setQtdAlexandre(parseInt(e.target.value) || 0)}
+                              value={getQtd(produto.id).alexandre}
+                              onChange={e => setQtdAlexandre(produto.id, parseInt(e.target.value) || 0)}
                               className="w-16 px-2 py-1.5 rounded border text-center text-sm"
                               style={{
                                 background: 'oklch(0.18 0.005 285)',
