@@ -22,13 +22,13 @@ export const appRouter = router({
 
   estoque: router({
     upsert: protectedProcedure
-      .input(z.object({ produtoId: z.string(), quantidade: z.number(), dataAtualizacao: z.date().optional() }))
+      .input(z.object({ produtoId: z.string().min(1).max(100).trim(), quantidade: z.number().int().min(0).max(999999), dataAtualizacao: z.date().optional() }))
       .mutation(async ({ input }) => {
         await upsertEstoque(input.produtoId, input.quantidade, input.dataAtualizacao);
         return { success: true };
       }),
     get: protectedProcedure
-      .input(z.object({ produtoId: z.string() }))
+      .input(z.object({ produtoId: z.string().min(1).max(100).trim() }))
       .query(async ({ input }) => {
         return await getEstoque(input.produtoId);
       }),
@@ -40,13 +40,13 @@ export const appRouter = router({
 
   preco: router({
     upsert: protectedProcedure
-      .input(z.object({ produtoId: z.string(), custoUsd: z.number(), precoVendaBrl: z.number() }))
+      .input(z.object({ produtoId: z.string().min(1).max(100).trim(), custoUsd: z.number().min(0).multipleOf(0.01).max(999999.99), precoVendaBrl: z.number().min(0).multipleOf(0.01).max(999999.99) }))
       .mutation(async ({ input }) => {
         await upsertPreco(input.produtoId, input.custoUsd, input.precoVendaBrl);
         return { success: true };
       }),
     get: protectedProcedure
-      .input(z.object({ produtoId: z.string() }))
+      .input(z.object({ produtoId: z.string().min(1).max(100).trim() }))
       .query(async ({ input }) => {
         return await getPreco(input.produtoId);
       }),
@@ -58,7 +58,7 @@ export const appRouter = router({
 
   pedido: router({
     criar: protectedProcedure
-      .input(z.object({ nome: z.string() }))
+      .input(z.object({ nome: z.string().min(1).max(255).trim() }))
       .mutation(async ({ input, ctx }) => {
         const result = await criarPedido(input.nome);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -77,7 +77,7 @@ export const appRouter = router({
         return result;
       }),
     get: protectedProcedure
-      .input(z.object({ pedidoId: z.number() }))
+      .input(z.object({ pedidoId: z.number().int().positive() }))
       .query(async ({ input }) => {
         return await getPedido(input.pedidoId);
       }),
@@ -86,7 +86,7 @@ export const appRouter = router({
         return await getAllPedidos();
       }),
     atualizarStatus: protectedProcedure
-      .input(z.object({ pedidoId: z.number(), novoStatus: z.enum(["Pendente", "Confirmado", "Recebido"]) }))
+      .input(z.object({ pedidoId: z.number().int().positive(), novoStatus: z.enum(["Pendente", "Confirmado", "Recebido"]) }))
       .mutation(async ({ input, ctx }) => {
         const pedidoAnterior = await getPedido(input.pedidoId);
         const result = await atualizarStatusPedido(input.pedidoId, input.novoStatus);
@@ -105,7 +105,7 @@ export const appRouter = router({
         return result;
       }),
     deletar: protectedProcedure
-      .input(z.object({ pedidoId: z.number() }))
+      .input(z.object({ pedidoId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
         const pedido = await getPedido(input.pedidoId);
         const result = await deletarPedido(input.pedidoId);
@@ -126,7 +126,7 @@ export const appRouter = router({
 
   container: router({
     criar: protectedProcedure
-      .input(z.object({ numero: z.string(), capacidadeMaxima: z.number().optional(), pesoMaximo: z.string().optional() }))
+      .input(z.object({ numero: z.string().min(1).max(100).trim(), capacidadeMaxima: z.number().int().positive().max(999999).optional(), pesoMaximo: z.number().positive().max(999999.99).optional() }))
       .mutation(async ({ input, ctx }) => {
         const result = await criarContainer(input.numero, input.capacidadeMaxima, input.pesoMaximo);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -143,7 +143,7 @@ export const appRouter = router({
         return result;
       }),
     get: protectedProcedure
-      .input(z.object({ containerId: z.number() }))
+      .input(z.object({ containerId: z.number().int().positive() }))
       .query(async ({ input }) => {
         return await getContainer(input.containerId);
       }),
@@ -156,7 +156,7 @@ export const appRouter = router({
         return await getContainersComPedidos();
       }),
     atualizarStatus: protectedProcedure
-      .input(z.object({ containerId: z.number(), novoStatus: z.enum(["Vazio", "Preenchendo", "Cheio", "Enviado", "Entregue"]) }))
+      .input(z.object({ containerId: z.number().int().positive(), novoStatus: z.enum(["Vazio", "Preenchendo", "Cheio", "Enviado", "Entregue"]) }))
       .mutation(async ({ input, ctx }) => {
         const result = await atualizarStatusContainer(input.containerId, input.novoStatus);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -173,7 +173,7 @@ export const appRouter = router({
         return result;
       }),
     deletar: protectedProcedure
-      .input(z.object({ containerId: z.number() }))
+      .input(z.object({ containerId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
         const container = await getContainer(input.containerId);
         const result = await deletarContainer(input.containerId);
@@ -194,7 +194,7 @@ export const appRouter = router({
 
   containerPedido: router({
     vincular: protectedProcedure
-      .input(z.object({ containerId: z.number(), pedidoId: z.number(), sequencia: z.number().optional() }))
+      .input(z.object({ containerId: z.number().int().positive(), pedidoId: z.number().int().positive(), sequencia: z.number().int().min(0).optional() }))
       .mutation(async ({ input, ctx }) => {
         const result = await vincularPedidoAContainer(input.containerId, input.pedidoId, input.sequencia);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -211,7 +211,7 @@ export const appRouter = router({
         return result;
       }),
     desvincular: protectedProcedure
-      .input(z.object({ containerPedidoId: z.number() }))
+      .input(z.object({ containerPedidoId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
         const result = await desvincularPedidoDoContainer(input.containerPedidoId);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -227,7 +227,7 @@ export const appRouter = router({
         return result;
       }),
     getPedidos: protectedProcedure
-      .input(z.object({ containerId: z.number() }))
+      .input(z.object({ containerId: z.number().int().positive() }))
       .query(async ({ input }) => {
         return await getPedidosDoContainer(input.containerId);
        }),
@@ -255,22 +255,22 @@ export const appRouter = router({
         return await listarProdutos();
       }),
     get: protectedProcedure
-      .input(z.object({ produtoId: z.number() }))
+      .input(z.object({ produtoId: z.number().int().positive() }))
       .query(async ({ input }) => {
         return await getProduto(input.produtoId);
       }),
     criar: protectedProcedure
       .input(z.object({
-        codigo: z.string(),
-        descricao: z.string(),
-        categoria: z.string(),
-        unidade: z.string().optional(),
-        caixa: z.string().optional(),
-        voltagem: z.string().optional(),
-        codigoBarras: z.string().optional(),
-        ncm: z.string().optional(),
-        custoUsd: z.number().optional(),
-        precoVendaBrl: z.number().optional(),
+        codigo: z.string().min(1).max(100).trim(),
+        descricao: z.string().min(1).max(500).trim(),
+        categoria: z.string().min(1).max(100).trim(),
+        unidade: z.string().max(50).trim().optional(),
+        caixa: z.string().max(50).trim().optional(),
+        voltagem: z.string().max(50).trim().optional(),
+        codigoBarras: z.string().max(50).trim().optional(),
+        ncm: z.string().max(20).trim().optional(),
+        custoUsd: z.number().min(0).multipleOf(0.01).max(999999.99).optional(),
+        precoVendaBrl: z.number().min(0).multipleOf(0.01).max(999999.99).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const result = await criarProduto({

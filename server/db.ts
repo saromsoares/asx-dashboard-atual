@@ -1,9 +1,12 @@
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from 'drizzle-orm/mysql2';
+import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc } from 'drizzle-orm';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+let _db: MySql2Database | null = null;
+
+export type Transaction = any; // TODO: Tipagem correta de transação Drizzle
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -16,6 +19,15 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+// Helper para executar operações em transação
+export async function executeInTransaction<T>(
+  callback: (tx: Transaction) => Promise<T>
+): Promise<T> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db.transaction(callback);
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -298,7 +310,7 @@ export async function deletarPedido(pedidoId: number) {
 
 // ============= CONTAINERS =============
 
-export async function criarContainer(numero: string, capacidadeMaxima: number = 1000, pesoMaximo: string = "0") {
+export async function criarContainer(numero: string, capacidadeMaxima?: number, pesoMaximo?: number) {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot create container: database not available");
@@ -309,7 +321,7 @@ export async function criarContainer(numero: string, capacidadeMaxima: number = 
     const result = await db.insert(containers).values({
       numero,
       capacidadeMaxima,
-      pesoMaximo,
+      pesoMaximo: pesoMaximo ? String(pesoMaximo) : "0",
       status: "Vazio",
     });
     return { id: result[0].insertId, numero, status: "Vazio" };
