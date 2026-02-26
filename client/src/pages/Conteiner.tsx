@@ -1175,7 +1175,34 @@ export default function Conteiner() {
           // Invalidar cache para recarregar dados
           utilsTrpc.processoSR.getAll.invalidate();
           utilsTrpc.itemProcesso.getAll.invalidate();
-          showSuccess(`Processo ${processoSelecionado.numeroProcesso} confirmado!`, 3000);
+          showSuccess(
+            `Processo ${processoSelecionado.numeroProcesso} confirmado!`,
+            5000,
+            {
+              label: 'Desfazer',
+              onClick: () => {
+                atualizarStatusMut.mutate(
+                  {
+                    processoId: parseInt(processoSelecionado.id),
+                    novoStatus: 'Em andamento',
+                  },
+                  {
+                    onSuccess: () => {
+                      setProcessosConfirmados(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(processoSelecionado.id);
+                        return newSet;
+                      });
+                      utilsTrpc.processoSR.getAll.invalidate();
+                      utilsTrpc.itemProcesso.getAll.invalidate();
+                      showSuccess(`Confirmacao desfeita para ${processoSelecionado.numeroProcesso}`, 3000);
+                    },
+                    onError: (error: any) => showError(`Erro ao desfazer: ${error.message}`, 4000),
+                  }
+                );
+              },
+            }
+          );
           // Disparar evento para atualizar analise de estoque
           dispatchProcessosChange();
         },

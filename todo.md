@@ -329,3 +329,10 @@
 - [x] Testar e validar - 149 TESTES PASSANDO
 
 **Análise:** O código estava correto. A função `handleAdicionarProcesso` já salva no banco via `criarProcessoMut.mutate()`. O campo `confirmado` é atualizado para 1 quando status = "Finalizado". O filtro está funcionando corretamente. A tabela estava vazia porque não havia dados criados ainda. Tudo está funcionando como esperado.
+
+
+## ✨ Melhorias: Notificação e Validação de Processos
+
+- [x] Adicionar notificação visual ao confirmar processo com opção de desfazer (IMPLEMENTADO)
+- [ ] Validar criação de processos em produção (criar, confirmar, recarregar)
+- [ ] Testar persistência de dados após recarregar página

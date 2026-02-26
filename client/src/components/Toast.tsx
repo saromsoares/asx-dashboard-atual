@@ -6,13 +6,17 @@ export interface ToastMessage {
   type: 'success' | 'error' | 'info';
   message: string;
   duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 }
 
 interface ToastProps extends ToastMessage {
   onClose: (id: string) => void;
 }
 
-export function Toast({ id, type, message, duration = 5000, onClose }: ToastProps) {
+export function Toast({ id, type, message, duration = 5000, onClose, action }: ToastProps) {
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => onClose(id), duration);
@@ -57,10 +61,22 @@ export function Toast({ id, type, message, duration = 5000, onClose }: ToastProp
     >
       <Icon className="w-5 h-5 flex-shrink-0" />
       <span className="text-sm font-medium flex-1">{message}</span>
+      {action && (
+        <button
+          onClick={() => {
+            action.onClick();
+            onClose(id);
+          }}
+          className="ml-2 px-3 py-1 text-xs font-semibold rounded hover:opacity-75 transition-opacity"
+          style={{ background: 'rgba(255,255,255,0.2)' }}
+        >
+          {action.label}
+        </button>
+      )}
       <button
         onClick={() => onClose(id)}
         className="ml-2 p-1 hover:opacity-75 transition-opacity"
-        aria-label="Fechar notificação"
+        aria-label="Fechar notificacao"
       >
         <X className="w-4 h-4" />
       </button>
@@ -90,9 +106,9 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
 export function useToast() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 4000) => {
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 4000, action?: { label: string; onClick: () => void }) => {
     const id = Math.random().toString(36).substr(2, 9);
-    const toast: ToastMessage = { id, message, type, duration };
+    const toast: ToastMessage = { id, message, type, duration, action };
     setToasts((prev) => [...prev, toast]);
     return id;
   };
@@ -101,9 +117,9 @@ export function useToast() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const success = (message: string, duration?: number) => addToast(message, 'success', duration);
-  const error = (message: string, duration?: number) => addToast(message, 'error', duration);
-  const info = (message: string, duration?: number) => addToast(message, 'info', duration);
+  const success = (message: string, duration?: number, action?: { label: string; onClick: () => void }) => addToast(message, 'success', duration || 4000, action);
+  const error = (message: string, duration?: number, action?: { label: string; onClick: () => void }) => addToast(message, 'error', duration || 4000, action);
+  const info = (message: string, duration?: number, action?: { label: string; onClick: () => void }) => addToast(message, 'info', duration || 4000, action);
 
   return {
     toasts,
