@@ -19,14 +19,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
-const STORAGE_SALDO = 'asx_saldo_embarques';
-const STORAGE_PROCESSOS = 'asx_processos_sr';
-
 interface SaldoEmbarque { [pedidoId: string]: { [produtoId: string]: { sarom: number; alexandre: number } } }
 interface ProcessoSR { id: string; numeroProcesso: string; itens: Array<{ codigo: string; pedidoSarom: number; pedidoAlexandre: number; ordemCompra: string }> }
-
-function lerSaldo(): SaldoEmbarque { try { const s = localStorage.getItem(STORAGE_SALDO); return s ? JSON.parse(s) : {}; } catch { return {}; } }
-function lerProcessos(): ProcessoSR[] { try { const s = localStorage.getItem(STORAGE_PROCESSOS); return s ? JSON.parse(s) : []; } catch { return []; } }
 const fmtN = (n: number) => n.toLocaleString('pt-BR');
 const fmtUSD = (n: number) => `$${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -34,21 +28,59 @@ export default function Rastreamento() {
   const [, setLocation] = useLocation();
   const [pedidoExpandido, setPedidoExpandido] = useState<number | null>(null);
   const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'completo'>('todos');
+  const [rastSortField, setRastSortField] = useState<'codigo' | 'descricao' | 'pct'>('codigo');
+  const [rastSortDir, setRastSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleRastSort = useCallback((field: 'codigo' | 'descricao' | 'pct') => {
+    if (rastSortField === field) setRastSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setRastSortField(field); setRastSortDir('asc'); }
+  }, [rastSortField]);
+
+  const RastSortIcon = ({ field }: { field: 'codigo' | 'descricao' | 'pct' }) => {
+    if (rastSortField !== field) return <ChevronDown className="w-3 h-3 opacity-30 inline ml-0.5" />;
+    return rastSortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-red-400 inline ml-0.5" /> : <ChevronDown className="w-3 h-3 text-red-400 inline ml-0.5" />;
+  };
 
   const { data: pedidosDb = [], isLoading: l1 } = trpc.pedido.getAll.useQuery();
   const { data: todosItensDb = [], isLoading: l2 } = trpc.itemPedido.getAll.useQuery();
 
-  const [saldo, setSaldo] = useState<SaldoEmbarque>(lerSaldo);
-  const [procs, setProcs] = useState<ProcessoSR[]>(lerProcessos);
+  // Dados do banco via tRPC
+  const { data: saldoDB } = trpc.dados.getSaldo.useQuery();
+  const { data: processosSRDb } = trpc.processoSR.getAll.useQuery();
+  const { data: todosItensSRDb } = trpc.itemProcesso.getAll.useQuery();
 
+  const [saldo, setSaldo] = useState<SaldoEmbarque>({});
+  const [procs, setProcs] = useState<ProcessoSR[]>([]);
+
+  // Carregar saldo do banco
   useEffect(() => {
-    const up = () => { setSaldo(lerSaldo()); setProcs(lerProcessos()); };
-    window.addEventListener('asx_processos_changed', up);
-    const hs = (e: StorageEvent) => { if (e.key === STORAGE_SALDO || e.key === STORAGE_PROCESSOS) up(); };
-    window.addEventListener('storage', hs);
-    const iv = setInterval(up, 3000);
-    return () => { window.removeEventListener('asx_processos_changed', up); window.removeEventListener('storage', hs); clearInterval(iv); };
-  }, []);
+    if (saldoDB && saldoDB.dados) {
+      try { setSaldo(JSON.parse(saldoDB.dados)); } catch { /* ignore */ }
+    }
+  }, [saldoDB]);
+
+  // Carregar processos do banco
+  useEffect(() => {
+    if (processosSRDb && todosItensSRDb) {
+      const itensMap = new Map<number, any[]>();
+      for (const item of todosItensSRDb as any[]) {
+        const list = itensMap.get(item.processoId) || [];
+        list.push(item);
+        itensMap.set(item.processoId, list);
+      }
+      const mapped: ProcessoSR[] = (processosSRDb as any[]).map((p: any) => ({
+        id: String(p.id),
+        numeroProcesso: p.numeroProcesso || '',
+        itens: (itensMap.get(p.id) || []).map((i: any) => ({
+          codigo: i.codigo,
+          pedidoSarom: i.pedidoSarom || 0,
+          pedidoAlexandre: i.pedidoAlexandre || 0,
+          ordemCompra: i.ordemCompra || '',
+        })),
+      }));
+      setProcs(mapped);
+    }
+  }, [processosSRDb, todosItensSRDb]);
 
   const catMap = useMemo(() => new Map(produtosCatalogo.map(p => [p.codigo, p])), []);
 
@@ -222,21 +254,28 @@ export default function Rastreamento() {
                         <table className="w-full text-xs">
                           <thead>
                             <tr style={{ background: 'oklch(0.11 0.005 285)' }}>
-                              <th className="px-3 py-2.5 text-left font-bold" style={{ color: 'oklch(0.55 0.010 285)' }}>CÓDIGO</th>
-                              <th className="px-3 py-2.5 text-left font-bold" style={{ color: 'oklch(0.55 0.010 285)' }}>DESCRIÇÃO</th>
+                              <th className="px-3 py-2.5 text-left font-bold cursor-pointer select-none" style={{ color: 'oklch(0.55 0.010 285)' }} onClick={() => toggleRastSort('codigo')}>CÓDIGO <RastSortIcon field="codigo" /></th>
+                              <th className="px-3 py-2.5 text-left font-bold cursor-pointer select-none" style={{ color: 'oklch(0.55 0.010 285)' }} onClick={() => toggleRastSort('descricao')}>DESCRIÇÃO <RastSortIcon field="descricao" /></th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.55 0.15 200)' }}>PED. S</th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.55 0.15 145)' }}>PED. A</th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.60 0.15 200)' }}>EMB. S</th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.60 0.15 145)' }}>EMB. A</th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.75 0.22 30)' }}>PEND. S</th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.75 0.22 30)' }}>PEND. A</th>
-                              <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.55 0.010 285)' }}>%</th>
+                              <th className="px-3 py-2.5 text-center font-bold cursor-pointer select-none" style={{ color: 'oklch(0.55 0.010 285)' }} onClick={() => toggleRastSort('pct')}>% <RastSortIcon field="pct" /></th>
                               <th className="px-3 py-2.5 text-right font-bold" style={{ color: 'oklch(0.55 0.010 285)' }}>USD PEND.</th>
                               <th className="px-3 py-2.5 text-center font-bold" style={{ color: 'oklch(0.55 0.010 285)' }}>STATUS</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {ped.itens.map((it: any, idx: number) => {
+                            {[...ped.itens].sort((a: any, b: any) => {
+                              let va: any = 0, vb: any = 0;
+                              if (rastSortField === 'codigo') { va = a.produtoId; vb = b.produtoId; }
+                              else if (rastSortField === 'descricao') { va = a.descricao; vb = b.descricao; }
+                              else if (rastSortField === 'pct') { va = a.pct; vb = b.pct; }
+                              if (typeof va === 'string') return rastSortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+                              return rastSortDir === 'asc' ? va - vb : vb - va;
+                            }).map((it: any, idx: number) => {
                               const ok = it.tPend === 0 && it.tPed > 0;
                               return (
                                 <tr key={it.produtoId} style={{ background: idx % 2 === 0 ? 'transparent' : 'oklch(0.14 0.005 285 / 0.5)', opacity: ok ? 0.5 : 1 }}>

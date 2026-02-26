@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Trash2, Edit2, Check, X, DollarSign, TrendingDown, TrendingUp, ArrowUpDown, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
 
 // ─── Types ───────────────────────────────────────────────────────────
 interface Debito {
@@ -24,10 +25,7 @@ interface Pagamento {
   tipo: string; // NAITE, MIC, etc.
 }
 
-// ─── Constants ───────────────────────────────────────────────────────
-const STORAGE_DEBITOS = 'asx_debitos';
-const STORAGE_PAGAMENTOS = 'asx_pagamentos';
-
+// ─── Constants ───────────────────────────────────────────────────────────
 const TIPOS_PAGAMENTO = ['MIC', 'NAITE', 'TT', 'LC', 'OUTRO'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -55,7 +53,7 @@ function parseFloatSafe(str: string): number {
   return parseFloat(cleaned) || 0;
 }
 
-// ─── Load/Save ───────────────────────────────────────────────────────
+// ─── Dados iniciais (fallback quando banco vazio) ──────────────────────────────
 const INITIAL_DEBITOS: Debito[] = [
   {
     id: 'init_debito_001',
@@ -73,48 +71,46 @@ const INITIAL_PAGAMENTOS: Pagamento[] = [
     valor: 48444.30,
     tipo: 'TT',
   },
-];
-
-function loadDebitos(): Debito[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_DEBITOS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Garantir que o registro inicial existe
-      const hasInitial = parsed.some((d: Debito) => d.id === 'init_debito_001');
-      if (!hasInitial) return [...INITIAL_DEBITOS, ...parsed];
-      return parsed;
-    }
-    return [...INITIAL_DEBITOS];
-  } catch { return [...INITIAL_DEBITOS]; }
-}
-
-function saveDebitos(data: Debito[]) {
-  localStorage.setItem(STORAGE_DEBITOS, JSON.stringify(data));
-}
-
-function loadPagamentos(): Pagamento[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_PAGAMENTOS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Garantir que o registro inicial existe
-      const hasInitial = parsed.some((p: Pagamento) => p.id === 'init_pag_001');
-      if (!hasInitial) return [...INITIAL_PAGAMENTOS, ...parsed];
-      return parsed;
-    }
-    return [...INITIAL_PAGAMENTOS];
-  } catch { return [...INITIAL_PAGAMENTOS]; }
-}
-
-function savePagamentos(data: Pagamento[]) {
-  localStorage.setItem(STORAGE_PAGAMENTOS, JSON.stringify(data));
-}
-
-// ─── Component ───────────────────────────────────────────────────────
+];// ─── Component ───────────────────────────────────────────────────────
 export default function Pagamentos() {
-  const [debitos, setDebitos] = useState<Debito[]>(loadDebitos);
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>(loadPagamentos);
+  const [debitos, setDebitos] = useState<Debito[]>(INITIAL_DEBITOS);
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>(INITIAL_PAGAMENTOS);
+
+  // Carregar débitos e pagamentos do banco via tRPC
+  const { data: debitosDB } = trpc.dados.listDebitos.useQuery();
+  const { data: pagamentosDB } = trpc.dados.listPagamentos.useQuery();
+  const addDebitoMut = trpc.dados.addDebito.useMutation();
+  const deleteDebitoMut = trpc.dados.deleteDebito.useMutation();
+  const addPagamentoMut = trpc.dados.addPagamento.useMutation();
+  const deletePagamentoMut = trpc.dados.deletePagamento.useMutation();
+  const utilsTrpc = trpc.useUtils();
+
+  // Sincronizar débitos do banco
+  useEffect(() => {
+    if (debitosDB && debitosDB.length > 0) {
+      const mapped: Debito[] = debitosDB.map((d: any) => ({
+        id: String(d.id),
+        data: d.data,
+        ordem: d.descricao,
+        valor: parseFloat(d.valor) || 0,
+      }));
+      setDebitos(mapped);
+    }
+  }, [debitosDB]);
+
+  // Sincronizar pagamentos do banco
+  useEffect(() => {
+    if (pagamentosDB && pagamentosDB.length > 0) {
+      const mapped: Pagamento[] = pagamentosDB.map((p: any) => ({
+        id: String(p.id),
+        data: p.data,
+        remetente: p.descricao,
+        valor: parseFloat(p.valor) || 0,
+        tipo: p.observacoes || 'TT',
+      }));
+      setPagamentos(mapped);
+    }
+  }, [pagamentosDB]);
 
   // Edit states
   const [editingDebitoId, setEditingDebitoId] = useState<string | null>(null);
@@ -138,8 +134,7 @@ export default function Pagamentos() {
   const [sortPagamentos, setSortPagamentos] = useState<'date-asc' | 'date-desc' | 'value-asc' | 'value-desc'>('date-desc');
 
   // Persist
-  useEffect(() => { saveDebitos(debitos); }, [debitos]);
-  useEffect(() => { savePagamentos(pagamentos); }, [pagamentos]);
+  // Débitos e pagamentos agora são gerenciados via banco de dados (tRPC)
 
   // ─── Totals ──────────────────────────────────────────────────────
   const totalDebitos = useMemo(() => debitos.reduce((s, d) => s + d.valor, 0), [debitos]);

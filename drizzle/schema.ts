@@ -264,3 +264,114 @@ export const custos_produto = mysqlTable("custos_produto", {
 
 export type CustoProduto = typeof custos_produto.$inferSelect;
 export type InsertCustoProduto = typeof custos_produto.$inferInsert;
+
+/**
+ * Tabela de débitos financeiros
+ * Armazena débitos da operação (faturas, saldos anteriores, etc)
+ */
+export const debitos = mysqlTable("debitos", {
+  id: int("id").autoincrement().primaryKey(),
+  descricao: varchar("descricao", { length: 255 }).notNull(),
+  valor: decimal("valor", { precision: 12, scale: 2 }).default("0").notNull(),
+  data: varchar("data", { length: 32 }).notNull(), // YYYY-MM-DD
+  observacoes: text("observacoes"),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Debito = typeof debitos.$inferSelect;
+export type InsertDebito = typeof debitos.$inferInsert;
+
+/**
+ * Tabela de pagamentos
+ * Armazena pagamentos realizados
+ */
+export const pagamentos = mysqlTable("pagamentos", {
+  id: int("id").autoincrement().primaryKey(),
+  descricao: varchar("descricao", { length: 255 }).notNull(),
+  valor: decimal("valor", { precision: 12, scale: 2 }).default("0").notNull(),
+  data: varchar("data", { length: 32 }).notNull(), // YYYY-MM-DD
+  observacoes: text("observacoes"),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Pagamento = typeof pagamentos.$inferSelect;
+export type InsertPagamento = typeof pagamentos.$inferInsert;
+
+/**
+ * Tabela de vendas por produto (Central de Compras Avançada)
+ * Armazena dados de venda trimestral por produto
+ */
+export const vendas_produto = mysqlTable("vendas_produto", {
+  id: int("id").autoincrement().primaryKey(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull().unique(),
+  vendaTrimestre: int("vendaTrimestre").default(0).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type VendaProduto = typeof vendas_produto.$inferSelect;
+export type InsertVendaProduto = typeof vendas_produto.$inferInsert;
+
+/**
+ * Tabela de compras por produto (Central de Compras Avançada)
+ * Armazena dados de compra por produto
+ */
+export const compras_produto = mysqlTable("compras_produto", {
+  id: int("id").autoincrement().primaryKey(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull().unique(),
+  quantidadeCompra: int("quantidadeCompra").default(0).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CompraProduto = typeof compras_produto.$inferSelect;
+export type InsertCompraProduto = typeof compras_produto.$inferInsert;
+
+/**
+ * Tabela de cotação PTAX (cache)
+ * Armazena última cotação do dólar PTAX para evitar chamadas excessivas à API
+ */
+export const cotacao_ptax = mysqlTable("cotacao_ptax", {
+  id: int("id").autoincrement().primaryKey(),
+  compra: decimal("compra", { precision: 10, scale: 4 }).default("0").notNull(),
+  venda: decimal("venda", { precision: 10, scale: 4 }).default("0").notNull(),
+  dataHoraCotacao: varchar("dataHoraCotacao", { length: 64 }).default("").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CotacaoPtax = typeof cotacao_ptax.$inferSelect;
+export type InsertCotacaoPtax = typeof cotacao_ptax.$inferInsert;
+
+/**
+ * Tabela de saldo de embarque por processo
+ * Armazena saldo pendente de cada processo SR
+ */
+export const saldo_embarque = mysqlTable("saldo_embarque", {
+  id: int("id").autoincrement().primaryKey(),
+  processoId: varchar("processoId", { length: 64 }).notNull().unique(), // número do processo
+  saldoUnidades: int("saldoUnidades").default(0).notNull(),
+  saldoValorUsd: decimal("saldoValorUsd", { precision: 12, scale: 2 }).default("0").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SaldoEmbarque = typeof saldo_embarque.$inferSelect;
+export type InsertSaldoEmbarque = typeof saldo_embarque.$inferInsert;
+
+/**
+ * Tabela de configuração JSON genérica
+ * Armazena dados JSON arbitrários por chave (ex: saldo_embarques, configurações)
+ */
+export const config_json = mysqlTable("config_json", {
+  id: int("id").autoincrement().primaryKey(),
+  chave: varchar("chave", { length: 128 }).notNull().unique(),
+  dados: text("dados").notNull(), // JSON stringified
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ConfigJson = typeof config_json.$inferSelect;
+export type InsertConfigJson = typeof config_json.$inferInsert;

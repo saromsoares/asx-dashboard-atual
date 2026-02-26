@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { Search, ArrowLeft, Save, X, Download, AlertCircle } from 'lucide-react';
+import { Search, ArrowLeft, Save, X, Download, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
 import { useIdiomaDB as useIdioma } from '@/hooks/useIdiomaDB';
 import { trpc } from '@/lib/trpc';
@@ -26,6 +26,8 @@ export default function Desenvolvimento() {
   const [produtosEditando, setProdutosEditando] = useState<Record<number, Partial<ProdutoEditavel>>>({});
   const [alteracoesSalvas, setAlteracoesSalvas] = useState<Record<number, boolean>>({});
   const [mostrarModalNovoProduto, setMostrarModalNovoProduto] = useState(false);
+  const [sortField, setSortField] = useState<'codigo' | 'descricao' | 'custoUsd' | 'precoVendaBrl' | 'margem' | 'markup'>('codigo');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [novoProduto, setNovoProduto] = useState({
     categoria: '',
     nome: '',
@@ -71,8 +73,41 @@ export default function Desenvolvimento() {
       );
     }
 
+    // Ordenação
+    filtered.sort((a, b) => {
+      let va: any = 0, vb: any = 0;
+      if (sortField === 'codigo') { va = a.codigo; vb = b.codigo; }
+      else if (sortField === 'descricao') { va = a.descricao; vb = b.descricao; }
+      else if (sortField === 'custoUsd') { va = a.custo_usd; vb = b.custo_usd; }
+      else if (sortField === 'precoVendaBrl') { va = a.preco_venda; vb = b.preco_venda; }
+      else if (sortField === 'margem') {
+        va = a.preco_venda - (a.custo_usd * TAXA_CAMBIO);
+        vb = b.preco_venda - (b.custo_usd * TAXA_CAMBIO);
+      }
+      else if (sortField === 'markup') {
+        const custoA = a.custo_usd * TAXA_CAMBIO;
+        const custoB = b.custo_usd * TAXA_CAMBIO;
+        va = custoA > 0 ? ((a.preco_venda - custoA) / custoA) * 100 : 0;
+        vb = custoB > 0 ? ((b.preco_venda - custoB) / custoB) * 100 : 0;
+      }
+      if (typeof va === 'string') {
+        return sortDir === 'asc' ? va.localeCompare(vb as string) : (vb as string).localeCompare(va);
+      }
+      return sortDir === 'asc' ? (va as number) - (vb as number) : (vb as number) - (va as number);
+    });
+
     return filtered;
-  }, [categoriaSelected, busca]);
+  }, [categoriaSelected, busca, sortField, sortDir]);
+
+  const toggleSort = useCallback((field: typeof sortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  }, [sortField]);
+
+  const SortIcon = ({ field }: { field: typeof sortField }) => {
+    if (sortField !== field) return <ChevronDown className="w-3 h-3 opacity-30 inline ml-1" />;
+    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-red-400 inline ml-1" /> : <ChevronDown className="w-3 h-3 text-red-400 inline ml-1" />;
+  };
 
   // Obter valor editável ou original
   const getValor = (produto: typeof produtos[0], campo: 'custoUsd' | 'precoVendaBrl') => {
@@ -278,13 +313,13 @@ export default function Desenvolvimento() {
               <table className="w-full text-sm">
                 <thead style={{ background: 'oklch(0.12 0.005 285)' }}>
                   <tr style={{ borderBottom: '2px solid oklch(0.26 0.005 285)' }}>
-                    <th className="px-4 py-3 text-left font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>COD</th>
-                    <th className="px-4 py-3 text-left font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>{t('descricao') || 'DESCRIÇÃO'}</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>CUSTO USD</th>
+                    <th className="px-4 py-3 text-left font-bold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.005 65)' }} onClick={() => toggleSort('codigo')}>COD <SortIcon field="codigo" /></th>
+                    <th className="px-4 py-3 text-left font-bold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.005 65)' }} onClick={() => toggleSort('descricao')}>{t('descricao') || 'DESCRIÇÃO'} <SortIcon field="descricao" /></th>
+                    <th className="px-4 py-3 text-center font-bold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.005 65)' }} onClick={() => toggleSort('custoUsd')}>CUSTO USD <SortIcon field="custoUsd" /></th>
                     <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>CUSTO BRL</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>PREÇO VENDA BRL</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>MARGEM BRL</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>MARKUP %</th>
+                    <th className="px-4 py-3 text-center font-bold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.005 65)' }} onClick={() => toggleSort('precoVendaBrl')}>PREÇO VENDA BRL <SortIcon field="precoVendaBrl" /></th>
+                    <th className="px-4 py-3 text-center font-bold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.005 65)' }} onClick={() => toggleSort('margem')}>MARGEM BRL <SortIcon field="margem" /></th>
+                    <th className="px-4 py-3 text-center font-bold cursor-pointer select-none" style={{ color: 'oklch(0.80 0.005 65)' }} onClick={() => toggleSort('markup')}>MARKUP % <SortIcon field="markup" /></th>
                     <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>AÇÕES</th>
                   </tr>
                 </thead>

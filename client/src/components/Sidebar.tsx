@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useEstoqueDB as useEstoque } from "@/hooks/useEstoqueDB";
 import { useAuth } from "@/hooks/useAuth";
 import { useIdiomaDB as useIdioma } from "@/hooks/useIdiomaDB";
+import { trpc } from "@/lib/trpc";
 
 // Logo removido
 
@@ -51,6 +52,25 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   const { kpis: kpisSarom } = useEstoque('sarom');
   const { kpis: kpisAlexandre } = useEstoque('alexandre');
 
+  // Cotação PTAX via banco de dados
+  const { data: cotacaoDB } = trpc.dados.getCotacao.useQuery();
+  const updateCotacaoMut = trpc.dados.updateCotacao.useMutation();
+  const utilsTrpc = trpc.useUtils();
+
+  // Carregar cache do banco ao inicializar
+  useEffect(() => {
+    if (cotacaoDB && cotacaoDB.compra) {
+      setCotacao({
+        cotacaoCompra: Number(cotacaoDB.compra),
+        cotacaoVenda: Number(cotacaoDB.venda),
+        dataHoraCotacao: cotacaoDB.dataHoraCotacao,
+      });
+      if (cotacaoDB.atualizadoEm) {
+        setLastUpdate(new Date(cotacaoDB.atualizadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (cache)');
+      }
+    }
+  }, [cotacaoDB]);
+
   const fetchCotacao = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -68,8 +88,14 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           const ptax = data.value[0] as CotacaoPTAX;
           setCotacao(ptax);
           setLastUpdate(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-          localStorage.setItem('asx_cotacao_ptax', JSON.stringify(ptax));
-          localStorage.setItem('asx_cotacao_timestamp', new Date().toISOString());
+          // Salvar no banco de dados em vez de localStorage
+          updateCotacaoMut.mutate({
+            compra: ptax.cotacaoCompra,
+            venda: ptax.cotacaoVenda,
+            dataHoraCotacao: ptax.dataHoraCotacao,
+          }, {
+            onSuccess: () => utilsTrpc.dados.getCotacao.invalidate(),
+          });
           setLoading(false);
           return;
         }
@@ -79,19 +105,9 @@ export default function Sidebar({ currentPage }: SidebarProps) {
     }
     
     setError(true);
-    try {
-      const cached = localStorage.getItem('asx_cotacao_ptax');
-      if (cached) {
-        setCotacao(JSON.parse(cached));
-        const cachedTime = localStorage.getItem('asx_cotacao_timestamp');
-        if (cachedTime) {
-          setLastUpdate(new Date(cachedTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (cache)');
-        }
-      }
-    } catch { /* ignore */ }
-    
+    // Cache agora vem do banco (já carregado via useEffect acima)
     setLoading(false);
-  }, []);
+  }, [updateCotacaoMut, utilsTrpc]);
 
   useEffect(() => {
     fetchCotacao();

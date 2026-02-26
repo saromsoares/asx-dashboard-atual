@@ -10,25 +10,10 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const { login, loading, error, isAuthenticated } = useAuth();
 
-  useEffect(() => {
-    const savedEmail = localStorage.getItem('asx_remembered_email');
-    const wasRemembered = localStorage.getItem('asx_remember_me') === 'true';
-    if (savedEmail && wasRemembered) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
+  // "Lembrar-me" agora é apenas em memória da sessão (sem localStorage)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (rememberMe) {
-      localStorage.setItem('asx_remembered_email', email);
-      localStorage.setItem('asx_remember_me', 'true');
-    } else {
-      localStorage.removeItem('asx_remembered_email');
-      localStorage.removeItem('asx_remember_me');
-    }
 
     await login(email, password);
   };

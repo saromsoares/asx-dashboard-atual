@@ -846,6 +846,19 @@ export async function getItemProcessoById(itemId: number) {
   }
 }
 
+/** Listar todos os itens de todos os processos */
+export async function getAllItensProcesso() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(itens_processo);
+  } catch (error) {
+    console.error("[Database] Failed to get all items processo:", error);
+    return [];
+  }
+}
+
 export async function removerItemProcesso(itemId: number) {
   const db = await getDb();
   if (!db) return null;

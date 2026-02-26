@@ -2,9 +2,10 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { migracaoRouter } from "./routers/migracao";
+import { dadosRouter } from "./routers/dados";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getItemProcessoById } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getItemProcessoById, getAllItensProcesso } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 import { getExchangeRate, getExchangeRateInfo } from "./exchangeRate";
 
@@ -541,6 +542,10 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await removerItemProcesso(input.itemId);
       }),
+    getAll: protectedProcedure
+      .query(async () => {
+        return await getAllItensProcesso();
+      }),
   }),
 
   cambio: router({
@@ -556,5 +561,6 @@ export const appRouter = router({
   }),
 
   migracao: migracaoRouter,
+  dados: dadosRouter,
 });
 export type AppRouter = typeof appRouter;

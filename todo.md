@@ -239,3 +239,23 @@
 - [x] Criar hook useMigrateFromLocalStorage para migração automática
 - [x] Corrigir bug: custos com IDs numéricos não apareciam (migrados para códigos ASX)
 - [x] Zero erros TypeScript, 114 testes passando
+
+## 🔄 Migração 100% localStorage → Banco de Dados
+
+- [ ] Criar tabelas para vendas/compras da CentralCompraAvancada
+- [ ] Migrar CentralCompraAvancada.tsx para tRPC
+- [ ] Criar tabela para cotação PTAX (cache)
+- [ ] Migrar Sidebar.tsx cotação PTAX para tRPC
+- [ ] Migrar DashboardLayout.tsx largura sidebar para preferencias_usuario
+- [ ] Migrar useAnaliseEstoque.ts processos SR para tRPC
+- [ ] Migrar useAnaliseEstoqueSimples.ts processos SR para tRPC
+- [ ] Migrar ThemeContext.tsx tema para preferencias_usuario
+- [ ] Migrar Login.tsx "lembrar-me" para preferencias_usuario
+- [ ] Criar tabelas debitos/pagamentos para Pagamentos.tsx
+- [ ] Migrar Pagamentos.tsx para tRPC
+- [ ] Migrar Rastreamento.tsx saldo/processos para tRPC
+- [ ] Remover hooks antigos (useCustos.ts, useEstoque.ts, useIdioma.ts)
+- [ ] Remover useMigrateFromLocalStorage.ts
+- [ ] Verificar ZERO referências a localStorage no código
+- [ ] Testes passando
+- [x] Implementar ordenação por código e por produto nas tabelas do dashboard
