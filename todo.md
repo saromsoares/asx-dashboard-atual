@@ -268,3 +268,8 @@
 - [x] Remover referências a localStorage restantes
 - [x] Testar compilação e funcionalidade
 - [x] Salvar checkpoint
+
+## 💱 Cotação do Dólar - Horários Fixos
+- [x] Configurar atualização da cotação do dólar apenas às 10h e 15h
+- [x] Testar e validar (23 testes passando)
+- [x] Salvar checkpoint

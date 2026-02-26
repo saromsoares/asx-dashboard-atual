@@ -109,11 +109,58 @@ export default function Sidebar({ currentPage }: SidebarProps) {
     setLoading(false);
   }, [updateCotacaoMut, utilsTrpc]);
 
+  // Buscar cotação apenas às 10h e 15h (horário local do usuário)
   useEffect(() => {
-    fetchCotacao();
-    const interval = setInterval(fetchCotacao, 10 * 60 * 1000);
+    const HORARIOS_ATUALIZACAO = [10, 15]; // 10:00 e 15:00
+    const JANELA_MINUTOS = 5; // Janela de 5 minutos após o horário
+
+    const verificarSeDeveAtualizar = (): boolean => {
+      const agora = new Date();
+      const hora = agora.getHours();
+      const minuto = agora.getMinutes();
+
+      // Verificar se estamos dentro da janela de atualização (ex: 10:00-10:05 ou 15:00-15:05)
+      for (const h of HORARIOS_ATUALIZACAO) {
+        if (hora === h && minuto < JANELA_MINUTOS) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const verificarSeJaAtualizouHoje = (): boolean => {
+      if (!cotacaoDB?.atualizadoEm) return false;
+      const ultimaAtualizacao = new Date(cotacaoDB.atualizadoEm);
+      const agora = new Date();
+      // Se foi atualizado hoje, verificar se já passou pelo horário mais recente
+      if (ultimaAtualizacao.toDateString() === agora.toDateString()) {
+        const horaAtual = agora.getHours();
+        const horaUltimaAtualizacao = ultimaAtualizacao.getHours();
+        // Se estamos após as 15h e já atualizou às 15h ou depois, não precisa
+        if (horaAtual >= 15 && horaUltimaAtualizacao >= 15) return true;
+        // Se estamos entre 10h e 15h e já atualizou às 10h ou depois, não precisa
+        if (horaAtual >= 10 && horaAtual < 15 && horaUltimaAtualizacao >= 10) return true;
+      }
+      return false;
+    };
+
+    // Na primeira carga: buscar se não tem cache ou se o cache é de ontem
+    const temCacheValido = cotacaoDB && cotacaoDB.compra && Number(cotacaoDB.compra) > 0;
+    if (!temCacheValido) {
+      fetchCotacao();
+    } else if (verificarSeDeveAtualizar() && !verificarSeJaAtualizouHoje()) {
+      fetchCotacao();
+    }
+
+    // Verificar a cada 1 minuto se está no horário de atualização
+    const interval = setInterval(() => {
+      if (verificarSeDeveAtualizar() && !verificarSeJaAtualizouHoje()) {
+        fetchCotacao();
+      }
+    }, 60 * 1000); // Verificar a cada 1 minuto
+
     return () => clearInterval(interval);
-  }, [fetchCotacao]);
+  }, [fetchCotacao, cotacaoDB]);
 
   // Mapa de alertas por item de menu
   const alertas = useMemo(() => {
@@ -262,6 +309,9 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                   {t('atualizado')}: {lastUpdate}
                 </p>
               )}
+              <p className="text-[8px] mt-0.5" style={{ color: 'oklch(0.28 0.010 285)' }}>
+                Atualiza às 10h e 15h
+              </p>
             </div>
           ) : (
             <div className="flex items-center gap-2">
