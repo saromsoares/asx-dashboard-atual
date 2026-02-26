@@ -3,8 +3,8 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
-import { useCustos } from '@/hooks/useCustos';
-import { useIdioma } from '@/hooks/useIdioma';
+import { useCustosDB } from '@/hooks/useCustosDB';
+import { useIdiomaDB } from '@/hooks/useIdiomaDB';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { Ship } from 'lucide-react';
@@ -48,7 +48,7 @@ export default function Home() {
   let { user, loading, error, isAuthenticated, logout } = useAuth();
 
   const [, setLocation] = useLocation();
-  const { t } = useIdioma();
+  const { t } = useIdiomaDB();
   const [search, setSearch] = useState('');
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todas');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -62,7 +62,7 @@ export default function Home() {
   const [markupFilter, setMarkupFilter] = useState<'TODOS' | '0-20' | '20-50' | '50+'>('TODOS');
   const [apenasComCusto, setApenasComCusto] = useState(false);
 
-  const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct, getMarkup } = useCustos();
+  const { custos, taxaCambio, setTaxaCambio, setCusto, getCusto, getCustoReal, getLucro, getLucroPct, getMarkup } = useCustosDB();
 
   // Dados de pedidos para alerta de saldo pendente
   const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
@@ -115,7 +115,7 @@ export default function Home() {
     // Filtro por faixa de markup
     if (markupFilter !== 'TODOS') {
       list = list.filter(p => {
-        const custoUsd = getCusto(p.id);
+        const custoUsd = getCusto(p.codigo);
         const precoVenda = p.preco_venda;
         if (custoUsd === 0) return false;
         const custoBrl = custoUsd * 8.5;
@@ -130,7 +130,7 @@ export default function Home() {
     
     // Filtro por disponibilidade de custo
     if (apenasComCusto) {
-      list = list.filter(p => getCusto(p.id) > 0);
+      list = list.filter(p => getCusto(p.codigo) > 0);
     }
     
     if (search.trim()) {
@@ -142,7 +142,7 @@ export default function Home() {
       );
     }
     if (showOnlySemCusto) {
-      list = list.filter(p => getCusto(p.id) <= 0);
+      list = list.filter(p => getCusto(p.codigo) <= 0);
     }
 
     return [...list].sort((a, b) => {
@@ -151,8 +151,8 @@ export default function Home() {
       if (sortField === 'codigo') { va = a.codigo; vb = b.codigo; }
       else if (sortField === 'descricao') { va = a.descricao; vb = b.descricao; }
       else if (sortField === 'preco_venda') { va = a.preco_venda; vb = b.preco_venda; }
-      else if (sortField === 'lucro') { va = getLucro(a.id, a.preco_venda); vb = getLucro(b.id, b.preco_venda); }
-      else if (sortField === 'lucro_pct') { va = getLucroPct(a.id, a.preco_venda); vb = getLucroPct(b.id, b.preco_venda); }
+      else if (sortField === 'lucro') { va = getLucro(a.codigo, a.preco_venda); vb = getLucro(b.codigo, b.preco_venda); }
+      else if (sortField === 'lucro_pct') { va = getLucroPct(a.codigo, a.preco_venda); vb = getLucroPct(b.codigo, b.preco_venda); }
 
       if (typeof va === 'string') {
         return sortDir === 'asc' ? va.localeCompare(vb as string) : (vb as string).localeCompare(va);
@@ -162,13 +162,13 @@ export default function Home() {
   }, [search, categoriaAtiva, voltFilter, unidFilter, sortField, sortDir, custos, taxaCambio, showOnlySemCusto, markupFilter, apenasComCusto]);
 
   const stats = useMemo(() => {
-    const comCusto = filtered.filter(p => getCusto(p.id) > 0);
-    const semCusto = filtered.filter(p => getCusto(p.id) <= 0);
+    const comCusto = filtered.filter(p => getCusto(p.codigo) > 0);
+    const semCusto = filtered.filter(p => getCusto(p.codigo) <= 0);
     const avgLucroPct = comCusto.length > 0
-      ? comCusto.reduce((s, p) => s + getLucroPct(p.id, p.preco_venda), 0) / comCusto.length
+      ? comCusto.reduce((s, p) => s + getLucroPct(p.codigo, p.preco_venda), 0) / comCusto.length
       : 0;
     const avgMarkup = comCusto.length > 0
-      ? comCusto.reduce((s, p) => s + getMarkup(p.id, p.preco_venda), 0) / comCusto.length
+      ? comCusto.reduce((s, p) => s + getMarkup(p.codigo, p.preco_venda), 0) / comCusto.length
       : 0;
     return { total: filtered.length, comCusto: comCusto.length, semCusto: semCusto.length, avgLucroPct, avgMarkup };
   }, [filtered, custos, taxaCambio]);
@@ -194,10 +194,10 @@ export default function Home() {
       p.cod_barras,
       p.ncm,
       p.preco_venda.toFixed(2),
-      getCusto(p.id).toFixed(2),
-      getCustoReal(p.id).toFixed(2),
-      getLucro(p.id, p.preco_venda).toFixed(2),
-      getLucroPct(p.id, p.preco_venda).toFixed(1),
+      getCusto(p.codigo).toFixed(2),
+      getCustoReal(p.codigo).toFixed(2),
+      getLucro(p.codigo, p.preco_venda).toFixed(2),
+      getLucroPct(p.codigo, p.preco_venda).toFixed(1),
     ]);
 
     const csvContent = [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
@@ -546,10 +546,10 @@ export default function Home() {
           <div className="md:hidden flex-1 flex flex-col p-4 overflow-auto" style={{ minHeight: 0 }}>
             <div className="grid grid-cols-1 gap-3">
               {filtered.map(p => {
-                const custo = getCusto(p.id);
-                const custoR = getCustoReal(p.id);
-                const lucro = getLucro(p.id, p.preco_venda);
-                const markup = getMarkup(p.id, p.preco_venda);
+                const custo = getCusto(p.codigo);
+                const custoR = getCustoReal(p.codigo);
+                const lucro = getLucro(p.codigo, p.preco_venda);
+                const markup = getMarkup(p.codigo, p.preco_venda);
                 return (
                   <ProductCardMobile
                     key={p.id}
@@ -559,7 +559,7 @@ export default function Home() {
                     custoUsd={custo}
                     custoBrl={custoR}
                     lucro={lucro}
-                    margem={getLucroPct(p.id, p.preco_venda)}
+                    margem={getLucroPct(p.codigo, p.preco_venda)}
                     markup={markup}
                   />
                 );
@@ -575,11 +575,11 @@ export default function Home() {
                   <ProductCard
                     key={p.id}
                     produto={p}
-                    custo={getCusto(p.id)}
-                    custoReal={getCustoReal(p.id)}
-                    lucro={getLucro(p.id, p.preco_venda)}
-                    lucroPct={getLucroPct(p.id, p.preco_venda)}
-                    onCustoChange={(v) => setCusto(p.id, v)}
+                    custo={getCusto(p.codigo)}
+                    custoReal={getCustoReal(p.codigo)}
+                    lucro={getLucro(p.codigo, p.preco_venda)}
+                    lucroPct={getLucroPct(p.codigo, p.preco_venda)}
+                    onCustoChange={(v) => setCusto(p.codigo, v)}
                   />
                 ))}
               </div>
@@ -623,11 +623,11 @@ export default function Home() {
                   </thead>
                   <tbody>
                     {filtered.map(p => {
-                      const custo = getCusto(p.id);
-                      const custoR = getCustoReal(p.id);
-                      const lucro = getLucro(p.id, p.preco_venda);
-                      const lucroPct = getLucroPct(p.id, p.preco_venda);
-                      const markup = getMarkup(p.id, p.preco_venda);
+                      const custo = getCusto(p.codigo);
+                      const custoR = getCustoReal(p.codigo);
+                      const lucro = getLucro(p.codigo, p.preco_venda);
+                      const lucroPct = getLucroPct(p.codigo, p.preco_venda);
+                      const markup = getMarkup(p.codigo, p.preco_venda);
                       return (
                         <tr
                           key={p.id}
@@ -661,7 +661,7 @@ export default function Home() {
                           <td className="px-3 py-2 text-right">
                             <InlineCustoInput
                               value={custo}
-                              onChange={(v) => setCusto(p.id, v)}
+                              onChange={(v) => setCusto(p.codigo, v)}
                             />
                           </td>
                           <td className="px-3 py-2 text-right">
@@ -669,7 +669,7 @@ export default function Home() {
                               value={custoR}
                               onChange={(v) => {
                                 const custoUSD = v / taxaCambio;
-                                setCusto(p.id, custoUSD);
+                                setCusto(p.codigo, custoUSD);
                               }}
                               label="Custo R$"
                               disabled={custo <= 0}

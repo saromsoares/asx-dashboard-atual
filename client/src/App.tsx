@@ -21,6 +21,7 @@ import { MobileMenu } from "./components/MobileMenu";
 import { ToastContainer } from "./components/Toast";
 import { useToast } from "./hooks/useToast";
 import { useMigracaoLocalStorage } from "./_core/hooks/useMigracaoLocalStorage";
+import { useMigrateFromLocalStorage } from "./hooks/useMigrateFromLocalStorage";
 
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
@@ -51,6 +52,8 @@ function AuthenticatedRouter() {
   const { toasts, removeToast } = useToast();
   // Sincronizar dados do localStorage para banco de dados
   useMigracaoLocalStorage();
+  // Migrar dados críticos do localStorage para banco de dados
+  useMigrateFromLocalStorage();
 
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
