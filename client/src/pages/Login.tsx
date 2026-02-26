@@ -4,13 +4,12 @@ import { useLocation } from 'wouter';
 import { LogIn, AlertCircle } from 'lucide-react';
 
 export default function Login() {
-  const [email, setEmail] = useState('sarom@asxstore.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [, setLocation] = useLocation();
   const { login, loading, error, isAuthenticated } = useAuth();
 
-  // Carregar email salvo ao montar o componente
   useEffect(() => {
     const savedEmail = localStorage.getItem('asx_remembered_email');
     const wasRemembered = localStorage.getItem('asx_remember_me') === 'true';
@@ -20,10 +19,9 @@ export default function Login() {
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Salvar email se "Lembrar-me" estiver marcado
+
     if (rememberMe) {
       localStorage.setItem('asx_remembered_email', email);
       localStorage.setItem('asx_remember_me', 'true');
@@ -31,11 +29,10 @@ export default function Login() {
       localStorage.removeItem('asx_remembered_email');
       localStorage.removeItem('asx_remember_me');
     }
-    
-    login(email, password);
+
+    await login(email, password);
   };
 
-  // Redirecionar para home se login bem-sucedido
   useEffect(() => {
     if (isAuthenticated) {
       setLocation('/');
@@ -48,7 +45,6 @@ export default function Login() {
       style={{ background: 'oklch(0.12 0.005 285)' }}
     >
       <div className="w-full max-w-md">
-        {/* Logo e Título */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <div
@@ -68,13 +64,11 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Formulário */}
         <form
           onSubmit={handleSubmit}
           className="rounded-xl p-8 border shadow-2xl"
           style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}
         >
-          {/* Email */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2" style={{ color: 'oklch(0.70 0.010 285)' }}>
               Email
@@ -94,7 +88,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Senha */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2" style={{ color: 'oklch(0.70 0.010 285)' }}>
               Senha
@@ -114,7 +107,6 @@ export default function Login() {
             />
           </div>
 
-          {/* Lembrar-me */}
           <div className="mb-6 flex items-center gap-3">
             <input
               type="checkbox"
@@ -122,11 +114,7 @@ export default function Login() {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
               className="w-4 h-4 rounded cursor-pointer"
-              style={{
-                background: rememberMe ? 'oklch(0.48 0.22 25)' : 'oklch(0.14 0.005 285)',
-                borderColor: 'oklch(0.26 0.005 285)',
-                accentColor: 'oklch(0.48 0.22 25)',
-              }}
+              style={{ accentColor: 'oklch(0.48 0.22 25)' }}
             />
             <label
               htmlFor="rememberMe"
@@ -137,7 +125,6 @@ export default function Login() {
             </label>
           </div>
 
-          {/* Erro */}
           {error && (
             <div
               className="mb-6 p-4 rounded-lg flex items-center gap-3 border"
@@ -153,7 +140,6 @@ export default function Login() {
             </div>
           )}
 
-          {/* Botão */}
           <button
             type="submit"
             disabled={loading}
@@ -166,11 +152,8 @@ export default function Login() {
             <LogIn className="w-5 h-5" />
             {loading ? 'Autenticando...' : 'Entrar'}
           </button>
-
-          {/* Dica removida por segurança */}
         </form>
 
-        {/* Footer */}
         <p className="text-xs text-center mt-8" style={{ color: 'oklch(0.35 0.010 285)' }}>
           ASX Iluminação © 2026 — Dashboard de Gestão
         </p>

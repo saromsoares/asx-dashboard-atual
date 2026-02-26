@@ -832,6 +832,20 @@ export async function atualizarItemProcesso(itemId: number, data: Partial<Insert
   }
 }
 
+/** Buscar um item de processo pelo ID */
+export async function getItemProcessoById(itemId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(itens_processo).where(eq(itens_processo.id, itemId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get item processo:", error);
+    return null;
+  }
+}
+
 export async function removerItemProcesso(itemId: number) {
   const db = await getDb();
   if (!db) return null;

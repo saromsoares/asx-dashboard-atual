@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getItemProcessoById } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 import { getExchangeRate, getExchangeRateInfo } from "./exchangeRate";
 
@@ -526,10 +526,11 @@ export const appRouter = router({
         if (data.pedidoSarom !== undefined) updateData.pedidoSarom = data.pedidoSarom;
         if (data.pedidoAlexandre !== undefined) updateData.pedidoAlexandre = data.pedidoAlexandre;
         if (data.ordemCompra !== undefined) updateData.ordemCompra = data.ordemCompra;
-        // Recalcular preço total se quantidade ou preço unitário mudaram
+        // CORREÇÃO: Buscar item atual do banco para pegar valores não enviados
         if (data.quantidade !== undefined || data.precoUnitarioDolar !== undefined) {
-          const qty = data.quantidade ?? 0;
-          const price = data.precoUnitarioDolar ?? 0;
+          const itemAtual = await getItemProcessoById(itemId);
+          const qty = data.quantidade ?? (itemAtual?.quantidade ?? 0);
+          const price = data.precoUnitarioDolar ?? (itemAtual ? parseFloat(itemAtual.precoUnitarioDolar) : 0);
           updateData.precoTotalDolar = String(Math.round(qty * price * 100) / 100);
         }
         return await atualizarItemProcesso(itemId, updateData);

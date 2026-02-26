@@ -1,94 +1,108 @@
-import { useState, useEffect, useCallback } from 'react';
+/**
+ * useAuth — Hook de autenticação unificado
+ * CORREÇÃO CRÍTICA: Login via servidor com JWT cookie
+ */
+import { useState, useCallback, useMemo } from 'react';
+import { trpc } from '@/lib/trpc';
 
 export interface AuthUser {
-  email: string;
-  name: string;
-  role: 'admin' | 'user';
+  id?: number;
+  email: string | null;
+  name: string | null;
+  role: string;
+  openId?: string;
 }
 
-const USERS = [
-  {
-    email: 'sarom@asxstore.com',
-    password: 'Asxx@China',
-    name: 'Sarom',
-    role: 'admin' as const,
-  },
-  {
-    email: 'alexandre@asx.com.br',
-    password: 'China@2013',
-    name: 'Alexandre',
-    role: 'user' as const,
-  },
-  {
-    email: 'frederico@asx.com.br',
-    password: 'China@2013',
-    name: 'Frederico',
-    role: 'user' as const,
-  },
-  {
-    email: 'michaelfeng89@hotmail.com',
-    password: 'China@2013',
-    name: 'Michael',
-    role: 'user' as const,
-  },
-];
-
 export function useAuth() {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Verificar se há sessão salva ao montar o componente
-  useEffect(() => {
-    const savedUser = localStorage.getItem('authUser');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('Erro ao restaurar sessão:', e);
+  const utils = trpc.useUtils();
+
+  const meQuery = trpc.auth.me.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 4 * 60 * 1000,
+  });
+
+  const login = useCallback(async (email: string, password: string) => {
+    setLoginError(null);
+    setLoginLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setLoginError(data.error || 'Erro ao fazer login');
+        setLoginLoading(false);
+        return;
       }
+
+      await utils.auth.me.invalidate();
+      await meQuery.refetch();
+
+      setLoginLoading(false);
+    } catch (error) {
+      console.error('[Auth] Erro no login:', error);
+      setLoginError('Erro de conexão. Tente novamente.');
+      setLoginLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [utils, meQuery]);
 
-  const login = useCallback((email: string, password: string) => {
-    setError(null);
-    setLoading(true);
+  const logoutMutation = trpc.auth.logout.useMutation();
 
-    // Simular delay de requisição
-    setTimeout(() => {
-      const found = USERS.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
+  const logout = useCallback(async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch {
+      // fallthrough
+    } finally {
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch {}
 
-      if (found) {
-        const userData: AuthUser = {
-          email: found.email,
-          name: found.name,
-          role: found.role,
-        };
-        setUser(userData);
-        localStorage.setItem('authUser', JSON.stringify(userData));
-        setLoading(false);
-      } else {
-        setError('Email ou senha inválidos');
-        setLoading(false);
-      }
-    }, 500);
-  }, []);
+      localStorage.removeItem('authUser');
+      localStorage.removeItem('manus-runtime-user-info');
+      utils.auth.me.setData(undefined, null);
+      await utils.auth.me.invalidate();
+    }
+  }, [logoutMutation, utils]);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('authUser');
-    setError(null);
-  }, []);
+  const state = useMemo(() => {
+    const user = meQuery.data ?? null;
+    const isLoading = meQuery.isLoading || loginLoading;
+
+    const authUser: AuthUser | null = user ? {
+      id: (user as any).id,
+      email: (user as any).email ?? null,
+      name: (user as any).name ?? null,
+      role: (user as any).role ?? 'user',
+      openId: (user as any).openId,
+    } : null;
+
+    return {
+      user: authUser,
+      loading: isLoading,
+      error: loginError,
+      isAuthenticated: Boolean(user),
+    };
+  }, [meQuery.data, meQuery.isLoading, meQuery.error, loginLoading, loginError]);
 
   return {
-    user,
-    loading,
-    error,
+    ...state,
     login,
     logout,
-    isAuthenticated: !!user,
+    refresh: () => meQuery.refetch(),
   };
 }

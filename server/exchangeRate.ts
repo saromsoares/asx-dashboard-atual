@@ -1,88 +1,77 @@
 import axios from 'axios';
 
-const EXCHANGE_RATE_API_URL = 'https://api.exchangerate.host/latest';
-const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hora
-
-interface ExchangeRateResponse {
-  base: string;
-  date: string;
-  rates: Record<string, number>;
-  success: boolean;
-  timestamp: number;
-}
+const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutos
 
 interface CachedRate {
   rate: number;
   timestamp: number;
+  source: string;
 }
 
-// Cache em memória
 let cachedRate: CachedRate | null = null;
 
-/**
- * Obter taxa de câmbio USD para BRL em tempo real
- * @returns Taxa de câmbio USD → BRL
- */
+async function fetchFromOpenExchangeRates(): Promise<number | null> {
+  try {
+    const response = await axios.get('https://open.er-api.com/v6/latest/USD', {
+      timeout: 8000,
+    });
+    if (response.data?.rates?.BRL) {
+      return response.data.rates.BRL;
+    }
+  } catch (error) {
+    console.warn('[Exchange Rate] open.er-api.com falhou:', (error as any)?.message);
+  }
+  return null;
+}
+
+async function fetchFromExchangeRateApi(): Promise<number | null> {
+  try {
+    const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD', {
+      timeout: 8000,
+    });
+    if (response.data?.rates?.BRL) {
+      return response.data.rates.BRL;
+    }
+  } catch (error) {
+    console.warn('[Exchange Rate] exchangerate-api.com falhou:', (error as any)?.message);
+  }
+  return null;
+}
+
 export async function getExchangeRate(): Promise<number> {
-  // Verificar se cache ainda é válido
   if (cachedRate && Date.now() - cachedRate.timestamp < CACHE_DURATION_MS) {
-    console.log('[Exchange Rate] Usando taxa em cache:', cachedRate.rate);
     return cachedRate.rate;
   }
 
-  try {
-    console.log('[Exchange Rate] Buscando taxa em tempo real...');
-    const response = await axios.get<ExchangeRateResponse>(EXCHANGE_RATE_API_URL, {
-      params: {
-        base: 'USD',
-        symbols: 'BRL',
-      },
-      timeout: 10000, // 10 segundos de timeout
-    });
+  const sources = [
+    { name: 'open.er-api.com', fn: fetchFromOpenExchangeRates },
+    { name: 'exchangerate-api.com', fn: fetchFromExchangeRateApi },
+  ];
 
-    if (!response.data.success || !response.data.rates.BRL) {
-      throw new Error('Taxa de câmbio não encontrada na resposta');
+  for (const source of sources) {
+    const rate = await source.fn();
+    if (rate && rate > 0) {
+      cachedRate = { rate, timestamp: Date.now(), source: source.name };
+      console.log(`[Exchange Rate] Taxa atualizada via ${source.name}: ${rate}`);
+      return rate;
     }
-
-    const rate = response.data.rates.BRL;
-    
-    // Atualizar cache
-    cachedRate = {
-      rate,
-      timestamp: Date.now(),
-    };
-
-    console.log('[Exchange Rate] Taxa atualizada:', rate);
-    return rate;
-  } catch (error) {
-    console.error('[Exchange Rate] Erro ao buscar taxa:', error);
-    
-    // Se houver erro e temos cache antigo, usar mesmo que expirado
-    if (cachedRate) {
-      console.log('[Exchange Rate] Usando cache antigo como fallback:', cachedRate.rate);
-      return cachedRate.rate;
-    }
-
-    // Se não houver cache, usar valor padrão
-    const fallbackRate = 8.5;
-    console.log('[Exchange Rate] Usando taxa padrão como fallback:', fallbackRate);
-    return fallbackRate;
   }
+
+  if (cachedRate) {
+    console.log('[Exchange Rate] Usando cache antigo como fallback:', cachedRate.rate);
+    return cachedRate.rate;
+  }
+
+  const fallbackRate = 5.80;
+  console.log('[Exchange Rate] Usando taxa padrão como fallback:', fallbackRate);
+  return fallbackRate;
 }
 
-/**
- * Converter USD para BRL
- * @param usd Valor em dólares
- * @returns Valor em reais
- */
 export async function convertUsdToBrl(usd: number): Promise<number> {
   const rate = await getExchangeRate();
   return usd * rate;
 }
 
-/**
- * Obter informações detalhadas da taxa de câmbio
- */
 export async function getExchangeRateInfo() {
   const rate = await getExchangeRate();
   return {
@@ -90,13 +79,10 @@ export async function getExchangeRateInfo() {
     base: 'USD',
     target: 'BRL',
     timestamp: cachedRate?.timestamp || Date.now(),
-    source: 'exchangerate.host',
+    source: cachedRate?.source || 'fallback',
   };
 }
 
-/**
- * Limpar cache (útil para testes)
- */
 export function clearExchangeRateCache() {
   cachedRate = null;
 }

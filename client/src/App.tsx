@@ -107,7 +107,6 @@ function AuthenticatedRouter() {
 }
 
 function App() {
-  const { toasts, removeToast } = useToast();
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
@@ -117,7 +116,6 @@ function App() {
             <Route path="/login" component={Login} />
             <Route component={ProtectedRouter} />
           </Switch>
-          <ToastContainer toasts={toasts} onClose={removeToast} />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
