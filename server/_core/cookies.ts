@@ -1,13 +1,5 @@
 import type { CookieOptions, Request } from "express";
 
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
-
-function isIpAddress(host: string | undefined) {
-  if (!host) return false;
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
-  return host.includes(":");
-}
-
 function isSecureRequest(req: Request) {
   if (req.protocol === "https") return true;
   const forwardedProto = req.headers["x-forwarded-proto"];
@@ -21,17 +13,16 @@ function isSecureRequest(req: Request) {
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  const hostname = req.hostname;
-  const isLocal = LOCAL_HOSTS.has(hostname) || isIpAddress(hostname);
   const secure = isSecureRequest(req);
 
-  let domain: string | undefined;
-  if (!isLocal && hostname && !isIpAddress(hostname)) {
-    domain = hostname.startsWith(".") ? hostname : `.${hostname}`;
-  }
+  // CORREÇÃO CRÍTICA: NÃO definir domain no cookie.
+  // Quando domain é omitido, o navegador usa automaticamente o domínio da URL atual.
+  // Isso resolve o problema onde req.hostname retorna o domínio interno do Cloud Run
+  // (ex: qvplmmueng-nf24tux2iq-uk.a.run.app) em vez do domínio customizado (customsasx.online).
+  // Com domain omitido, o cookie funciona corretamente em qualquer domínio.
 
   return {
-    domain,
+    // domain omitido intencionalmente - navegador usa o domínio da URL automaticamente
     httpOnly: true,
     path: "/",
     sameSite: secure ? "none" : "lax",
