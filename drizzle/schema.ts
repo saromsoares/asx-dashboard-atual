@@ -217,3 +217,50 @@ export const itens_processo = mysqlTable("itens_processo", {
 
 export type ItemProcesso = typeof itens_processo.$inferSelect;
 export type InsertItemProcesso = typeof itens_processo.$inferInsert;
+
+/**
+ * Tabela de preferências do usuário
+ * Armazena taxa de câmbio customizada e outras preferências por usuário
+ */
+export const preferencias_usuario = mysqlTable("preferencias_usuario", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  taxaCambioCustomizada: decimal("taxaCambioCustomizada", { precision: 10, scale: 4 }).default("8.50").notNull(), // Taxa USD/BRL customizada
+  usarTaxaCustomizada: int("usarTaxaCustomizada").default(0).notNull(), // 0 = usar API, 1 = usar customizada
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PreferenciaUsuario = typeof preferencias_usuario.$inferSelect;
+export type InsertPreferenciaUsuario = typeof preferencias_usuario.$inferInsert;
+
+/**
+ * Tabela de estoques por usuário
+ * Armazena quantidade de estoque específica para cada usuário (Sarom, Alexandre, etc)
+ */
+export const estoques_usuario = mysqlTable("estoques_usuario", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull(),
+  quantidade: int("quantidade").default(0).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EstoqueUsuario = typeof estoques_usuario.$inferSelect;
+export type InsertEstoqueUsuario = typeof estoques_usuario.$inferInsert;
+
+/**
+ * Tabela de custos em USD por produto
+ * Armazena o custo em dólar de cada produto (migrado do localStorage)
+ */
+export const custos_produto = mysqlTable("custos_produto", {
+  id: int("id").autoincrement().primaryKey(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull().unique(),
+  custoUsd: decimal("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CustoProduto = typeof custos_produto.$inferSelect;
+export type InsertCustoProduto = typeof custos_produto.$inferInsert;

@@ -20,6 +20,7 @@ import CentralAlexandre from "./pages/CentralAlexandre";
 import { MobileMenu } from "./components/MobileMenu";
 import { ToastContainer } from "./components/Toast";
 import { useToast } from "./hooks/useToast";
+import { useMigracaoLocalStorage } from "./_core/hooks/useMigracaoLocalStorage";
 
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
@@ -48,6 +49,8 @@ function ProtectedRouter() {
 function AuthenticatedRouter() {
   const [location] = useLocation();
   const { toasts, removeToast } = useToast();
+  // Sincronizar dados do localStorage para banco de dados
+  useMigracaoLocalStorage();
 
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";

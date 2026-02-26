@@ -1,1 +1,20 @@
-{"version":"5","dialect":"mysql","entries":[]}
+{
+  "version": "5",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1772114497863,
+      "tag": "0000_nappy_the_order",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772114756438,
+      "tag": "0001_open_ender_wiggin",
+      "breakpoints": true
+    }
+  ]
+}

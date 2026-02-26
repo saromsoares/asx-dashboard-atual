@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, preferencias_usuario, estoques_usuario, custos_produto, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertPreferenciaUsuario, type InsertEstoqueUsuario, type InsertCustoProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc, sql } from 'drizzle-orm';
 
@@ -856,5 +856,175 @@ export async function removerItemProcesso(itemId: number) {
   } catch (error) {
     console.error("[Database] Failed to remove item from processo:", error);
     throw error;
+  }
+}
+
+
+// ============================================
+// FUNÇÕES PARA MIGRAÇÃO DE LOCALSTORAGE
+// ============================================
+
+/**
+ * Obter preferências do usuário (taxa de câmbio customizada, etc)
+ */
+export async function getPreferenciaUsuario(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(preferencias_usuario).where(eq(preferencias_usuario.userId, userId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get user preferences:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualizar ou criar preferências do usuário
+ */
+export async function upsertPreferenciaUsuario(userId: number, data: Partial<InsertPreferenciaUsuario>) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getPreferenciaUsuario(userId);
+    
+    if (existing) {
+      await db.update(preferencias_usuario)
+        .set({ ...data, atualizadoEm: new Date() })
+        .where(eq(preferencias_usuario.userId, userId));
+    } else {
+      await db.insert(preferencias_usuario).values({
+        userId,
+        ...data,
+      });
+    }
+    
+    return await getPreferenciaUsuario(userId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert user preferences:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter estoque de um produto para um usuário específico
+ */
+export async function getEstoqueUsuario(userId: number, produtoId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(estoques_usuario)
+      .where(sql`${estoques_usuario.userId} = ${userId} AND ${estoques_usuario.produtoId} = ${produtoId}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get user estoque:", error);
+    return null;
+  }
+}
+
+/**
+ * Listar todos os estoques de um usuário
+ */
+export async function listEstoquesUsuario(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(estoques_usuario).where(eq(estoques_usuario.userId, userId));
+  } catch (error) {
+    console.error("[Database] Failed to list user estoques:", error);
+    return [];
+  }
+}
+
+/**
+ * Atualizar ou criar estoque de um produto para um usuário
+ */
+export async function upsertEstoqueUsuario(userId: number, produtoId: string, quantidade: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getEstoqueUsuario(userId, produtoId);
+    
+    if (existing) {
+      await db.update(estoques_usuario)
+        .set({ quantidade, atualizadoEm: new Date() })
+        .where(sql`${estoques_usuario.userId} = ${userId} AND ${estoques_usuario.produtoId} = ${produtoId}`);
+    } else {
+      await db.insert(estoques_usuario).values({
+        userId,
+        produtoId,
+        quantidade,
+      });
+    }
+    
+    return await getEstoqueUsuario(userId, produtoId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert user estoque:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter custo em USD de um produto
+ */
+export async function getCustoProduto(produtoId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(custos_produto).where(eq(custos_produto.produtoId, produtoId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get product cost:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualizar ou criar custo em USD de um produto
+ */
+export async function upsertCustoProduto(produtoId: string, custoUsd: string | number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getCustoProduto(produtoId);
+    
+    if (existing) {
+      await db.update(custos_produto)
+        .set({ custoUsd: custoUsd.toString(), atualizadoEm: new Date() })
+        .where(eq(custos_produto.produtoId, produtoId));
+    } else {
+      await db.insert(custos_produto).values({
+        produtoId,
+        custoUsd: custoUsd.toString(),
+      });
+    }
+    
+    return await getCustoProduto(produtoId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert product cost:", error);
+    throw error;
+  }
+}
+
+/**
+ * Listar todos os custos de produtos
+ */
+export async function listCustosProdutos() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(custos_produto);
+  } catch (error) {
+    console.error("[Database] Failed to list product costs:", error);
+    return [];
   }
 }
