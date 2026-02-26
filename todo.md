@@ -273,3 +273,10 @@
 - [x] Configurar atualização da cotação do dólar apenas às 10h e 15h
 - [x] Testar e validar (23 testes passando)
 - [x] Salvar checkpoint
+
+## 🐛 BUG: Total Embarcado não atualiza ao confirmar contêiner
+- [x] Analisar fluxo de confirmação de contêiner
+- [x] Verificar cálculo de "Total Embarcado" na Central de Compras
+- [x] Sincronizar dados entre Contêiner e Central de Compras (handleConfirmarProcesso agora atualiza banco)
+- [x] Testar e validar (145 testes passando)
+- [x] Salvar checkpoint

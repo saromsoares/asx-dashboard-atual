@@ -1155,9 +1155,29 @@ export default function Conteiner() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  const atualizarStatusMut = trpc.processoSR.atualizarStatus.useMutation();
+
   const handleConfirmarProcesso = () => {
     if (!processoSelecionado) return;
-    setProcessosConfirmados(prev => new Set(Array.from(prev).concat([processoSelecionado.id])));
+    
+    // Atualizar status no banco de dados
+    atualizarStatusMut.mutate(
+      {
+        processoId: parseInt(processoSelecionado.id),
+        novoStatus: 'Finalizado',
+      },
+      {
+        onSuccess: () => {
+          // Adicionar ao estado local
+          setProcessosConfirmados(prev => new Set(Array.from(prev).concat([processoSelecionado.id])));
+          // Invalidar cache para recarregar dados
+          utilsTrpc.processoSR.getAll.invalidate();
+          utilsTrpc.itemProcesso.getAll.invalidate();
+          // Disparar evento para atualizar analise de estoque
+          dispatchProcessosChange();
+        },
+      }
+    );
   };
 
 
