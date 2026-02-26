@@ -23,7 +23,13 @@ import { useToast } from "./hooks/useToast";
 
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
+  
+  // Se está na página de login, sempre mostrar login
+  if (location === '/login') {
+    return <Login />;
+  }
+  
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
@@ -107,7 +113,10 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <ProtectedRouter />
+          <Switch>
+            <Route path="/login" component={Login} />
+            <Route component={ProtectedRouter} />
+          </Switch>
           <ToastContainer toasts={toasts} onClose={removeToast} />
         </TooltipProvider>
       </ThemeProvider>
