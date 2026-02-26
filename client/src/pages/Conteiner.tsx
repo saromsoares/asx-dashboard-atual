@@ -1446,8 +1446,14 @@ export default function Conteiner() {
               </div>
             )}
 
+            {/* Indicador de Itens Lancados */}
+            {processoSelecionado.itens.length > 0 && (
+              <div className="mt-4 p-3 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+                <p className="text-xs font-semibold" style={{ color: 'oklch(0.70 0.005 65)' }}>Itens lancados: {processoSelecionado.itens.length}</p>
+              </div>
+            )}
             {/* Tabela de Itens */}
-            <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: 0 }}>
+            <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: '300px' }}>
               <div className="overflow-x-auto">
               <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '1200px' }}>
                 <thead style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }} className="border-b sticky top-0">

@@ -280,3 +280,10 @@
 - [x] Sincronizar dados entre Contêiner e Central de Compras (handleConfirmarProcesso agora atualiza banco)
 - [x] Testar e validar (145 testes passando)
 - [x] Salvar checkpoint
+
+## 📋 Melhoria: Visualização de Itens no Contêiner
+- [x] Criar tabela clara de itens lançados no contêiner (já existia, agora com indicador visual)
+- [x] Adicionar funcionalidades de edição/remoção de itens (já existem na tabela)
+- [x] Melhorar layout para visualizar todos os itens antes de confirmar (altura mínima 300px)
+- [x] Testar e validar (145 testes passando)
+- [x] Salvar checkpoint
