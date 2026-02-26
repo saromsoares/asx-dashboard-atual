@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 
 export interface ToastMessage {
@@ -83,4 +83,34 @@ export function ToastContainer({ toasts, onClose }: ToastContainerProps) {
       </div>
     </div>
   );
+}
+
+// Hook para gerenciar toasts
+
+export function useToast() {
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info', duration: number = 4000) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const toast: ToastMessage = { id, message, type, duration };
+    setToasts((prev) => [...prev, toast]);
+    return id;
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const success = (message: string, duration?: number) => addToast(message, 'success', duration);
+  const error = (message: string, duration?: number) => addToast(message, 'error', duration);
+  const info = (message: string, duration?: number) => addToast(message, 'info', duration);
+
+  return {
+    toasts,
+    addToast,
+    removeToast,
+    success,
+    error,
+    info,
+  };
 }

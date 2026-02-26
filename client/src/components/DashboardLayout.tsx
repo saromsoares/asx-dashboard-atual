@@ -26,6 +26,9 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { OnlineUsersBadge } from './OnlineUsersIndicator';
+import { useSyncNotifications } from '@/_core/hooks/useSyncNotifications';
+import { useToast, ToastContainer } from './Toast';
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Page 1", path: "/" },
@@ -114,6 +117,8 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const { toasts, removeToast } = useToast();
+  useSyncNotifications();
 
   useEffect(() => {
     if (isCollapsed) {
@@ -255,9 +260,16 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
+            <OnlineUsersBadge />
+          </div>
+        )}
+        {!isMobile && (
+          <div className="flex items-center justify-end gap-3 px-4 py-2 border-b bg-background/95 sticky top-0 z-40">
+            <OnlineUsersBadge />
           </div>
         )}
         <main className="flex-1 p-4">{children}</main>
+        <ToastContainer toasts={toasts} onClose={removeToast} />
       </SidebarInset>
     </>
   );
