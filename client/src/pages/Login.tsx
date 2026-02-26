@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { LogIn, AlertCircle } from 'lucide-react';
@@ -6,16 +6,37 @@ import { LogIn, AlertCircle } from 'lucide-react';
 export default function Login() {
   const [email, setEmail] = useState('sarom@asxstore.com');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [, setLocation] = useLocation();
   const { login, loading, error, isAuthenticated } = useAuth();
 
+  // Carregar email salvo ao montar o componente
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('asx_remembered_email');
+    const wasRemembered = localStorage.getItem('asx_remember_me') === 'true';
+    if (savedEmail && wasRemembered) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Salvar email se "Lembrar-me" estiver marcado
+    if (rememberMe) {
+      localStorage.setItem('asx_remembered_email', email);
+      localStorage.setItem('asx_remember_me', 'true');
+    } else {
+      localStorage.removeItem('asx_remembered_email');
+      localStorage.removeItem('asx_remember_me');
+    }
+    
     login(email, password);
   };
 
   // Redirecionar para home se login bem-sucedido
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       setLocation('/');
     }
@@ -91,6 +112,29 @@ export default function Login() {
               placeholder="••••••••"
               required
             />
+          </div>
+
+          {/* Lembrar-me */}
+          <div className="mb-6 flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded cursor-pointer"
+              style={{
+                background: rememberMe ? 'oklch(0.48 0.22 25)' : 'oklch(0.14 0.005 285)',
+                borderColor: 'oklch(0.26 0.005 285)',
+                accentColor: 'oklch(0.48 0.22 25)',
+              }}
+            />
+            <label
+              htmlFor="rememberMe"
+              className="text-sm cursor-pointer select-none"
+              style={{ color: 'oklch(0.70 0.010 285)' }}
+            >
+              Lembrar-me neste dispositivo
+            </label>
           </div>
 
           {/* Erro */}
