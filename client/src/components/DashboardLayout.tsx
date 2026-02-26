@@ -29,6 +29,7 @@ import { Button } from "./ui/button";
 import { OnlineUsersBadge } from './OnlineUsersIndicator';
 import { useSyncNotifications } from '@/_core/hooks/useSyncNotifications';
 import { useToast, ToastContainer } from './Toast';
+import { ExchangeRateDisplay } from './ExchangeRateDisplay';
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Page 1", path: "/" },
@@ -264,7 +265,8 @@ function DashboardLayoutContent({
           </div>
         )}
         {!isMobile && (
-          <div className="flex items-center justify-end gap-3 px-4 py-2 border-b bg-background/95 sticky top-0 z-40">
+          <div className="flex items-center justify-between gap-3 px-4 py-2 border-b bg-background/95 sticky top-0 z-40">
+            <ExchangeRateDisplay />
             <OnlineUsersBadge />
           </div>
         )}

@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
+import { getExchangeRate, getExchangeRateInfo } from "./exchangeRate";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -537,6 +538,18 @@ export const appRouter = router({
       .input(z.object({ itemId: z.number().int().positive() }))
       .mutation(async ({ input }) => {
         return await removerItemProcesso(input.itemId);
+      }),
+  }),
+
+  cambio: router({
+    getTaxa: publicProcedure
+      .query(async () => {
+        const rate = await getExchangeRate();
+        return { rate };
+      }),
+    getInfo: publicProcedure
+      .query(async () => {
+        return await getExchangeRateInfo();
       }),
   }),
 });
