@@ -297,3 +297,9 @@
 - [x] Adicionar toast ao salvar/confirmar pedidos (vendas e compras)
 - [x] Adicionar toast ao confirmar contêiner
 - [x] Testar e validar (144/145 testes passando)
+
+## 🐛 BUG: Processos confirmados desaparecem da tela do Contêiner
+- [x] Analisar filtro de status na tela de Contêiner
+- [x] Processos confirmados devem permanecer visíveis
+- [x] Corrigir lógica de filtro para mostrar todos os status (campo confirmado agora é atualizado quando status = Finalizado)
+- [x] Testar e validar (149 testes passando, 4 novos testes de processoSR)

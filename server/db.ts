@@ -766,7 +766,9 @@ export async function atualizarStatusProcessoSR(processoId: number, novoStatus: 
   if (!db) return null;
 
   try {
-    await db.update(processos_sr).set({ status: novoStatus }).where(eq(processos_sr.id, processoId));
+    // Quando o status muda para "Finalizado", marcar como confirmado
+    const confirmado = novoStatus === "Finalizado" ? 1 : 0;
+    await db.update(processos_sr).set({ status: novoStatus, confirmado }).where(eq(processos_sr.id, processoId));
     return { success: true };
   } catch (error) {
     console.error("[Database] Failed to update processo SR status:", error);
