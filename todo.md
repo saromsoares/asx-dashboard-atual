@@ -303,3 +303,19 @@
 - [x] Processos confirmados devem permanecer visíveis
 - [x] Corrigir lógica de filtro para mostrar todos os status (campo confirmado agora é atualizado quando status = Finalizado)
 - [x] Testar e validar (149 testes passando, 4 novos testes de processoSR)
+
+
+## 🆕 Página de Garantias (Nova Sessão)
+
+- [x] Criar tabelas no banco: garantias_processo, garantias_item
+- [x] Criar rotas tRPC para CRUD de garantias
+- [x] Remover cards "PEDIDO SAROM" e "PEDIDO ALEXANDRE" do Sidebar
+- [x] Criar página Garantias com:
+  - [x] Seção SAROM: tabela de processos com Produto, Qtd, Valor Un. (USD), Valor Total, Observação, Status
+  - [x] Seção ALEXANDRE: mesma estrutura
+  - [x] Cada seção mostra: Quantidade de itens + Total em Garantia
+  - [x] Resumo Consolidado: Total Sarom + Total Alexandre = Soma Geral
+  - [x] Total sempre soma ao abrir novo processo
+- [x] Integrar Garantias ao App.tsx e navegação
+- [x] Testar e validar (149 testes passando)
+- [x] Salvar checkpoint

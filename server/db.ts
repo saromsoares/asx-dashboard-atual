@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/mysql2';
+import * as garantias_schema from '../drizzle/schema';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, preferencias_usuario, estoques_usuario, custos_produto, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertPreferenciaUsuario, type InsertEstoqueUsuario, type InsertCustoProduto } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, preferencias_usuario, estoques_usuario, custos_produto, garantias_processo, garantias_item, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertPreferenciaUsuario, type InsertEstoqueUsuario, type InsertCustoProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc, sql } from 'drizzle-orm';
 
@@ -1041,5 +1042,199 @@ export async function listCustosProdutos() {
   } catch (error) {
     console.error("[Database] Failed to list product costs:", error);
     return [];
+  }
+}
+
+
+// ============================================================================
+// GARANTIAS - CRUD Operations
+// ============================================================================
+
+/**
+ * Criar novo processo de garantia
+ */
+export async function criarGarantiaProcesso(usuarioId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.insert(garantias_processo).values({
+      usuarioId,
+    });
+    return { id: result[0].insertId, usuarioId };
+  } catch (error) {
+    console.error("[Database] Failed to create warranty process:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter processo de garantia por ID
+ */
+export async function getGarantiaProcesso(processoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(garantias_processo).where(eq(garantias_processo.id, processoId));
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get warranty process:", error);
+    return null;
+  }
+}
+
+/**
+ * Listar todos os processos de garantia de um usuário
+ */
+export async function getAllGarantiaProcessosByUser(usuarioId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(garantias_processo).where(eq(garantias_processo.usuarioId, usuarioId));
+  } catch (error) {
+    console.error("[Database] Failed to list warranty processes:", error);
+    return [];
+  }
+}
+
+/**
+ * Deletar processo de garantia (cascata remove itens)
+ */
+export async function deletarGarantiaProcesso(processoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.delete(garantias_processo).where(eq(garantias_processo.id, processoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete warranty process:", error);
+    throw error;
+  }
+}
+
+/**
+ * Adicionar item a um processo de garantia
+ */
+export async function adicionarGarantiaItem(processoId: number, data: {
+  codigoProduto: string;
+  quantidade: number;
+  precoUnitarioDolar: number;
+  observacao?: string;
+  status?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const precoTotalDolar = data.quantidade * data.precoUnitarioDolar;
+    const result = await db.insert(garantias_item).values({
+      processoId,
+      codigoProduto: data.codigoProduto,
+      quantidade: data.quantidade,
+      precoUnitarioDolar: String(data.precoUnitarioDolar),
+      precoTotalDolar: String(precoTotalDolar),
+      observacao: data.observacao || null,
+      status: data.status || 'Em Análise',
+    });
+    return { id: result[0].insertId, ...data, precoTotalDolar };
+  } catch (error) {
+    console.error("[Database] Failed to add warranty item:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter itens de um processo de garantia
+ */
+export async function getGarantiaItens(processoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(garantias_item).where(eq(garantias_item.processoId, processoId));
+  } catch (error) {
+    console.error("[Database] Failed to get warranty items:", error);
+    return [];
+  }
+}
+
+/**
+ * Atualizar item de garantia
+ */
+export async function atualizarGarantiaItem(itemId: number, data: {
+  quantidade?: number;
+  precoUnitarioDolar?: number;
+  observacao?: string;
+  status?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const item = await db.select().from(garantias_item).where(eq(garantias_item.id, itemId));
+    if (!item[0]) throw new Error("Item not found");
+
+    const quantidade = data.quantidade ?? item[0].quantidade;
+    const precoUnitarioDolar = data.precoUnitarioDolar ?? parseFloat(String(item[0].precoUnitarioDolar));
+    const precoTotalDolar = quantidade * precoUnitarioDolar;
+
+    await db.update(garantias_item).set({
+      quantidade,
+      precoUnitarioDolar: String(precoUnitarioDolar),
+      precoTotalDolar: String(precoTotalDolar),
+      observacao: data.observacao ?? item[0].observacao,
+      status: data.status ?? item[0].status,
+    }).where(eq(garantias_item.id, itemId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update warranty item:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remover item de garantia
+ */
+export async function removerGarantiaItem(itemId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.delete(garantias_item).where(eq(garantias_item.id, itemId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to remove warranty item:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter total em garantia por usuário
+ */
+export async function getTotalGarantiaByUser(usuarioId: string) {
+  const db = await getDb();
+  if (!db) return { total: 0, quantidade: 0 };
+
+  try {
+    const processos = await db.select().from(garantias_processo).where(eq(garantias_processo.usuarioId, usuarioId));
+    const processoIds = processos.map(p => p.id);
+
+    if (processoIds.length === 0) return { total: 0, quantidade: 0 };
+
+    const itens = await db.select().from(garantias_item).where(
+      sql`${garantias_item.processoId} IN (${sql.raw(processoIds.join(','))})`
+    );
+
+    const total = itens.reduce((sum, item) => sum + parseFloat(String(item.precoTotalDolar)), 0);
+    const quantidade = itens.length;
+
+    return { total, quantidade };
+  } catch (error) {
+    console.error("[Database] Failed to get warranty total:", error);
+    return { total: 0, quantidade: 0 };
   }
 }

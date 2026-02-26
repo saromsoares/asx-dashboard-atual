@@ -17,6 +17,7 @@ import Rastreamento from "./pages/Rastreamento";
 import Pagamentos from "./pages/Pagamentos";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
+import Garantias from "./pages/Garantias";
 import { MobileMenu } from "./components/MobileMenu";
 import { ToastContainer } from "./components/Toast";
 import { useToast } from "./hooks/useToast";
@@ -98,6 +99,7 @@ function AuthenticatedRouter() {
           <Route path="/central-sarom" component={CentralSarom} />
           <Route path="/central-alexandre" component={CentralAlexandre} />
           <Route path="/desenvolvimento" component={Desenvolvimento} />
+          <Route path="/garantias" component={Garantias} />
           <Route path="/configuracoes" component={Configuracoes} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />

@@ -228,6 +228,13 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       description: t('produtosEmDesenvolvimento'),
     },
     {
+      id: "garantias",
+      label: 'Garantias',
+      icon: AlertTriangle,
+      href: "/garantias",
+      description: 'Controle de processos de garantia',
+    },
+    {
       id: "configuracoes",
       label: t('configuracoes'),
       icon: Settings,
@@ -472,26 +479,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         </div>
       )}
 
-      {/* Cards de Porcentagem Total - Cobertura de Estoque */}
-      {!collapsed && (
-        <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg border space-y-2" style={{
-          background: 'oklch(0.14 0.005 285)',
-          borderColor: 'oklch(0.26 0.005 285)',
-        }}>
-          <div>
-            <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Sarom</span>
-            <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.72 0.17 145)' }}>
-              {kpisSarom && kpisSarom.totalSkus > 0 ? Math.round((kpisSarom.skusOk / kpisSarom.totalSkus) * 100) : 0}%
-            </p>
-          </div>
-          <div>
-            <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Alexandre</span>
-            <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.55 0.15 270)' }}>
-              {kpisAlexandre && kpisAlexandre.totalSkus > 0 ? Math.round((kpisAlexandre.skusOk / kpisAlexandre.totalSkus) * 100) : 0}%
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Cards de Pedido Removidos - Migrados para página de Garantias */}
 
       {/* Logout Button */}
       <LogoutButton collapsed={collapsed} />

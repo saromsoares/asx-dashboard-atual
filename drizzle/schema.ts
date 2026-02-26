@@ -375,3 +375,38 @@ export const config_json = mysqlTable("config_json", {
 
 export type ConfigJson = typeof config_json.$inferSelect;
 export type InsertConfigJson = typeof config_json.$inferInsert;
+
+
+/**
+ * Tabela de processos de garantia
+ * Armazena processos de garantia por empresa (Sarom/Alexandre)
+ */
+export const garantias_processo = mysqlTable("garantias_processo", {
+  id: int("id").autoincrement().primaryKey(),
+  usuarioId: varchar("usuarioId", { length: 255 }).notNull(), // sarom@asxstore.com ou alexandre@asx.com.br
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type GarantiaProcesso = typeof garantias_processo.$inferSelect;
+export type InsertGarantiaProcesso = typeof garantias_processo.$inferInsert;
+
+/**
+ * Tabela de itens de garantia
+ * Armazena produtos em garantia com quantidade, valor unitário, observação e status
+ */
+export const garantias_item = mysqlTable("garantias_item", {
+  id: int("id").autoincrement().primaryKey(),
+  processoId: int("processoId").notNull().references(() => garantias_processo.id, { onDelete: "cascade" }),
+  codigoProduto: varchar("codigoProduto", { length: 50 }).notNull(), // Código ASX do produto
+  quantidade: int("quantidade").notNull().default(1),
+  precoUnitarioDolar: decimal("precoUnitarioDolar", { precision: 10, scale: 2 }).notNull().default("0"),
+  precoTotalDolar: decimal("precoTotalDolar", { precision: 12, scale: 2 }).notNull().default("0"),
+  observacao: text("observacao"), // Descrição do defeito e lote
+  status: varchar("status", { length: 50 }).notNull().default("Em Análise"), // Ok, Em Análise, Pendente, Cancelado
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type GarantiaItem = typeof garantias_item.$inferSelect;
+export type InsertGarantiaItem = typeof garantias_item.$inferInsert;

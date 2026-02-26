@@ -5,7 +5,7 @@ import { migracaoRouter } from "./routers/migracao";
 import { dadosRouter } from "./routers/dados";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getItemProcessoById, getAllItensProcesso } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getItemProcessoById, getAllItensProcesso, criarGarantiaProcesso, getGarantiaProcesso, getAllGarantiaProcessosByUser, deletarGarantiaProcesso, adicionarGarantiaItem, getGarantiaItens, atualizarGarantiaItem, removerGarantiaItem, getTotalGarantiaByUser } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 import { getExchangeRate, getExchangeRateInfo } from "./exchangeRate";
 
@@ -557,6 +557,66 @@ export const appRouter = router({
     getInfo: publicProcedure
       .query(async () => {
         return await getExchangeRateInfo();
+      }),
+  }),
+
+  garantias: router({
+    criarProcesso: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        return await criarGarantiaProcesso(String(ctx.user.id));
+      }),
+    getAllByUser: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await getAllGarantiaProcessosByUser(String(ctx.user.id));
+      }),
+    getItens: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        return await getGarantiaItens(input.processoId);
+      }),
+    adicionarItem: protectedProcedure
+      .input(z.object({
+        processoId: z.number().int().positive(),
+        codigoProduto: z.string().min(1).max(50).trim(),
+        quantidade: z.number().int().min(1).max(999999),
+        precoUnitarioDolar: z.number().min(0).max(999999.99),
+        observacao: z.string().max(500).trim().optional(),
+        status: z.enum(['Ok', 'Em Análise', 'Pendente', 'Cancelado']).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await adicionarGarantiaItem(input.processoId, {
+          codigoProduto: input.codigoProduto,
+          quantidade: input.quantidade,
+          precoUnitarioDolar: input.precoUnitarioDolar,
+          observacao: input.observacao,
+          status: input.status,
+        });
+      }),
+    atualizarItem: protectedProcedure
+      .input(z.object({
+        itemId: z.number().int().positive(),
+        quantidade: z.number().int().min(1).max(999999).optional(),
+        precoUnitarioDolar: z.number().min(0).max(999999.99).optional(),
+        observacao: z.string().max(500).trim().optional(),
+        status: z.enum(['Ok', 'Em Análise', 'Pendente', 'Cancelado']).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { itemId, ...data } = input;
+        return await atualizarGarantiaItem(itemId, data);
+      }),
+    removerItem: protectedProcedure
+      .input(z.object({ itemId: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        return await removerGarantiaItem(input.itemId);
+      }),
+    deletarProcesso: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        return await deletarGarantiaProcesso(input.processoId);
+      }),
+    getTotalByUser: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await getTotalGarantiaByUser(String(ctx.user.id));
       }),
   }),
 
