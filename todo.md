@@ -287,3 +287,13 @@
 - [x] Melhorar layout para visualizar todos os itens antes de confirmar (altura mínima 300px)
 - [x] Testar e validar (145 testes passando)
 - [x] Salvar checkpoint
+
+## 🐛 BUG: Botão Confirmar Contêiner não funciona
+- [x] Investigar por que o botão "Confirmar Processo" não funciona (faltava estado de loading)
+- [x] Adicionar toast de confirmação ao confirmar contêiner
+- [x] Testar e validar (144/145 testes passando)
+
+## 🔔 Feature: Toast de Confirmação
+- [x] Adicionar toast ao salvar/confirmar pedidos (vendas e compras)
+- [x] Adicionar toast ao confirmar contêiner
+- [x] Testar e validar (144/145 testes passando)

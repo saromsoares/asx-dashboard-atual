@@ -11,6 +11,7 @@ import { VinculadorEmbarques } from '../components/VinculadorEmbarques';
 import { useEmbarques } from '../hooks/useEmbarques';
 import { useIdiomaDB as useIdioma } from '../hooks/useIdiomaDB';
 import { trpc } from '../lib/trpc';
+import { useToast } from '../components/Toast';
 
 interface ItemConteiner {
   id: string;
@@ -48,6 +49,7 @@ export default function Conteiner() {
   const [, setLocation] = useLocation();
   const { t } = useIdioma();
   const { embarques } = useEmbarques();
+  const { success: showSuccess, error: showError } = useToast();
   const [processos, setProcessos] = useState<ProcessoSR[]>([]);
   const [showNovoProcesso, setShowNovoProcesso] = useState(false);
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
@@ -1173,9 +1175,11 @@ export default function Conteiner() {
           // Invalidar cache para recarregar dados
           utilsTrpc.processoSR.getAll.invalidate();
           utilsTrpc.itemProcesso.getAll.invalidate();
+          showSuccess(`Processo ${processoSelecionado.numeroProcesso} confirmado!`, 3000);
           // Disparar evento para atualizar analise de estoque
           dispatchProcessosChange();
         },
+        onError: (error: any) => showError(`Erro ao confirmar: ${error.message}`, 4000),
       }
     );
   };
@@ -1882,12 +1886,12 @@ export default function Conteiner() {
               </button>
               <button
                 onClick={handleConfirmarProcesso}
-                disabled={processosConfirmados.has(processoSelecionado?.id || '')}
+                disabled={processosConfirmados.has(processoSelecionado?.id || '') || atualizarStatusMut.isPending}
                 className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 style={{ background: processosConfirmados.has(processoSelecionado?.id || '') ? 'oklch(0.30 0.005 285)' : 'oklch(0.48 0.22 25)', color: 'white' }}
                 title={processosConfirmados.has(processoSelecionado?.id || '') ? 'Processo já confirmado' : 'Confirmar e finalizar processo'}
               >
-                ✓ Confirmar Processo
+                {atualizarStatusMut.isPending ? '⏳ Confirmando...' : '✓ Confirmar Processo'}
               </button>
             </div>
           </main>

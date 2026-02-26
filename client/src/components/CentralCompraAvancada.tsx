@@ -16,6 +16,7 @@ import { useIdiomaDB as useIdioma } from '@/hooks/useIdiomaDB';
 import { trpc } from '@/lib/trpc';
 import { ArrowLeft, Download, Upload, ChevronUp, ChevronDown, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import ModalEstoque from '@/components/ModalEstoque';
+import { useToast } from '@/components/Toast';
 import * as XLSX from 'xlsx';
 
 interface CentralCompraAvancadaProps {
@@ -45,6 +46,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const { analisarProduto, VENDAS_HISTORICAS } = useAnaliseEstoque();
   const { produtosComEstoque } = useEstoque(comprador);
   const { t } = useIdioma();
+  const { success: showSuccess, error: showError } = useToast();
 
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('codigo');
