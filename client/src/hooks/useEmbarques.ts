@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { trpc } from '@/lib/trpc';
 
 // Referência de um item de pedido embarcado em um contêiner
 export interface ItemEmbarque {
@@ -16,30 +17,38 @@ export interface RegistroEmbarque {
   embarques: ItemEmbarque[]; // Lista de itens embarcados neste contêiner
 }
 
-const STORAGE_KEY = 'asx_embarques';
+const CONFIG_KEY = 'asx_embarques';
 
 export function useEmbarques() {
   const [embarques, setEmbarques] = useState<RegistroEmbarque[]>([]);
   const [carregado, setCarregado] = useState(false);
+  const { data: configDB } = trpc.dados.getConfig.useQuery({ chave: CONFIG_KEY });
+  const setConfigMut = trpc.dados.setConfig.useMutation();
+  const utils = trpc.useUtils();
+  const dbLoaded = useRef(false);
 
-  // Carregar do localStorage
+  // Carregar do banco de dados
   useEffect(() => {
-    const salvo = localStorage.getItem(STORAGE_KEY);
-    if (salvo) {
+    if (configDB && configDB.dados && !dbLoaded.current) {
       try {
-        setEmbarques(JSON.parse(salvo));
+        setEmbarques(JSON.parse(configDB.dados));
+        dbLoaded.current = true;
       } catch (e) {
         console.error('Erro ao carregar embarques:', e);
       }
     }
-    setCarregado(true);
-  }, []);
+    if (configDB !== undefined) {
+      setCarregado(true);
+    }
+  }, [configDB]);
 
-  // Salvar no localStorage
+  // Salvar no banco de dados
   const salvarEmbarques = useCallback((novos: RegistroEmbarque[]) => {
     setEmbarques(novos);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(novos));
-  }, []);
+    setConfigMut.mutate({ chave: CONFIG_KEY, dados: JSON.stringify(novos) }, {
+      onSuccess: () => utils.dados.getConfig.invalidate({ chave: CONFIG_KEY }),
+    });
+  }, [setConfigMut, utils]);
 
   // Adicionar embarque de um item de pedido em um contêiner
   const adicionarEmbarque = useCallback(

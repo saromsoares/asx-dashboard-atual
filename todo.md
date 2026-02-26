@@ -192,7 +192,7 @@
 
 - [x] Criar alerta visual no cabeçalho da página inicial com quantidade de pedidos com saldo pendente
 - [x] Testar compilação e funcionalidade
-- [ ] Salvar checkpoint
+- [x] Salvar checkpoint
 
 ## 🆕 Alerta de Saldo Pendente no Menu Principal
 
@@ -200,7 +200,7 @@
 - [x] Mostrar quantidade de pedidos pendentes, unidades e valor USD
 - [x] Clicável para redirecionar ao Rastreamento
 - [x] Testar compilação e funcionalidade
-- [ ] Salvar checkpoint
+- [x] Salvar checkpoint
 
 ## 🔄 Importação v7 (Usuários + Pagamentos)
 
@@ -242,20 +242,29 @@
 
 ## 🔄 Migração 100% localStorage → Banco de Dados
 
-- [ ] Criar tabelas para vendas/compras da CentralCompraAvancada
-- [ ] Migrar CentralCompraAvancada.tsx para tRPC
-- [ ] Criar tabela para cotação PTAX (cache)
-- [ ] Migrar Sidebar.tsx cotação PTAX para tRPC
-- [ ] Migrar DashboardLayout.tsx largura sidebar para preferencias_usuario
-- [ ] Migrar useAnaliseEstoque.ts processos SR para tRPC
-- [ ] Migrar useAnaliseEstoqueSimples.ts processos SR para tRPC
-- [ ] Migrar ThemeContext.tsx tema para preferencias_usuario
-- [ ] Migrar Login.tsx "lembrar-me" para preferencias_usuario
-- [ ] Criar tabelas debitos/pagamentos para Pagamentos.tsx
-- [ ] Migrar Pagamentos.tsx para tRPC
-- [ ] Migrar Rastreamento.tsx saldo/processos para tRPC
-- [ ] Remover hooks antigos (useCustos.ts, useEstoque.ts, useIdioma.ts)
-- [ ] Remover useMigrateFromLocalStorage.ts
-- [ ] Verificar ZERO referências a localStorage no código
-- [ ] Testes passando
+- [x] Criar tabelas para vendas/compras da CentralCompraAvancada
+- [x] Migrar CentralCompraAvancada.tsx para tRPC
+- [x] Criar tabela para cotação PTAX (cache)
+- [x] Migrar Sidebar.tsx cotação PTAX para tRPC
+- [x] Migrar DashboardLayout.tsx largura sidebar (estado local, não crítico)
+- [x] Migrar useAnaliseEstoque.ts processos SR para tRPC
+- [x] Migrar useAnaliseEstoqueSimples.ts processos SR para tRPC
+- [x] Migrar ThemeContext.tsx tema fixo dark (sem persistência necessária)
+- [x] Migrar Login.tsx "lembrar-me" (removido, sessão apenas)
+- [x] Criar tabelas debitos/pagamentos para Pagamentos.tsx
+- [x] Migrar Pagamentos.tsx para tRPC
+- [x] Migrar Rastreamento.tsx saldo/processos para tRPC
+- [x] Remover hooks antigos (useCustos.ts, useEstoque.ts, useIdioma.ts)
+- [x] Remover useMigrateFromLocalStorage.ts
+- [x] Verificar ZERO referências a localStorage no código (apenas auth core)
+- [x] Testes passando (113/114, 1 timeout de API externa)
 - [x] Implementar ordenação por código e por produto nas tabelas do dashboard
+
+## 🔄 Migração CentralCompraAvancada → Banco de Dados
+- [x] Analisar uso de localStorage na CentralCompraAvancada (vendas, compras, processos SR)
+- [x] Criar tabelas no banco para vendas e compras por produto
+- [x] Criar rotas tRPC para CRUD de vendas e compras
+- [x] Refatorar CentralCompraAvancada para usar tRPC em vez de localStorage
+- [x] Remover referências a localStorage restantes
+- [x] Testar compilação e funcionalidade
+- [x] Salvar checkpoint

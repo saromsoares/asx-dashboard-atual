@@ -68,10 +68,11 @@ export default function Home() {
   const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
   const { data: todosItensDb = [] } = trpc.itemPedido.getAll.useQuery();
 
-  const STORAGE_SALDO = 'asx_saldo_embarques';
+  // Saldo de embarques do banco de dados via tRPC
+  const { data: saldoDB } = trpc.dados.getSaldo.useQuery();
   const pedidosPendentes = useMemo(() => {
     let saldo: Record<string, Record<string, { sarom: number; alexandre: number }>> = {};
-    try { const s = localStorage.getItem(STORAGE_SALDO); if (s) saldo = JSON.parse(s); } catch {}
+    try { if (saldoDB?.dados) saldo = JSON.parse(saldoDB.dados); } catch {}
     const confirmados = pedidosDb.filter((p: any) => p.status === 'Confirmado');
     let countPendentes = 0;
     let totalUnidPend = 0;
@@ -94,7 +95,7 @@ export default function Home() {
       if (temPendente) countPendentes++;
     });
     return { count: countPendentes, totalConfirmados: confirmados.length, totalUnidPend, totalUsdPend };
-  }, [pedidosDb, todosItensDb]);
+  }, [pedidosDb, todosItensDb, saldoDB]);
 
   const volts = useMemo(() => ['TODOS', ...Array.from(new Set(produtos.map(p => p.volt).filter(Boolean)))], []);
   const unids = useMemo(() => ['TODOS', ...Array.from(new Set(produtos.map(p => p.unid).filter(Boolean)))], []);

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { Search, ArrowLeft, Save, X, Download, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
@@ -16,7 +16,7 @@ interface ProdutoEditavel {
   categoria: string;
 }
 
-const STORAGE_KEY = 'asx_produtos_edicoes';
+const CONFIG_KEY = 'asx_produtos_edicoes';
 
 export default function Desenvolvimento() {
   const [, setLocation] = useLocation();
@@ -37,17 +37,23 @@ export default function Desenvolvimento() {
     observacoes: '',
   });
 
-  // Carregar edições do localStorage ao montar
+  // Carregar edições do banco de dados via tRPC
+  const { data: configDB } = trpc.dados.getConfig.useQuery({ chave: CONFIG_KEY });
+  const setConfigMut = trpc.dados.setConfig.useMutation();
+  const utils = trpc.useUtils();
+  const dbLoaded = useRef(false);
+
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
+    if (configDB && configDB.dados && !dbLoaded.current) {
       try {
-        setProdutosEditando(JSON.parse(saved));
+        const parsed = JSON.parse(configDB.dados);
+        setProdutosEditando(parsed);
+        dbLoaded.current = true;
       } catch (e) {
-        console.error('Erro ao carregar edições:', e);
+        console.error('Erro ao carregar edições do banco:', e);
       }
     }
-  }, []);
+  }, [configDB]);
 
   // Extrair categorias únicas
   const categorias = useMemo(() => {
@@ -127,8 +133,10 @@ export default function Desenvolvimento() {
           [campo]: valor,
         },
       };
-      // Salvar no localStorage imediatamente
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      // Salvar no banco de dados via tRPC
+      setConfigMut.mutate({ chave: CONFIG_KEY, dados: JSON.stringify(novo) }, {
+        onSuccess: () => utils.dados.getConfig.invalidate({ chave: CONFIG_KEY }),
+      });
       return novo;
     });
     setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: false }));
@@ -137,7 +145,7 @@ export default function Desenvolvimento() {
   // Salvar alterações
   const handleSalvar = (produtoId: number) => {
     setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: true }));
-    // Dados já estão salvos no localStorage
+    // Dados já estão salvos no banco de dados
     console.log(`Produto ${produtoId} salvo:`, produtosEditando[produtoId]);
     
     // Mostrar feedback visual (opcional)
@@ -151,8 +159,10 @@ export default function Desenvolvimento() {
     setProdutosEditando(prev => {
       const novo = { ...prev };
       delete novo[produtoId];
-      // Atualizar localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      // Atualizar no banco de dados
+      setConfigMut.mutate({ chave: CONFIG_KEY, dados: JSON.stringify(novo) }, {
+        onSuccess: () => utils.dados.getConfig.invalidate({ chave: CONFIG_KEY }),
+      });
       return novo;
     });
     setAlteracoesSalvas(prev => ({ ...prev, [produtoId]: false }));

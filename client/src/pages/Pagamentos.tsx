@@ -2,7 +2,7 @@
   ASX Dark Command Center — Pagamentos
   Controle de Débitos e Pagamentos com balanço geral
   Layout: 3 KPIs no topo + duas tabelas lado a lado (Débitos | Pagamentos)
-  Storage: localStorage (asx_debitos / asx_pagamentos)
+  Storage: Banco de dados TiDB via tRPC
 */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
