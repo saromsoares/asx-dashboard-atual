@@ -1,0 +1,46 @@
+{
+  "query": "SELECT COUNT(*) as total FROM custos_produto; SELECT * FROM custos_produto LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute SELECT COUNT(*) as total FROM custos_produto; SELECT * FROM custos_produto LIMIT 10;",
+  "rows": [
+    {
+      "total": "54"
+    },
+    {
+      "total": "id\tprodutoId\tcustoUsd\tcriadoEm\tatualizadoEm"
+    },
+    {
+      "total": "1\tASX1001\t50.00\t2026-02-26 14:04:45\t2026-02-26 14:18:01"
+    },
+    {
+      "total": "2\tASX1002\t75.00\t2026-02-26 14:04:45\t2026-02-26 14:18:01"
+    },
+    {
+      "total": "3\tASX1003\t100.00\t2026-02-26 14:04:45\t2026-02-26 14:18:01"
+    },
+    {
+      "total": "4\t46\t4.08\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    },
+    {
+      "total": "5\t67\t15.70\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    },
+    {
+      "total": "6\t86\t2.48\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    },
+    {
+      "total": "7\t87\t1.55\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    },
+    {
+      "total": "8\t88\t3.00\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    },
+    {
+      "total": "9\t89\t1.96\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    },
+    {
+      "total": "10\t90\t13.00\t2026-02-26 14:20:56\t2026-02-26 14:20:56"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n54\nid\tprodutoId\tcustoUsd\tcriadoEm\tatualizadoEm\n1\tASX1001\t50.00\t2026-02-26 14:04:45\t2026-02-26 14:18:01\n2\tASX1002\t75.00\t2026-02-26 14:04:45\t2026-02-26 14:18:01\n3\tASX1003\t100.00\t2026-02-26 14:04:45\t2026-02-26 14:18:01\n4\t46\t4.08\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n5\t67\t15.70\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n6\t86\t2.48\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n7\t87\t1.55\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n8\t88\t3.00\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n9\t89\t1.96\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n10\t90\t13.00\t2026-02-26 14:20:56\t2026-02-26 14:20:56\n",
+  "stderr": "",
+  "execution_time_ms": 82
+}

@@ -20,7 +20,7 @@ export interface DadosEstoqueProduto {
 }
 
 export interface ProdutoComEstoque {
-  id: string;
+  id: number;
   codigo: string;
   descricao: string;
   unidade: string;
@@ -180,7 +180,7 @@ export function useEstoqueDB(comprador: 'sarom' | 'alexandre') {
         const status = calcularStatus(coberturaMeses, mediaMensal);
 
         return {
-          id: p.codigo,
+          id: p.id,
           codigo: p.codigo,
           descricao: p.descricao,
           unidade: p.unid,

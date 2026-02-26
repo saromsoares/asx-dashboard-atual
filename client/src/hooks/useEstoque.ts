@@ -13,7 +13,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
-import { CUSTOS_CHANGE_EVENT, TAXA_CHANGE_EVENT } from './useCustos';
+import { CUSTOS_CHANGE_EVENT, TAXA_CHANGE_EVENT } from './useCustosDB';
 
 // ---- Interfaces ----
 

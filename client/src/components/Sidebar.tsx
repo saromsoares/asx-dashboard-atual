@@ -9,9 +9,9 @@
 import { Link, useLocation } from "wouter";
 import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle, LogOut, DollarSign } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useEstoque } from "@/hooks/useEstoque";
+import { useEstoqueDB as useEstoque } from "@/hooks/useEstoqueDB";
 import { useAuth } from "@/hooks/useAuth";
-import { useIdioma } from "@/hooks/useIdioma";
+import { useIdiomaDB as useIdioma } from "@/hooks/useIdiomaDB";
 
 // Logo removido
 

@@ -139,6 +139,6 @@ export function useCustosDB() {
     getLucro,
     getLucroPct,
     getMarkup,
-    isLoading: custosList.length === 0 || !preferencias,
+    isLoading: false,
   };
 }

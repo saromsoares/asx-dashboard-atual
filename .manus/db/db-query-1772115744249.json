@@ -1,0 +1,90 @@
+{
+  "query": "SELECT produtoId, custoUsd FROM custos_produto ORDER BY produtoId LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute SELECT produtoId, custoUsd FROM custos_produto ORDER BY produtoId LIMIT 20;",
+  "rows": [
+    {
+      "produtoId": "123",
+      "custoUsd": "0.06"
+    },
+    {
+      "produtoId": "127",
+      "custoUsd": "0.33"
+    },
+    {
+      "produtoId": "128",
+      "custoUsd": "0.35"
+    },
+    {
+      "produtoId": "132",
+      "custoUsd": "0.38"
+    },
+    {
+      "produtoId": "144",
+      "custoUsd": "0.05"
+    },
+    {
+      "produtoId": "149",
+      "custoUsd": "0.40"
+    },
+    {
+      "produtoId": "150",
+      "custoUsd": "0.40"
+    },
+    {
+      "produtoId": "169",
+      "custoUsd": "2.00"
+    },
+    {
+      "produtoId": "170",
+      "custoUsd": "2.00"
+    },
+    {
+      "produtoId": "171",
+      "custoUsd": "2.00"
+    },
+    {
+      "produtoId": "176",
+      "custoUsd": "0.10"
+    },
+    {
+      "produtoId": "188",
+      "custoUsd": "0.25"
+    },
+    {
+      "produtoId": "189",
+      "custoUsd": "0.35"
+    },
+    {
+      "produtoId": "190",
+      "custoUsd": "0.35"
+    },
+    {
+      "produtoId": "191",
+      "custoUsd": "1.00"
+    },
+    {
+      "produtoId": "192",
+      "custoUsd": "1.00"
+    },
+    {
+      "produtoId": "193",
+      "custoUsd": "0.20"
+    },
+    {
+      "produtoId": "194",
+      "custoUsd": "3.00"
+    },
+    {
+      "produtoId": "195",
+      "custoUsd": "0.80"
+    },
+    {
+      "produtoId": "196",
+      "custoUsd": "1.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "produtoId\tcustoUsd\n123\t0.06\n127\t0.33\n128\t0.35\n132\t0.38\n144\t0.05\n149\t0.40\n150\t0.40\n169\t2.00\n170\t2.00\n171\t2.00\n176\t0.10\n188\t0.25\n189\t0.35\n190\t0.35\n191\t1.00\n192\t1.00\n193\t0.20\n194\t3.00\n195\t0.80\n196\t1.00\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

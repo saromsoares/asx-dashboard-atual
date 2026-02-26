@@ -1,5 +1,5 @@
 import { usePedidos } from './usePedidos';
-import { useCustos } from './useCustos';
+import { useCustosDB as useCustos } from './useCustosDB';
 import { useState, useEffect, useCallback } from 'react';
 import { produtos as produtosCatalogo } from '@/data/produtos';
 

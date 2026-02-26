@@ -6,10 +6,10 @@ import { useLocation } from 'wouter';
 import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle, Link2, ShoppingCart, Check } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
-import { dispatchProcessosChange } from '../hooks/useEstoque';
+import { dispatchProcessosChange } from '../hooks/useEstoqueDB';
 import { VinculadorEmbarques } from '../components/VinculadorEmbarques';
 import { useEmbarques } from '../hooks/useEmbarques';
-import { useIdioma } from '../hooks/useIdioma';
+import { useIdiomaDB as useIdioma } from '../hooks/useIdiomaDB';
 import { trpc } from '../lib/trpc';
 
 interface ItemConteiner {

@@ -220,3 +220,22 @@
 - [x] Inserir débito: "Saldo da planilha anterior" - data hoje - $56.069,63
 - [x] Inserir pagamento: "Prosper ASX" - data hoje - $48.444,30
 - [ ] Testar e salvar checkpoint
+
+## 🔄 Migração localStorage → TiDB (Banco de Dados)
+
+- [x] Criar tabelas custos_produto, estoques_usuario, preferencias_usuario no banco
+- [x] Criar rotas tRPC para CRUD de custos, estoques e preferências
+- [x] Criar hooks useCustosDB, useEstoqueDB, useIdiomaDB
+- [x] Migrar IDs numéricos para códigos ASX no banco (51 custos migrados)
+- [x] Atualizar Home.tsx para usar useCustosDB
+- [x] Atualizar Configuracoes.tsx para usar useCustosDB + useIdiomaDB
+- [x] Atualizar CentralCompra.tsx para usar useEstoqueDB
+- [x] Atualizar CentralCompraAvancada.tsx para usar useEstoqueDB + useIdiomaDB
+- [x] Atualizar Sidebar.tsx para usar useEstoqueDB + useIdiomaDB
+- [x] Atualizar Conteiner.tsx para usar useIdiomaDB + useEstoqueDB
+- [x] Atualizar Desenvolvimento.tsx para usar useIdiomaDB
+- [x] Atualizar useAnaliseEstoque.ts e useAnaliseEstoqueSimples.ts para useCustosDB
+- [x] Atualizar useEstoque.ts para importar eventos de useCustosDB
+- [x] Criar hook useMigrateFromLocalStorage para migração automática
+- [x] Corrigir bug: custos com IDs numéricos não apareciam (migrados para códigos ASX)
+- [x] Zero erros TypeScript, 114 testes passando

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Search, ArrowLeft, Save, X, Download, AlertCircle } from 'lucide-react';
 import { produtos, TAXA_CAMBIO } from '@/data/produtos';
-import { useIdioma } from '@/hooks/useIdioma';
+import { useIdiomaDB as useIdioma } from '@/hooks/useIdiomaDB';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
