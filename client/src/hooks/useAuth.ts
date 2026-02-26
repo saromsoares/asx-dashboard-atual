@@ -35,9 +35,8 @@ const USERS = [
 
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
 
   // Verificar se há sessão salva ao montar o componente
   useEffect(() => {
@@ -49,7 +48,7 @@ export function useAuth() {
         console.error('Erro ao restaurar sessão:', e);
       }
     }
-    setIsInitializing(false);
+    setLoading(false);
   }, []);
 
   const login = useCallback((email: string, password: string) => {
@@ -62,7 +61,6 @@ export function useAuth() {
         (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
       );
 
-      console.log('Found user:', found);
       if (found) {
         const userData: AuthUser = {
           email: found.email,
@@ -87,7 +85,7 @@ export function useAuth() {
 
   return {
     user,
-    loading: loading || isInitializing,
+    loading,
     error,
     login,
     logout,
