@@ -1,0 +1,122 @@
+{
+  "query": "DESCRIBE processos_sr;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute DESCRIBE processos_sr;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "numeroProcesso",
+      "Type": "varchar(64)",
+      "Null": "NO",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nomeInvoice",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "",
+      "Extra": ""
+    },
+    {
+      "Field": "dataProcesso",
+      "Type": "varchar(32)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "",
+      "Extra": ""
+    },
+    {
+      "Field": "observacoes",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "ncm",
+      "Type": "varchar(20)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('Em andamento','Finalizado','Cancelado')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "Em andamento",
+      "Extra": ""
+    },
+    {
+      "Field": "confirmado",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "caixasPapelao",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "pesoBrutoKg",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "pesoLiquidoKg",
+      "Type": "decimal(10,2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "cbm",
+      "Type": "decimal(10,4)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "criadoEm",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "atualizadoEm",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\nnumeroProcesso\tvarchar(64)\tNO\tUNI\tNULL\t\nnomeInvoice\tvarchar(255)\tNO\t\t\t\ndataProcesso\tvarchar(32)\tNO\t\t\t\nobservacoes\ttext\tYES\t\tNULL\t\nncm\tvarchar(20)\tYES\t\t\t\nstatus\tenum('Em andamento','Finalizado','Cancelado')\tNO\t\tEm andamento\t\nconfirmado\ttinyint(1)\tNO\t\t0\t\ncaixasPapelao\tint(11)\tNO\t\t0\t\npesoBrutoKg\tdecimal(10,2)\tNO\t\t0\t\npesoLiquidoKg\tdecimal(10,2)\tNO\t\t0\t\ncbm\tdecimal(10,4)\tNO\t\t0\t\ncriadoEm\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\natualizadoEm\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}
