@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, email, role FROM users LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute SELECT id, name, email, role FROM users LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "SAROM GLOBAL",
+      "email": "sarom@asxstore.com",
+      "role": "admin"
+    },
+    {
+      "id": "390004",
+      "name": "sarom soares",
+      "email": "saromsoares@hotmail.com",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n1\tSAROM GLOBAL\tsarom@asxstore.com\tadmin\n390004\tsarom soares\tsaromsoares@hotmail.com\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}
