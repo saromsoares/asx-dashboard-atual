@@ -7,16 +7,20 @@ export default function Login() {
   const [email, setEmail] = useState('sarom@asxstore.com');
   const [password, setPassword] = useState('');
   const [, setLocation] = useLocation();
-  const { login, loading, error, isAuthenticated } = useAuth();
+  const { login, loading, error, isAuthenticated, user } = useAuth();
+  console.log('Login component render - user:', user, 'isAuthenticated:', isAuthenticated);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted with:', { email, password });
     login(email, password);
   };
 
   // Redirecionar para home se login bem-sucedido
   React.useEffect(() => {
+    console.log('Login effect - isAuthenticated:', isAuthenticated);
     if (isAuthenticated) {
+      console.log('Redirecting to home...');
       setLocation('/');
     }
   }, [isAuthenticated, setLocation]);
