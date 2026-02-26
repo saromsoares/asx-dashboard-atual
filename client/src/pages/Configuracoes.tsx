@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useIdioma } from '@/hooks/useIdioma';
-import { useCustos } from '@/hooks/useCustos';
+import { useIdiomaDB as useIdioma } from '@/hooks/useIdiomaDB';
+import { useCustosDB as useCustos } from '@/hooks/useCustosDB';
 import { Clock, ArrowLeft } from 'lucide-react';
 
 export default function Configuracoes() {

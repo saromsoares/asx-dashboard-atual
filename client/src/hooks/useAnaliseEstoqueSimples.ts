@@ -1,6 +1,7 @@
 import { usePedidos } from './usePedidos';
-import { useCustos } from './useCustos';
-import { useState, useEffect, useCallback } from 'react';
+import { useCustosDB as useCustos } from './useCustosDB';
+import { useCallback } from 'react';
+import { trpc } from '@/lib/trpc';
 
 export interface AnaliseEstoqueItem {
   produtoId: number;
@@ -19,37 +20,38 @@ export interface AnaliseEstoqueItem {
   investimentoEstoque: number;
 }
 
-// ===== Leitura dos Processos SR do Contêiner =====
-const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
-const STORAGE_KEY_CONFIRMADOS = 'asx_processos_confirmados';
-
-function calcularEmbarcadoSR(): Map<string, { sarom: number; alexandre: number }> {
+/**
+ * Calcula total embarcado por produto a partir dos processos SR do banco de dados.
+ */
+function calcularEmbarcadoPorProcessos(
+  processos: any[],
+  todosItens: any[]
+): Map<string, { sarom: number; alexandre: number }> {
   const resultado = new Map<string, { sarom: number; alexandre: number }>();
-  try {
-    const dados = localStorage.getItem(STORAGE_KEY_PROCESSOS);
-    if (!dados) return resultado;
-    const processos: any[] = JSON.parse(dados);
 
-    let confirmados = new Set<string>();
-    try {
-      const confDados = localStorage.getItem(STORAGE_KEY_CONFIRMADOS);
-      if (confDados) confirmados = new Set(JSON.parse(confDados));
-    } catch { /* ignore */ }
+  // Agrupar itens por processoId
+  const itensMap = new Map<number, any[]>();
+  for (const item of todosItens) {
+    const list = itensMap.get(item.processoId) || [];
+    list.push(item);
+    itensMap.set(item.processoId, list);
+  }
 
-    const validos = processos.filter(p =>
-      p.status === 'Em andamento' || p.status === 'Finalizado' || confirmados.has(p.id)
-    );
+  const validos = processos.filter(p =>
+    p.status === 'Em andamento' || p.status === 'Finalizado' || p.confirmado === 1
+  );
 
-    for (const processo of validos) {
-      for (const item of processo.itens) {
-        const codigo = item.codigo.toUpperCase();
-        const atual = resultado.get(codigo) || { sarom: 0, alexandre: 0 };
-        atual.sarom += item.pedidoSarom || 0;
-        atual.alexandre += item.pedidoAlexandre || 0;
-        resultado.set(codigo, atual);
-      }
+  for (const processo of validos) {
+    const itens = itensMap.get(processo.id) || [];
+    for (const item of itens) {
+      const codigo = item.codigo.toUpperCase();
+      const atual = resultado.get(codigo) || { sarom: 0, alexandre: 0 };
+      atual.sarom += item.pedidoSarom || 0;
+      atual.alexandre += item.pedidoAlexandre || 0;
+      resultado.set(codigo, atual);
     }
-  } catch { /* ignore */ }
+  }
+
   return resultado;
 }
 
@@ -57,20 +59,15 @@ export function useAnaliseEstoqueSimples() {
   const { pedidos } = usePedidos();
   const { taxaCambio } = useCustos();
 
-  const [embarcadoMap, setEmbarcadoMap] = useState(() => calcularEmbarcadoSR());
+  // Buscar processos SR e itens do banco de dados via tRPC
+  const { data: processosSR } = trpc.processoSR.getAll.useQuery();
+  const { data: todosItens } = trpc.itemProcesso.getAll.useQuery();
 
-  useEffect(() => {
-    const atualizar = () => setEmbarcadoMap(calcularEmbarcadoSR());
-    window.addEventListener('asx_processos_changed', atualizar);
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY_PROCESSOS || e.key === STORAGE_KEY_CONFIRMADOS) atualizar();
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => {
-      window.removeEventListener('asx_processos_changed', atualizar);
-      window.removeEventListener('storage', handleStorage);
-    };
-  }, []);
+  // Calcular embarcado a partir dos dados do banco
+  const embarcadoMap = (() => {
+    if (!processosSR || !todosItens) return new Map<string, { sarom: number; alexandre: number }>();
+    return calcularEmbarcadoPorProcessos(processosSR, todosItens);
+  })();
 
   const analisarProduto = useCallback((
     produtoId: number,
@@ -100,7 +97,7 @@ export function useAnaliseEstoqueSimples() {
       }
     });
 
-    // TOTAL EMBARCADO: itens dos processos SR do Contêiner
+    // TOTAL EMBARCADO: itens dos processos SR do banco
     let totalEmbarcado = 0;
     const embarcadoItem = embarcadoMap.get(codigo.toUpperCase());
     if (embarcadoItem) {

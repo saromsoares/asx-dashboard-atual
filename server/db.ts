@@ -1,8 +1,9 @@
 import { drizzle } from 'drizzle-orm/mysql2';
+import * as garantias_schema from '../drizzle/schema';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, preferencias_usuario, estoques_usuario, custos_produto, garantias_processo, garantias_item, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertPreferenciaUsuario, type InsertEstoqueUsuario, type InsertCustoProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, inArray } from 'drizzle-orm';
 
 let _db: MySql2Database | null = null;
 
@@ -766,7 +767,9 @@ export async function atualizarStatusProcessoSR(processoId: number, novoStatus: 
   if (!db) return null;
 
   try {
-    await db.update(processos_sr).set({ status: novoStatus }).where(eq(processos_sr.id, processoId));
+    // Quando o status muda para "Finalizado", marcar como confirmado
+    const confirmado = novoStatus === "Finalizado" ? 1 : 0;
+    await db.update(processos_sr).set({ status: novoStatus, confirmado }).where(eq(processos_sr.id, processoId));
     return { success: true };
   } catch (error) {
     console.error("[Database] Failed to update processo SR status:", error);
@@ -832,6 +835,33 @@ export async function atualizarItemProcesso(itemId: number, data: Partial<Insert
   }
 }
 
+/** Buscar um item de processo pelo ID */
+export async function getItemProcessoById(itemId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(itens_processo).where(eq(itens_processo.id, itemId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get item processo:", error);
+    return null;
+  }
+}
+
+/** Listar todos os itens de todos os processos */
+export async function getAllItensProcesso() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(itens_processo);
+  } catch (error) {
+    console.error("[Database] Failed to get all items processo:", error);
+    return [];
+  }
+}
+
 export async function removerItemProcesso(itemId: number) {
   const db = await getDb();
   if (!db) return null;
@@ -842,5 +872,369 @@ export async function removerItemProcesso(itemId: number) {
   } catch (error) {
     console.error("[Database] Failed to remove item from processo:", error);
     throw error;
+  }
+}
+
+
+// ============================================
+// FUNÇÕES PARA MIGRAÇÃO DE LOCALSTORAGE
+// ============================================
+
+/**
+ * Obter preferências do usuário (taxa de câmbio customizada, etc)
+ */
+export async function getPreferenciaUsuario(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(preferencias_usuario).where(eq(preferencias_usuario.userId, userId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get user preferences:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualizar ou criar preferências do usuário
+ */
+export async function upsertPreferenciaUsuario(userId: number, data: Partial<InsertPreferenciaUsuario>) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getPreferenciaUsuario(userId);
+    
+    if (existing) {
+      await db.update(preferencias_usuario)
+        .set({ ...data, atualizadoEm: new Date() })
+        .where(eq(preferencias_usuario.userId, userId));
+    } else {
+      await db.insert(preferencias_usuario).values({
+        userId,
+        ...data,
+      });
+    }
+    
+    return await getPreferenciaUsuario(userId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert user preferences:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter estoque de um produto para um usuário específico
+ */
+export async function getEstoqueUsuario(userId: number, produtoId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(estoques_usuario)
+      .where(sql`${estoques_usuario.userId} = ${userId} AND ${estoques_usuario.produtoId} = ${produtoId}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get user estoque:", error);
+    return null;
+  }
+}
+
+/**
+ * Listar todos os estoques de um usuário
+ */
+export async function listEstoquesUsuario(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(estoques_usuario).where(eq(estoques_usuario.userId, userId));
+  } catch (error) {
+    console.error("[Database] Failed to list user estoques:", error);
+    return [];
+  }
+}
+
+/**
+ * Atualizar ou criar estoque de um produto para um usuário
+ */
+export async function upsertEstoqueUsuario(userId: number, produtoId: string, quantidade: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getEstoqueUsuario(userId, produtoId);
+    
+    if (existing) {
+      await db.update(estoques_usuario)
+        .set({ quantidade, atualizadoEm: new Date() })
+        .where(sql`${estoques_usuario.userId} = ${userId} AND ${estoques_usuario.produtoId} = ${produtoId}`);
+    } else {
+      await db.insert(estoques_usuario).values({
+        userId,
+        produtoId,
+        quantidade,
+      });
+    }
+    
+    return await getEstoqueUsuario(userId, produtoId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert user estoque:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter custo em USD de um produto
+ */
+export async function getCustoProduto(produtoId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(custos_produto).where(eq(custos_produto.produtoId, produtoId)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get product cost:", error);
+    return null;
+  }
+}
+
+/**
+ * Atualizar ou criar custo em USD de um produto
+ */
+export async function upsertCustoProduto(produtoId: string, custoUsd: string | number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const existing = await getCustoProduto(produtoId);
+    
+    if (existing) {
+      await db.update(custos_produto)
+        .set({ custoUsd: custoUsd.toString(), atualizadoEm: new Date() })
+        .where(eq(custos_produto.produtoId, produtoId));
+    } else {
+      await db.insert(custos_produto).values({
+        produtoId,
+        custoUsd: custoUsd.toString(),
+      });
+    }
+    
+    return await getCustoProduto(produtoId);
+  } catch (error) {
+    console.error("[Database] Failed to upsert product cost:", error);
+    throw error;
+  }
+}
+
+/**
+ * Listar todos os custos de produtos
+ */
+export async function listCustosProdutos() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(custos_produto);
+  } catch (error) {
+    console.error("[Database] Failed to list product costs:", error);
+    return [];
+  }
+}
+
+
+// ============================================================================
+// GARANTIAS - CRUD Operations
+// ============================================================================
+
+/**
+ * Criar novo processo de garantia
+ */
+export async function criarGarantiaProcesso(usuarioId: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.insert(garantias_processo).values({
+      usuarioId,
+    });
+    return { id: result[0].insertId, usuarioId };
+  } catch (error) {
+    console.error("[Database] Failed to create warranty process:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter processo de garantia por ID
+ */
+export async function getGarantiaProcesso(processoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const result = await db.select().from(garantias_processo).where(eq(garantias_processo.id, processoId));
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Failed to get warranty process:", error);
+    return null;
+  }
+}
+
+/**
+ * Listar todos os processos de garantia de um usuário
+ */
+export async function getAllGarantiaProcessosByUser(usuarioId: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(garantias_processo).where(eq(garantias_processo.usuarioId, usuarioId));
+  } catch (error) {
+    console.error("[Database] Failed to list warranty processes:", error);
+    return [];
+  }
+}
+
+/**
+ * Deletar processo de garantia (cascata remove itens)
+ */
+export async function deletarGarantiaProcesso(processoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.delete(garantias_processo).where(eq(garantias_processo.id, processoId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to delete warranty process:", error);
+    throw error;
+  }
+}
+
+/**
+ * Adicionar item a um processo de garantia
+ */
+export async function adicionarGarantiaItem(processoId: number, data: {
+  codigoProduto: string;
+  quantidade: number;
+  precoUnitarioDolar: number;
+  observacao?: string;
+  status?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const precoTotalDolar = data.quantidade * data.precoUnitarioDolar;
+    const result = await db.insert(garantias_item).values({
+      processoId,
+      codigoProduto: data.codigoProduto,
+      quantidade: data.quantidade,
+      precoUnitarioDolar: String(data.precoUnitarioDolar),
+      precoTotalDolar: String(precoTotalDolar),
+      observacao: data.observacao || null,
+      status: data.status || 'Em Análise',
+    });
+    return { id: result[0].insertId, ...data, precoTotalDolar };
+  } catch (error) {
+    console.error("[Database] Failed to add warranty item:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter itens de um processo de garantia
+ */
+export async function getGarantiaItens(processoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    return await db.select().from(garantias_item).where(eq(garantias_item.processoId, processoId));
+  } catch (error) {
+    console.error("[Database] Failed to get warranty items:", error);
+    return [];
+  }
+}
+
+/**
+ * Atualizar item de garantia
+ */
+export async function atualizarGarantiaItem(itemId: number, data: {
+  quantidade?: number;
+  precoUnitarioDolar?: number;
+  observacao?: string;
+  status?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const item = await db.select().from(garantias_item).where(eq(garantias_item.id, itemId));
+    if (!item[0]) throw new Error("Item not found");
+
+    const quantidade = data.quantidade ?? item[0].quantidade;
+    const precoUnitarioDolar = data.precoUnitarioDolar ?? parseFloat(String(item[0].precoUnitarioDolar));
+    const precoTotalDolar = quantidade * precoUnitarioDolar;
+
+    await db.update(garantias_item).set({
+      quantidade,
+      precoUnitarioDolar: String(precoUnitarioDolar),
+      precoTotalDolar: String(precoTotalDolar),
+      observacao: data.observacao ?? item[0].observacao,
+      status: data.status ?? item[0].status,
+    }).where(eq(garantias_item.id, itemId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to update warranty item:", error);
+    throw error;
+  }
+}
+
+/**
+ * Remover item de garantia
+ */
+export async function removerGarantiaItem(itemId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    await db.delete(garantias_item).where(eq(garantias_item.id, itemId));
+    return { success: true };
+  } catch (error) {
+    console.error("[Database] Failed to remove warranty item:", error);
+    throw error;
+  }
+}
+
+/**
+ * Obter total em garantia por usuário
+ */
+export async function getTotalGarantiaByUser(usuarioId: string) {
+  const db = await getDb();
+  if (!db) return { total: 0, quantidade: 0 };
+
+  try {
+    const processos = await db.select().from(garantias_processo).where(eq(garantias_processo.usuarioId, usuarioId));
+    const processoIds = processos.map(p => p.id);
+
+    if (processoIds.length === 0) return { total: 0, quantidade: 0 };
+
+    const itens = await db.select().from(garantias_item).where(
+      inArray(garantias_item.processoId, processoIds)
+    );
+
+    const total = itens.reduce((sum, item) => sum + parseFloat(String(item.precoTotalDolar)), 0);
+    const quantidade = itens.length;
+
+    return { total, quantidade };
+  } catch (error) {
+    console.error("[Database] Failed to get warranty total:", error);
+    return { total: 0, quantidade: 0 };
   }
 }

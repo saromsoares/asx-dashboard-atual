@@ -217,3 +217,196 @@ export const itens_processo = mysqlTable("itens_processo", {
 
 export type ItemProcesso = typeof itens_processo.$inferSelect;
 export type InsertItemProcesso = typeof itens_processo.$inferInsert;
+
+/**
+ * Tabela de preferências do usuário
+ * Armazena taxa de câmbio customizada e outras preferências por usuário
+ */
+export const preferencias_usuario = mysqlTable("preferencias_usuario", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  taxaCambioCustomizada: decimal("taxaCambioCustomizada", { precision: 10, scale: 4 }).default("8.50").notNull(), // Taxa USD/BRL customizada
+  usarTaxaCustomizada: int("usarTaxaCustomizada").default(0).notNull(), // 0 = usar API, 1 = usar customizada
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PreferenciaUsuario = typeof preferencias_usuario.$inferSelect;
+export type InsertPreferenciaUsuario = typeof preferencias_usuario.$inferInsert;
+
+/**
+ * Tabela de estoques por usuário
+ * Armazena quantidade de estoque específica para cada usuário (Sarom, Alexandre, etc)
+ */
+export const estoques_usuario = mysqlTable("estoques_usuario", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull(),
+  quantidade: int("quantidade").default(0).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EstoqueUsuario = typeof estoques_usuario.$inferSelect;
+export type InsertEstoqueUsuario = typeof estoques_usuario.$inferInsert;
+
+/**
+ * Tabela de custos em USD por produto
+ * Armazena o custo em dólar de cada produto (migrado do localStorage)
+ */
+export const custos_produto = mysqlTable("custos_produto", {
+  id: int("id").autoincrement().primaryKey(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull().unique(),
+  custoUsd: decimal("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CustoProduto = typeof custos_produto.$inferSelect;
+export type InsertCustoProduto = typeof custos_produto.$inferInsert;
+
+/**
+ * Tabela de débitos financeiros
+ * Armazena débitos da operação (faturas, saldos anteriores, etc)
+ */
+export const debitos = mysqlTable("debitos", {
+  id: int("id").autoincrement().primaryKey(),
+  descricao: varchar("descricao", { length: 255 }).notNull(),
+  valor: decimal("valor", { precision: 12, scale: 2 }).default("0").notNull(),
+  data: varchar("data", { length: 32 }).notNull(), // YYYY-MM-DD
+  observacoes: text("observacoes"),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Debito = typeof debitos.$inferSelect;
+export type InsertDebito = typeof debitos.$inferInsert;
+
+/**
+ * Tabela de pagamentos
+ * Armazena pagamentos realizados
+ */
+export const pagamentos = mysqlTable("pagamentos", {
+  id: int("id").autoincrement().primaryKey(),
+  descricao: varchar("descricao", { length: 255 }).notNull(),
+  valor: decimal("valor", { precision: 12, scale: 2 }).default("0").notNull(),
+  data: varchar("data", { length: 32 }).notNull(), // YYYY-MM-DD
+  observacoes: text("observacoes"),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Pagamento = typeof pagamentos.$inferSelect;
+export type InsertPagamento = typeof pagamentos.$inferInsert;
+
+/**
+ * Tabela de vendas por produto (Central de Compras Avançada)
+ * Armazena dados de venda trimestral por produto
+ */
+export const vendas_produto = mysqlTable("vendas_produto", {
+  id: int("id").autoincrement().primaryKey(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull().unique(),
+  vendaTrimestre: int("vendaTrimestre").default(0).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type VendaProduto = typeof vendas_produto.$inferSelect;
+export type InsertVendaProduto = typeof vendas_produto.$inferInsert;
+
+/**
+ * Tabela de compras por produto (Central de Compras Avançada)
+ * Armazena dados de compra por produto
+ */
+export const compras_produto = mysqlTable("compras_produto", {
+  id: int("id").autoincrement().primaryKey(),
+  produtoId: varchar("produtoId", { length: 64 }).notNull().unique(),
+  quantidadeCompra: int("quantidadeCompra").default(0).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CompraProduto = typeof compras_produto.$inferSelect;
+export type InsertCompraProduto = typeof compras_produto.$inferInsert;
+
+/**
+ * Tabela de cotação PTAX (cache)
+ * Armazena última cotação do dólar PTAX para evitar chamadas excessivas à API
+ */
+export const cotacao_ptax = mysqlTable("cotacao_ptax", {
+  id: int("id").autoincrement().primaryKey(),
+  compra: decimal("compra", { precision: 10, scale: 4 }).default("0").notNull(),
+  venda: decimal("venda", { precision: 10, scale: 4 }).default("0").notNull(),
+  dataHoraCotacao: varchar("dataHoraCotacao", { length: 64 }).default("").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CotacaoPtax = typeof cotacao_ptax.$inferSelect;
+export type InsertCotacaoPtax = typeof cotacao_ptax.$inferInsert;
+
+/**
+ * Tabela de saldo de embarque por processo
+ * Armazena saldo pendente de cada processo SR
+ */
+export const saldo_embarque = mysqlTable("saldo_embarque", {
+  id: int("id").autoincrement().primaryKey(),
+  processoId: varchar("processoId", { length: 64 }).notNull().unique(), // número do processo
+  saldoUnidades: int("saldoUnidades").default(0).notNull(),
+  saldoValorUsd: decimal("saldoValorUsd", { precision: 12, scale: 2 }).default("0").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SaldoEmbarque = typeof saldo_embarque.$inferSelect;
+export type InsertSaldoEmbarque = typeof saldo_embarque.$inferInsert;
+
+/**
+ * Tabela de configuração JSON genérica
+ * Armazena dados JSON arbitrários por chave (ex: saldo_embarques, configurações)
+ */
+export const config_json = mysqlTable("config_json", {
+  id: int("id").autoincrement().primaryKey(),
+  chave: varchar("chave", { length: 128 }).notNull().unique(),
+  dados: text("dados").notNull(), // JSON stringified
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ConfigJson = typeof config_json.$inferSelect;
+export type InsertConfigJson = typeof config_json.$inferInsert;
+
+
+/**
+ * Tabela de processos de garantia
+ * Armazena processos de garantia por empresa (Sarom/Alexandre)
+ */
+export const garantias_processo = mysqlTable("garantias_processo", {
+  id: int("id").autoincrement().primaryKey(),
+  usuarioId: varchar("usuarioId", { length: 255 }).notNull(), // sarom@asxstore.com ou alexandre@asx.com.br
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type GarantiaProcesso = typeof garantias_processo.$inferSelect;
+export type InsertGarantiaProcesso = typeof garantias_processo.$inferInsert;
+
+/**
+ * Tabela de itens de garantia
+ * Armazena produtos em garantia com quantidade, valor unitário, observação e status
+ */
+export const garantias_item = mysqlTable("garantias_item", {
+  id: int("id").autoincrement().primaryKey(),
+  processoId: int("processoId").notNull().references(() => garantias_processo.id, { onDelete: "cascade" }),
+  codigoProduto: varchar("codigoProduto", { length: 50 }).notNull(), // Código ASX do produto
+  quantidade: int("quantidade").notNull().default(1),
+  precoUnitarioDolar: decimal("precoUnitarioDolar", { precision: 10, scale: 2 }).notNull().default("0"),
+  precoTotalDolar: decimal("precoTotalDolar", { precision: 12, scale: 2 }).notNull().default("0"),
+  observacao: text("observacao"), // Descrição do defeito e lote
+  status: varchar("status", { length: 50 }).notNull().default("Em Análise"), // Ok, Em Análise, Pendente, Cancelado
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type GarantiaItem = typeof garantias_item.$inferSelect;
+export type InsertGarantiaItem = typeof garantias_item.$inferInsert;

@@ -7,14 +7,16 @@
   COMPRAS, DURAÇÃO 6M COMPRAS, DURAÇÃO 3M COMPRAS
 */
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { produtos } from '@/data/produtos';
 import { useAnaliseEstoque } from '@/hooks/useAnaliseEstoque';
-import { useEstoque } from '@/hooks/useEstoque';
-import { useIdioma } from '@/hooks/useIdioma';
+import { useEstoqueDB as useEstoque } from '@/hooks/useEstoqueDB';
+import { useIdiomaDB as useIdioma } from '@/hooks/useIdiomaDB';
+import { trpc } from '@/lib/trpc';
 import { ArrowLeft, Download, Upload, ChevronUp, ChevronDown, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import ModalEstoque from '@/components/ModalEstoque';
+import { useToast } from '@/components/Toast';
 import * as XLSX from 'xlsx';
 
 interface CentralCompraAvancadaProps {
@@ -44,6 +46,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const { analisarProduto, VENDAS_HISTORICAS } = useAnaliseEstoque();
   const { produtosComEstoque } = useEstoque(comprador);
   const { t } = useIdioma();
+  const { success: showSuccess, error: showError } = useToast();
 
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('codigo');
@@ -52,40 +55,61 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
   const [showModalEstoque, setShowModalEstoque] = useState(false);
   const [estoqueEditando, setEstoqueEditando] = useState<{[key: string]: number}>({});
 
-  // ===== ESTADOS EDITÁVEIS: Vendas manuais e Compras =====
-  const STORAGE_VENDAS = `asx_central_vendas_${comprador}`;
-  const STORAGE_COMPRAS = `asx_central_compras_${comprador}`;
+  // ===== ESTADOS EDITÁVEIS: Vendas manuais e Compras (via banco de dados) =====
+  const { data: vendasDB } = trpc.dados.listVendas.useQuery();
+  const { data: comprasDB } = trpc.dados.listCompras.useQuery();
+  const updateVendaMut = trpc.dados.updateVenda.useMutation();
+  const updateCompraMut = trpc.dados.updateCompra.useMutation();
+  const utils = trpc.useUtils();
 
-  const [vendasEditando, setVendasEditando] = useState<{[codigo: string]: { vendas6m: number; vendas3m: number }}>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_VENDAS);
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
+  const [vendasEditando, setVendasEditando] = useState<{[codigo: string]: { vendas6m: number; vendas3m: number }}>({});
+  const [comprasEditando, setComprasEditando] = useState<{[codigo: string]: number}>({});
 
-  const [comprasEditando, setComprasEditando] = useState<{[codigo: string]: number}>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_COMPRAS);
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
+  // Carregar vendas do banco ao inicializar
+  useEffect(() => {
+    if (vendasDB && vendasDB.length > 0) {
+      const map: {[codigo: string]: { vendas6m: number; vendas3m: number }} = {};
+      for (const v of vendasDB) {
+        // vendaTrimestre armazena vendas3m; vendas6m = vendas3m * 2 (estimativa)
+        map[v.produtoId] = { vendas6m: v.vendaTrimestre * 2, vendas3m: v.vendaTrimestre };
+      }
+      setVendasEditando(prev => ({ ...map, ...prev }));
+    }
+  }, [vendasDB]);
 
-  // Persistir vendas e compras editadas
+  // Carregar compras do banco ao inicializar
+  useEffect(() => {
+    if (comprasDB && comprasDB.length > 0) {
+      const map: {[codigo: string]: number} = {};
+      for (const c of comprasDB) {
+        map[c.produtoId] = c.quantidadeCompra;
+      }
+      setComprasEditando(prev => ({ ...map, ...prev }));
+    }
+  }, [comprasDB]);
+
+  // Persistir vendas e compras no banco de dados
   const updateVendas = useCallback((codigo: string, campo: 'vendas6m' | 'vendas3m', valor: number) => {
     setVendasEditando(prev => {
       const next = { ...prev, [codigo]: { ...prev[codigo], [campo]: valor } };
-      try { localStorage.setItem(STORAGE_VENDAS, JSON.stringify(next)); } catch {}
+      // Salvar no banco (vendaTrimestre = vendas3m)
+      const vendas3m = campo === 'vendas3m' ? valor : (next[codigo]?.vendas3m ?? 0);
+      updateVendaMut.mutate({ produtoId: codigo, vendaTrimestre: vendas3m }, {
+        onSuccess: () => utils.dados.listVendas.invalidate(),
+      });
       return next;
     });
-  }, [STORAGE_VENDAS]);
+  }, [updateVendaMut, utils]);
 
   const updateCompras = useCallback((codigo: string, valor: number) => {
     setComprasEditando(prev => {
       const next = { ...prev, [codigo]: valor };
-      try { localStorage.setItem(STORAGE_COMPRAS, JSON.stringify(next)); } catch {}
+      updateCompraMut.mutate({ produtoId: codigo, quantidadeCompra: valor }, {
+        onSuccess: () => utils.dados.listCompras.invalidate(),
+      });
       return next;
     });
-  }, [STORAGE_COMPRAS]);
+  }, [updateCompraMut, utils]);
 
   const handleSaveManualEstoque = useCallback((codigo: string, quantidade: number) => {
     console.log(`Estoque adicionado: ${codigo} = ${quantidade}`);

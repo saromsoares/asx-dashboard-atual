@@ -1,0 +1,76 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2vDSDNDUA8VuM2q.22225ef3822e --database nCT6FD84zx5zyA9JkrjkuC --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "auditLogs"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "compras_produto"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "config_json"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "container_pedidos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "containers"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "cotacao_ptax"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "custos_produto"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "debitos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "estoques"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "estoques_usuario"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "itens_pedidos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "itens_processo"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "pagamentos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "pedidos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "precos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "preferencias_usuario"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "processos_sr"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "produtos"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "saldo_embarque"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "users"
+    },
+    {
+      "Tables_in_nCT6FD84zx5zyA9JkrjkuC": "vendas_produto"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_nCT6FD84zx5zyA9JkrjkuC\n__drizzle_migrations\nauditLogs\ncompras_produto\nconfig_json\ncontainer_pedidos\ncontainers\ncotacao_ptax\ncustos_produto\ndebitos\nestoques\nestoques_usuario\nitens_pedidos\nitens_processo\npagamentos\npedidos\nprecos\npreferencias_usuario\nprocessos_sr\nprodutos\nsaldo_embarque\nusers\nvendas_produto\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

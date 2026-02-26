@@ -1,10 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
+import { migracaoRouter } from "./routers/migracao";
+import { dadosRouter } from "./routers/dados";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getItemProcessoById, getAllItensProcesso, criarGarantiaProcesso, getGarantiaProcesso, getAllGarantiaProcessosByUser, deletarGarantiaProcesso, adicionarGarantiaItem, getGarantiaItens, atualizarGarantiaItem, removerGarantiaItem, getTotalGarantiaByUser } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
+import { getExchangeRate, getExchangeRateInfo } from "./exchangeRate";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -525,10 +528,11 @@ export const appRouter = router({
         if (data.pedidoSarom !== undefined) updateData.pedidoSarom = data.pedidoSarom;
         if (data.pedidoAlexandre !== undefined) updateData.pedidoAlexandre = data.pedidoAlexandre;
         if (data.ordemCompra !== undefined) updateData.ordemCompra = data.ordemCompra;
-        // Recalcular preço total se quantidade ou preço unitário mudaram
+        // CORREÇÃO: Buscar item atual do banco para pegar valores não enviados
         if (data.quantidade !== undefined || data.precoUnitarioDolar !== undefined) {
-          const qty = data.quantidade ?? 0;
-          const price = data.precoUnitarioDolar ?? 0;
+          const itemAtual = await getItemProcessoById(itemId);
+          const qty = data.quantidade ?? (itemAtual?.quantidade ?? 0);
+          const price = data.precoUnitarioDolar ?? (itemAtual ? parseFloat(itemAtual.precoUnitarioDolar) : 0);
           updateData.precoTotalDolar = String(Math.round(qty * price * 100) / 100);
         }
         return await atualizarItemProcesso(itemId, updateData);
@@ -538,6 +542,85 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await removerItemProcesso(input.itemId);
       }),
+    getAll: protectedProcedure
+      .query(async () => {
+        return await getAllItensProcesso();
+      }),
   }),
+
+  cambio: router({
+    getTaxa: publicProcedure
+      .query(async () => {
+        const rate = await getExchangeRate();
+        return { rate };
+      }),
+    getInfo: publicProcedure
+      .query(async () => {
+        return await getExchangeRateInfo();
+      }),
+  }),
+
+  garantias: router({
+    criarProcesso: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        return await criarGarantiaProcesso(ctx.user.email || String(ctx.user.id));
+      }),
+    getAllByUser: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await getAllGarantiaProcessosByUser(ctx.user.email || String(ctx.user.id));
+      }),
+    getItens: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        return await getGarantiaItens(input.processoId);
+      }),
+    adicionarItem: protectedProcedure
+      .input(z.object({
+        processoId: z.number().int().positive(),
+        codigoProduto: z.string().min(1).max(50).trim(),
+        quantidade: z.number().int().min(1).max(999999),
+        precoUnitarioDolar: z.number().min(0).max(999999.99),
+        observacao: z.string().max(500).trim().optional(),
+        status: z.enum(['Ok', 'Em Análise', 'Pendente', 'Cancelado']).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await adicionarGarantiaItem(input.processoId, {
+          codigoProduto: input.codigoProduto,
+          quantidade: input.quantidade,
+          precoUnitarioDolar: input.precoUnitarioDolar,
+          observacao: input.observacao,
+          status: input.status,
+        });
+      }),
+    atualizarItem: protectedProcedure
+      .input(z.object({
+        itemId: z.number().int().positive(),
+        quantidade: z.number().int().min(1).max(999999).optional(),
+        precoUnitarioDolar: z.number().min(0).max(999999.99).optional(),
+        observacao: z.string().max(500).trim().optional(),
+        status: z.enum(['Ok', 'Em Análise', 'Pendente', 'Cancelado']).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { itemId, ...data } = input;
+        return await atualizarGarantiaItem(itemId, data);
+      }),
+    removerItem: protectedProcedure
+      .input(z.object({ itemId: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        return await removerGarantiaItem(input.itemId);
+      }),
+    deletarProcesso: protectedProcedure
+      .input(z.object({ processoId: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        return await deletarGarantiaProcesso(input.processoId);
+      }),
+    getTotalByUser: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await getTotalGarantiaByUser(ctx.user.email || String(ctx.user.id));
+      }),
+  }),
+
+  migracao: migracaoRouter,
+  dados: dadosRouter,
 });
 export type AppRouter = typeof appRouter;

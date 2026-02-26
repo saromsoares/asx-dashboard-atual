@@ -9,9 +9,10 @@
 import { Link, useLocation } from "wouter";
 import { BarChart3, ShoppingCart, Settings, Lightbulb, ChevronLeft, ChevronRight, RefreshCw, ClipboardList, AlertTriangle, LogOut, DollarSign } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useEstoque } from "@/hooks/useEstoque";
+import { useEstoqueDB as useEstoque } from "@/hooks/useEstoqueDB";
 import { useAuth } from "@/hooks/useAuth";
-import { useIdioma } from "@/hooks/useIdioma";
+import { useIdiomaDB as useIdioma } from "@/hooks/useIdiomaDB";
+import { trpc } from "@/lib/trpc";
 
 // Logo removido
 
@@ -51,6 +52,25 @@ export default function Sidebar({ currentPage }: SidebarProps) {
   const { kpis: kpisSarom } = useEstoque('sarom');
   const { kpis: kpisAlexandre } = useEstoque('alexandre');
 
+  // Cotação PTAX via banco de dados
+  const { data: cotacaoDB } = trpc.dados.getCotacao.useQuery();
+  const updateCotacaoMut = trpc.dados.updateCotacao.useMutation();
+  const utilsTrpc = trpc.useUtils();
+
+  // Carregar cache do banco ao inicializar
+  useEffect(() => {
+    if (cotacaoDB && cotacaoDB.compra) {
+      setCotacao({
+        cotacaoCompra: Number(cotacaoDB.compra),
+        cotacaoVenda: Number(cotacaoDB.venda),
+        dataHoraCotacao: cotacaoDB.dataHoraCotacao,
+      });
+      if (cotacaoDB.atualizadoEm) {
+        setLastUpdate(new Date(cotacaoDB.atualizadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (cache)');
+      }
+    }
+  }, [cotacaoDB]);
+
   const fetchCotacao = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -68,8 +88,14 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           const ptax = data.value[0] as CotacaoPTAX;
           setCotacao(ptax);
           setLastUpdate(new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-          localStorage.setItem('asx_cotacao_ptax', JSON.stringify(ptax));
-          localStorage.setItem('asx_cotacao_timestamp', new Date().toISOString());
+          // Salvar no banco de dados em vez de localStorage
+          updateCotacaoMut.mutate({
+            compra: ptax.cotacaoCompra,
+            venda: ptax.cotacaoVenda,
+            dataHoraCotacao: ptax.dataHoraCotacao,
+          }, {
+            onSuccess: () => utilsTrpc.dados.getCotacao.invalidate(),
+          });
           setLoading(false);
           return;
         }
@@ -79,25 +105,62 @@ export default function Sidebar({ currentPage }: SidebarProps) {
     }
     
     setError(true);
-    try {
-      const cached = localStorage.getItem('asx_cotacao_ptax');
-      if (cached) {
-        setCotacao(JSON.parse(cached));
-        const cachedTime = localStorage.getItem('asx_cotacao_timestamp');
-        if (cachedTime) {
-          setLastUpdate(new Date(cachedTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' (cache)');
+    // Cache agora vem do banco (já carregado via useEffect acima)
+    setLoading(false);
+  }, [updateCotacaoMut, utilsTrpc]);
+
+  // Buscar cotação apenas às 10h e 15h (horário local do usuário)
+  useEffect(() => {
+    const HORARIOS_ATUALIZACAO = [10, 15]; // 10:00 e 15:00
+    const JANELA_MINUTOS = 5; // Janela de 5 minutos após o horário
+
+    const verificarSeDeveAtualizar = (): boolean => {
+      const agora = new Date();
+      const hora = agora.getHours();
+      const minuto = agora.getMinutes();
+
+      // Verificar se estamos dentro da janela de atualização (ex: 10:00-10:05 ou 15:00-15:05)
+      for (const h of HORARIOS_ATUALIZACAO) {
+        if (hora === h && minuto < JANELA_MINUTOS) {
+          return true;
         }
       }
-    } catch { /* ignore */ }
-    
-    setLoading(false);
-  }, []);
+      return false;
+    };
 
-  useEffect(() => {
-    fetchCotacao();
-    const interval = setInterval(fetchCotacao, 10 * 60 * 1000);
+    const verificarSeJaAtualizouHoje = (): boolean => {
+      if (!cotacaoDB?.atualizadoEm) return false;
+      const ultimaAtualizacao = new Date(cotacaoDB.atualizadoEm);
+      const agora = new Date();
+      // Se foi atualizado hoje, verificar se já passou pelo horário mais recente
+      if (ultimaAtualizacao.toDateString() === agora.toDateString()) {
+        const horaAtual = agora.getHours();
+        const horaUltimaAtualizacao = ultimaAtualizacao.getHours();
+        // Se estamos após as 15h e já atualizou às 15h ou depois, não precisa
+        if (horaAtual >= 15 && horaUltimaAtualizacao >= 15) return true;
+        // Se estamos entre 10h e 15h e já atualizou às 10h ou depois, não precisa
+        if (horaAtual >= 10 && horaAtual < 15 && horaUltimaAtualizacao >= 10) return true;
+      }
+      return false;
+    };
+
+    // Na primeira carga: buscar se não tem cache ou se o cache é de ontem
+    const temCacheValido = cotacaoDB && cotacaoDB.compra && Number(cotacaoDB.compra) > 0;
+    if (!temCacheValido) {
+      fetchCotacao();
+    } else if (verificarSeDeveAtualizar() && !verificarSeJaAtualizouHoje()) {
+      fetchCotacao();
+    }
+
+    // Verificar a cada 1 minuto se está no horário de atualização
+    const interval = setInterval(() => {
+      if (verificarSeDeveAtualizar() && !verificarSeJaAtualizouHoje()) {
+        fetchCotacao();
+      }
+    }, 60 * 1000); // Verificar a cada 1 minuto
+
     return () => clearInterval(interval);
-  }, [fetchCotacao]);
+  }, [fetchCotacao, cotacaoDB]);
 
   // Mapa de alertas por item de menu
   const alertas = useMemo(() => {
@@ -163,6 +226,13 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       icon: Lightbulb,
       href: "/desenvolvimento",
       description: t('produtosEmDesenvolvimento'),
+    },
+    {
+      id: "garantias",
+      label: 'Garantias',
+      icon: AlertTriangle,
+      href: "/garantias",
+      description: 'Controle de processos de garantia',
     },
     {
       id: "configuracoes",
@@ -246,6 +316,9 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                   {t('atualizado')}: {lastUpdate}
                 </p>
               )}
+              <p className="text-[8px] mt-0.5" style={{ color: 'oklch(0.28 0.010 285)' }}>
+                Atualiza às 10h e 15h
+              </p>
             </div>
           ) : (
             <div className="flex items-center gap-2">
@@ -406,26 +479,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
         </div>
       )}
 
-      {/* Cards de Porcentagem Total - Cobertura de Estoque */}
-      {!collapsed && (
-        <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg border space-y-2" style={{
-          background: 'oklch(0.14 0.005 285)',
-          borderColor: 'oklch(0.26 0.005 285)',
-        }}>
-          <div>
-            <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Sarom</span>
-            <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.72 0.17 145)' }}>
-              {kpisSarom && kpisSarom.totalSkus > 0 ? Math.round((kpisSarom.skusOk / kpisSarom.totalSkus) * 100) : 0}%
-            </p>
-          </div>
-          <div>
-            <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Alexandre</span>
-            <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.55 0.15 270)' }}>
-              {kpisAlexandre && kpisAlexandre.totalSkus > 0 ? Math.round((kpisAlexandre.skusOk / kpisAlexandre.totalSkus) * 100) : 0}%
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Cards de Pedido Removidos - Migrados para página de Garantias */}
 
       {/* Logout Button */}
       <LogoutButton collapsed={collapsed} />

@@ -3,14 +3,15 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
-import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle, Link2, ShoppingCart, Check } from 'lucide-react';
+import { X, Plus, Trash2, Copy, ArrowLeft, Download, AlertTriangle, Link2, ShoppingCart, Check, ChevronUp, ChevronDown } from 'lucide-react';
 import XLSX from 'xlsx-js-style';
 import { produtos } from '../data/produtos';
-import { dispatchProcessosChange } from '../hooks/useEstoque';
+import { dispatchProcessosChange } from '../hooks/useEstoqueDB';
 import { VinculadorEmbarques } from '../components/VinculadorEmbarques';
 import { useEmbarques } from '../hooks/useEmbarques';
-import { useIdioma } from '../hooks/useIdioma';
+import { useIdiomaDB as useIdioma } from '../hooks/useIdiomaDB';
 import { trpc } from '../lib/trpc';
+import { useToast } from '../components/Toast';
 
 interface ItemConteiner {
   id: string;
@@ -42,40 +43,105 @@ interface ProcessoSR {
   cbm: number;
 }
 
-const STORAGE_KEY_PROCESSOS = 'asx_processos_sr';
-const STORAGE_KEY_CONFIRMADOS = 'asx_processos_confirmados';
-
-function carregarProcessos(): ProcessoSR[] {
-  try {
-    const dados = localStorage.getItem(STORAGE_KEY_PROCESSOS);
-    if (dados) return JSON.parse(dados);
-  } catch (e) {
-    console.error('Erro ao carregar processos:', e);
-  }
-  return [];
-}
-
-function carregarConfirmados(): Set<string> {
-  try {
-    const dados = localStorage.getItem(STORAGE_KEY_CONFIRMADOS);
-    if (dados) return new Set(JSON.parse(dados));
-  } catch (e) {
-    console.error('Erro ao carregar confirmados:', e);
-  }
-  return new Set();
-}
+// Processos SR agora são gerenciados via banco de dados (tRPC)
 
 export default function Conteiner() {
   const [, setLocation] = useLocation();
   const { t } = useIdioma();
   const { embarques } = useEmbarques();
-  const [processos, setProcessos] = useState<ProcessoSR[]>(() => carregarProcessos());
+  const { success: showSuccess, error: showError } = useToast();
+  const [processos, setProcessos] = useState<ProcessoSR[]>([]);
   const [showNovoProcesso, setShowNovoProcesso] = useState(false);
   const [processoSelecionado, setProcessoSelecionado] = useState<ProcessoSR | null>(null);
-  const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(() => carregarConfirmados());
+  const [processosConfirmados, setProcessosConfirmados] = useState<Set<string>>(new Set());
+
+  // Carregar processos do banco de dados via tRPC
+  const { data: processosSRDb } = trpc.processoSR.getAll.useQuery();
+  const { data: todosItensSRDb } = trpc.itemProcesso.getAll.useQuery();
+  const { data: saldoDB } = trpc.dados.getSaldo.useQuery();
+  const updateSaldoMut = trpc.dados.updateSaldo.useMutation();
+  const utilsTrpc = trpc.useUtils();
+
+  // Sincronizar processos do banco para estado local
+  useEffect(() => {
+    if (processosSRDb && todosItensSRDb) {
+      const itensMap = new Map<number, any[]>();
+      for (const item of todosItensSRDb as any[]) {
+        const list = itensMap.get(item.processoId) || [];
+        list.push(item);
+        itensMap.set(item.processoId, list);
+      }
+
+      const mapped: ProcessoSR[] = (processosSRDb as any[]).map((p: any) => ({
+        id: String(p.id),
+        numeroProcesso: p.numeroProcesso || '',
+        nomeInvoice: p.nomeInvoice || '',
+        dataProcesso: p.dataProcesso || '',
+        observacoes: p.observacoes || '',
+        ncm: p.ncm || '',
+        itens: (itensMap.get(p.id) || []).map((i: any) => ({
+          id: String(i.id),
+          codigo: i.codigo,
+          descricao: i.descricao,
+          unidade: i.unidade || 'UND',
+          quantidade: i.quantidade,
+          precoUnitarioDolar: parseFloat(i.precoUnitarioDolar) || 0,
+          precoTotalDolar: parseFloat(i.precoTotalDolar) || 0,
+          pedidoSarom: i.pedidoSarom || 0,
+          pedidoAlexandre: i.pedidoAlexandre || 0,
+          ordemCompra: i.ordemCompra || '',
+        })),
+        dataCriacao: p.dataCriacao || new Date().toISOString(),
+        status: p.status || 'Em andamento',
+        caixasPapelao: p.caixasPapelao || 0,
+        pesoBrutoKg: p.pesoBrutoKg || 0,
+        pesoLiquidoKg: p.pesoLiquidoKg || 0,
+        cbm: p.cbm || 0,
+      }));
+      setProcessos(mapped);
+
+      // Carregar confirmados
+      const confSet = new Set<string>();
+      (processosSRDb as any[]).forEach((p: any) => {
+        if (p.confirmado === 1) confSet.add(String(p.id));
+      });
+      setProcessosConfirmados(confSet);
+    }
+  }, [processosSRDb, todosItensSRDb]);
   const [filtroConfirmados, setFiltroConfirmados] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<'Todos' | 'Em andamento' | 'Finalizado' | 'Cancelado'>('Todos');
   const [showVinculador, setShowVinculador] = useState(false);
+
+  // Ordenação de itens do processo
+  type ItemSortField = 'codigo' | 'descricao' | 'quantidade' | 'precoUnitarioDolar' | 'precoTotalDolar';
+  const [itemSortField, setItemSortField] = useState<ItemSortField>('codigo');
+  const [itemSortDir, setItemSortDir] = useState<'asc' | 'desc'>('asc');
+
+  const toggleItemSort = useCallback((field: ItemSortField) => {
+    if (itemSortField === field) setItemSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setItemSortField(field); setItemSortDir('asc'); }
+  }, [itemSortField]);
+
+  const ItemSortIcon = ({ field }: { field: ItemSortField }) => {
+    if (itemSortField !== field) return <ChevronDown className="w-3 h-3 opacity-30 inline ml-0.5" />;
+    return itemSortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-red-400 inline ml-0.5" /> : <ChevronDown className="w-3 h-3 text-red-400 inline ml-0.5" />;
+  };
+
+  const sortedItens = useMemo(() => {
+    if (!processoSelecionado) return [];
+    return [...processoSelecionado.itens].sort((a, b) => {
+      let va: any = 0, vb: any = 0;
+      if (itemSortField === 'codigo') { va = a.codigo; vb = b.codigo; }
+      else if (itemSortField === 'descricao') { va = a.descricao; vb = b.descricao; }
+      else if (itemSortField === 'quantidade') { va = a.quantidade; vb = b.quantidade; }
+      else if (itemSortField === 'precoUnitarioDolar') { va = a.precoUnitarioDolar; vb = b.precoUnitarioDolar; }
+      else if (itemSortField === 'precoTotalDolar') { va = a.precoTotalDolar; vb = b.precoTotalDolar; }
+      if (typeof va === 'string') {
+        return itemSortDir === 'asc' ? va.localeCompare(vb as string) : (vb as string).localeCompare(va);
+      }
+      return itemSortDir === 'asc' ? (va as number) - (vb as number) : (vb as number) - (va as number);
+    });
+  }, [processoSelecionado, itemSortField, itemSortDir]);
   const { obterEmbarquesProcesso } = useEmbarques();
 
   // ===== IMPORTAR DE PEDIDO CONFIRMADO (Modal Grande) =====
@@ -102,19 +168,24 @@ export default function Conteiner() {
   const { data: pedidosDb = [] } = trpc.pedido.getAll.useQuery();
   const { data: todosItensDb = [] } = trpc.itemPedido.getAll.useQuery();
 
-  // Saldo pendente: quantidades já embarcadas de cada pedido em contêineres anteriores
-  const STORAGE_SALDO = 'asx_saldo_embarques';
-  const [saldoEmbarques, setSaldoEmbarques] = useState<Record<string, Record<string, { sarom: number; alexandre: number }>>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_SALDO);
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
+   // Saldo pendente: quantidades já embarcadas de cada pedido em contêneres anteriores (via banco)
+  const [saldoEmbarques, setSaldoEmbarques] = useState<Record<string, Record<string, { sarom: number; alexandre: number }>>>({});
+
+  // Carregar saldo do banco
+  useEffect(() => {
+    if (saldoDB && saldoDB.dados) {
+      try {
+        setSaldoEmbarques(JSON.parse(saldoDB.dados));
+      } catch { /* ignore */ }
+    }
+  }, [saldoDB]);
 
   const salvarSaldo = useCallback((novoSaldo: typeof saldoEmbarques) => {
     setSaldoEmbarques(novoSaldo);
-    try { localStorage.setItem(STORAGE_SALDO, JSON.stringify(novoSaldo)); } catch {}
-  }, []);
+    updateSaldoMut.mutate({ dados: JSON.stringify(novoSaldo) }, {
+      onSuccess: () => utilsTrpc.dados.getSaldo.invalidate(),
+    });
+  }, [updateSaldoMut, utilsTrpc]);
 
   // Filtrar apenas pedidos confirmados
   const pedidosConfirmadosDb = useMemo(() => {
@@ -267,24 +338,8 @@ export default function Conteiner() {
     setQtdsEmbarcar({});
   }, [processoSelecionado, itensDoSelecionado, qtdsEmbarcar, pedidosDb, pedidoSelecionadoImport, saldoEmbarques, salvarSaldo, processos]);
 
-  // Persistir processos no localStorage sempre que mudar
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_PROCESSOS, JSON.stringify(processos));
-      dispatchProcessosChange(); // Notificar useEstoque da mudança
-    } catch (e) {
-      console.error('Erro ao salvar processos:', e);
-    }
-  }, [processos]);
-
-  // Persistir confirmados no localStorage sempre que mudar
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY_CONFIRMADOS, JSON.stringify(Array.from(processosConfirmados)));
-    } catch (e) {
-      console.error('Erro ao salvar confirmados:', e);
-    }
-  }, [processosConfirmados]);
+  // Processos e confirmados agora são gerenciados via banco de dados (tRPC)
+  // Não precisa mais persistir no localStorage
 
   const processosFiltrados = useMemo(() => {
     let resultado = processos;
@@ -1102,9 +1157,58 @@ export default function Conteiner() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+  const atualizarStatusMut = trpc.processoSR.atualizarStatus.useMutation();
+
   const handleConfirmarProcesso = () => {
     if (!processoSelecionado) return;
-    setProcessosConfirmados(prev => new Set(Array.from(prev).concat([processoSelecionado.id])));
+    
+    // Atualizar status no banco de dados
+    atualizarStatusMut.mutate(
+      {
+        processoId: parseInt(processoSelecionado.id),
+        novoStatus: 'Finalizado',
+      },
+      {
+        onSuccess: () => {
+          // Adicionar ao estado local
+          setProcessosConfirmados(prev => new Set(Array.from(prev).concat([processoSelecionado.id])));
+          // Invalidar cache para recarregar dados
+          utilsTrpc.processoSR.getAll.invalidate();
+          utilsTrpc.itemProcesso.getAll.invalidate();
+          showSuccess(
+            `Processo ${processoSelecionado.numeroProcesso} confirmado!`,
+            5000,
+            {
+              label: 'Desfazer',
+              onClick: () => {
+                atualizarStatusMut.mutate(
+                  {
+                    processoId: parseInt(processoSelecionado.id),
+                    novoStatus: 'Em andamento',
+                  },
+                  {
+                    onSuccess: () => {
+                      setProcessosConfirmados(prev => {
+                        const newSet = new Set(prev);
+                        newSet.delete(processoSelecionado.id);
+                        return newSet;
+                      });
+                      utilsTrpc.processoSR.getAll.invalidate();
+                      utilsTrpc.itemProcesso.getAll.invalidate();
+                      showSuccess(`Confirmacao desfeita para ${processoSelecionado.numeroProcesso}`, 3000);
+                    },
+                    onError: (error: any) => showError(`Erro ao desfazer: ${error.message}`, 4000),
+                  }
+                );
+              },
+            }
+          );
+          // Disparar evento para atualizar analise de estoque
+          dispatchProcessosChange();
+        },
+        onError: (error: any) => showError(`Erro ao confirmar: ${error.message}`, 4000),
+      }
+    );
   };
 
 
@@ -1373,18 +1477,24 @@ export default function Conteiner() {
               </div>
             )}
 
+            {/* Indicador de Itens Lancados */}
+            {processoSelecionado.itens.length > 0 && (
+              <div className="mt-4 p-3 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+                <p className="text-xs font-semibold" style={{ color: 'oklch(0.70 0.005 65)' }}>Itens lancados: {processoSelecionado.itens.length}</p>
+              </div>
+            )}
             {/* Tabela de Itens */}
-            <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: 0 }}>
+            <div className="flex-1 overflow-auto mt-4 border rounded-lg" style={{ borderColor: 'oklch(0.22 0.005 285)', minHeight: '300px' }}>
               <div className="overflow-x-auto">
               <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '1200px' }}>
                 <thead style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }} className="border-b sticky top-0">
                   <tr>
-                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Código</th>
-                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Nome</th>
+                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider cursor-pointer select-none" style={{ color: 'oklch(0.50 0.010 285)' }} onClick={() => toggleItemSort('codigo')}>Código <ItemSortIcon field="codigo" /></th>
+                    <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider cursor-pointer select-none" style={{ color: 'oklch(0.50 0.010 285)' }} onClick={() => toggleItemSort('descricao')}>Nome <ItemSortIcon field="descricao" /></th>
                     <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Unid</th>
-                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Qtd</th>
-                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Preço Unit USD</th>
-                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Total USD</th>
+                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider cursor-pointer select-none" style={{ color: 'oklch(0.50 0.010 285)' }} onClick={() => toggleItemSort('quantidade')}>Qtd <ItemSortIcon field="quantidade" /></th>
+                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider cursor-pointer select-none" style={{ color: 'oklch(0.50 0.010 285)' }} onClick={() => toggleItemSort('precoUnitarioDolar')}>Preço Unit USD <ItemSortIcon field="precoUnitarioDolar" /></th>
+                    <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider cursor-pointer select-none" style={{ color: 'oklch(0.50 0.010 285)' }} onClick={() => toggleItemSort('precoTotalDolar')}>Total USD <ItemSortIcon field="precoTotalDolar" /></th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.40 0.15 200)' }}>Sarom</th>
                     <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.40 0.15 145)' }}>Alexandre</th>
                     <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Ordem</th>
@@ -1392,7 +1502,7 @@ export default function Conteiner() {
                   </tr>
                 </thead>
                 <tbody>
-                  {processoSelecionado.itens.map(item => {
+                  {sortedItens.map(item => {
                     const somaDistrib = item.pedidoSarom + item.pedidoAlexandre;
                     const isDivergente = somaDistrib !== item.quantidade;
                     const diff = somaDistrib - item.quantidade;
@@ -1803,12 +1913,12 @@ export default function Conteiner() {
               </button>
               <button
                 onClick={handleConfirmarProcesso}
-                disabled={processosConfirmados.has(processoSelecionado?.id || '')}
+                disabled={processosConfirmados.has(processoSelecionado?.id || '') || atualizarStatusMut.isPending}
                 className="flex-1 px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                 style={{ background: processosConfirmados.has(processoSelecionado?.id || '') ? 'oklch(0.30 0.005 285)' : 'oklch(0.48 0.22 25)', color: 'white' }}
                 title={processosConfirmados.has(processoSelecionado?.id || '') ? 'Processo já confirmado' : 'Confirmar e finalizar processo'}
               >
-                ✓ Confirmar Processo
+                {atualizarStatusMut.isPending ? '⏳ Confirmando...' : '✓ Confirmar Processo'}
               </button>
             </div>
           </main>

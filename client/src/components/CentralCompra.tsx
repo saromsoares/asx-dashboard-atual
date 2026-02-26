@@ -6,7 +6,7 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { useEstoque, type ProdutoComEstoque, type StatusEstoque } from '@/hooks/useEstoque';
+import { useEstoqueDB as useEstoque, type ProdutoComEstoque, type StatusEstoque } from '@/hooks/useEstoqueDB';
 import { categorias } from '@/data/produtos';
 import {
   Search,
@@ -68,7 +68,6 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
     metaCobertura,
     setMetaCobertura,
     atualizarDados,
-    atualizarDadosEmMassa,
   } = useEstoque(comprador);
 
   // Estado da UI
@@ -151,7 +150,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
   const commitEdit = () => {
     if (!editingCell) return;
     const val = parseFloat(editValue) || 0;
-    atualizarDados(editingCell.id, editingCell.field as any, Math.max(0, val));
+    atualizarDados(String(editingCell.id), editingCell.field as any, Math.max(0, val));
     setEditingCell(null);
     setEditValue('');
   };
@@ -211,7 +210,13 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
         });
 
         if (importados > 0) {
-          atualizarDadosEmMassa(dadosImport);
+          // Atualizar dados um a um (sem atualizarDadosEmMassa)
+          for (const [produtoId, dados] of Object.entries(dadosImport)) {
+            const d = dados as any;
+            if (d.estoqueInicial !== undefined) atualizarDados(String(produtoId), 'estoqueInicial', d.estoqueInicial);
+            if (d.vendaTrimestre !== undefined) atualizarDados(String(produtoId), 'vendaTrimestre', d.vendaTrimestre);
+            if (d.mercadoriaAChegarManual !== undefined) atualizarDados(String(produtoId), 'mercadoriaAChegarManual', d.mercadoriaAChegarManual);
+          }
           alert(`Importação concluída: ${importados} produtos atualizados.`);
         } else {
           alert('Nenhum produto encontrado na planilha. Verifique se a coluna CODIGO está presente.');
@@ -225,7 +230,7 @@ export default function CentralCompra({ comprador, titulo, corAcento, corAcentoH
 
     // Reset input
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [produtosComEstoque, atualizarDadosEmMassa]);
+  }, [produtosComEstoque, atualizarDados]);
 
   // ---- Exportação Excel ----
 

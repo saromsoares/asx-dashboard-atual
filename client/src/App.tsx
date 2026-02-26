@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
@@ -17,13 +16,21 @@ import Rastreamento from "./pages/Rastreamento";
 import Pagamentos from "./pages/Pagamentos";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
+import Garantias from "./pages/Garantias";
 import { MobileMenu } from "./components/MobileMenu";
 import { ToastContainer } from "./components/Toast";
 import { useToast } from "./hooks/useToast";
 
+
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
+  
+  // Se está na página de login, sempre mostrar login
+  if (location === '/login') {
+    return <Login />;
+  }
+  
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
@@ -43,6 +50,7 @@ function AuthenticatedRouter() {
   const [location] = useLocation();
   const { toasts, removeToast } = useToast();
 
+
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
     if (location === "/containers") return "containers";
@@ -53,6 +61,7 @@ function AuthenticatedRouter() {
     if (location === "/central-alexandre") return "central-alexandre";
     if (location === "/desenvolvimento") return "desenvolvimento";
     if (location === "/configuracoes") return "configuracoes";
+    if (location === "/garantias") return "garantias";
     return "dashboard";
   };
 
@@ -76,6 +85,7 @@ function AuthenticatedRouter() {
           { label: 'Central Sarom', href: '/central-sarom' },
           { label: 'Central Alexandre', href: '/central-alexandre' },
           { label: 'Configurações', href: '/configuracoes' },
+          { label: 'Garantias', href: '/garantias' },
         ]} currentPath={location} />
         <div className="flex-1" />
       </header>
@@ -90,6 +100,7 @@ function AuthenticatedRouter() {
           <Route path="/central-sarom" component={CentralSarom} />
           <Route path="/central-alexandre" component={CentralAlexandre} />
           <Route path="/desenvolvimento" component={Desenvolvimento} />
+          <Route path="/garantias" component={Garantias} />
           <Route path="/configuracoes" component={Configuracoes} />
           <Route path="/404" component={NotFound} />
           <Route component={NotFound} />
@@ -101,14 +112,14 @@ function AuthenticatedRouter() {
 }
 
 function App() {
-  const { toasts, removeToast } = useToast();
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
-          <ProtectedRouter />
-          <ToastContainer toasts={toasts} onClose={removeToast} />
+          <Switch>
+            <Route path="/login" component={Login} />
+            <Route component={ProtectedRouter} />
+          </Switch>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
