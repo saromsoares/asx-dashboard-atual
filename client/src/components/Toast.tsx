@@ -50,7 +50,7 @@ export function Toast({ id, type, message, duration = 5000, onClose, action }: T
 
   return (
     <div
-      className="fixed bottom-4 right-4 md:bottom-6 md:right-6 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg animate-in slide-in-from-bottom-5 z-50"
+      className="flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg animate-in slide-in-from-bottom-5 z-50"
       style={{
         background: bgColor,
         borderColor: borderColor,

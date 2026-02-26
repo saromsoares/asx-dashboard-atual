@@ -563,11 +563,11 @@ export const appRouter = router({
   garantias: router({
     criarProcesso: protectedProcedure
       .mutation(async ({ ctx }) => {
-        return await criarGarantiaProcesso(String(ctx.user.id));
+        return await criarGarantiaProcesso(ctx.user.email || String(ctx.user.id));
       }),
     getAllByUser: protectedProcedure
       .query(async ({ ctx }) => {
-        return await getAllGarantiaProcessosByUser(String(ctx.user.id));
+        return await getAllGarantiaProcessosByUser(ctx.user.email || String(ctx.user.id));
       }),
     getItens: protectedProcedure
       .input(z.object({ processoId: z.number().int().positive() }))
@@ -616,7 +616,7 @@ export const appRouter = router({
       }),
     getTotalByUser: protectedProcedure
       .query(async ({ ctx }) => {
-        return await getTotalGarantiaByUser(String(ctx.user.id));
+        return await getTotalGarantiaByUser(ctx.user.email || String(ctx.user.id));
       }),
   }),
 

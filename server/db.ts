@@ -3,7 +3,7 @@ import * as garantias_schema from '../drizzle/schema';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
 import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, preferencias_usuario, estoques_usuario, custos_produto, garantias_processo, garantias_item, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertPreferenciaUsuario, type InsertEstoqueUsuario, type InsertCustoProduto } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, inArray } from 'drizzle-orm';
 
 let _db: MySql2Database | null = null;
 
@@ -1226,7 +1226,7 @@ export async function getTotalGarantiaByUser(usuarioId: string) {
     if (processoIds.length === 0) return { total: 0, quantidade: 0 };
 
     const itens = await db.select().from(garantias_item).where(
-      sql`${garantias_item.processoId} IN (${sql.raw(processoIds.join(','))})`
+      inArray(garantias_item.processoId, processoIds)
     );
 
     const total = itens.reduce((sum, item) => sum + parseFloat(String(item.precoTotalDolar)), 0);

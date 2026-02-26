@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import Login from "@/pages/Login";
@@ -62,6 +61,7 @@ function AuthenticatedRouter() {
     if (location === "/central-alexandre") return "central-alexandre";
     if (location === "/desenvolvimento") return "desenvolvimento";
     if (location === "/configuracoes") return "configuracoes";
+    if (location === "/garantias") return "garantias";
     return "dashboard";
   };
 
@@ -85,6 +85,7 @@ function AuthenticatedRouter() {
           { label: 'Central Sarom', href: '/central-sarom' },
           { label: 'Central Alexandre', href: '/central-alexandre' },
           { label: 'Configurações', href: '/configuracoes' },
+          { label: 'Garantias', href: '/garantias' },
         ]} currentPath={location} />
         <div className="flex-1" />
       </header>
@@ -115,7 +116,6 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
           <Switch>
             <Route path="/login" component={Login} />
             <Route component={ProtectedRouter} />
