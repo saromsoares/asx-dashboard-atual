@@ -86,6 +86,8 @@ export function criarDescricaoAcao(acao: string, entidade: string, dados?: any):
     produto: 'Produto',
     processo_sr: 'Processo SR',
     item_processo: 'Item do Processo',
+    debito: 'Débito',
+    pagamento_registro: 'Pagamento Registro',
   };
 
   const acaoTexto = acoes[acao] || acao;

@@ -1,49 +1,35 @@
 /*
   ASX Dark Command Center — Pagamentos
-  Controle de Débitos e Pagamentos com balanço geral
-  Layout: 3 KPIs no topo + duas tabelas lado a lado (Débitos | Pagamentos)
-  Storage: localStorage (asx_debitos / asx_pagamentos)
+  Controle de Debitos e Pagamentos com balanco geral
+  Layout: 3 KPIs no topo + duas tabelas lado a lado (Debitos | Pagamentos)
+  Data: tRPC (debito / pagamentoRegistro)
 */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Trash2, Edit2, Check, X, DollarSign, TrendingDown, TrendingUp, ArrowUpDown, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Trash2, Edit2, Check, X, DollarSign, TrendingDown, TrendingUp, ArrowUpDown, Download } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
+import { formatUSD } from '@/lib/formatters';
 
-// ─── Types ───────────────────────────────────────────────────────────
+// ─── Types (local UI representations) ────────────────────────────────
 interface Debito {
-  id: string;
-  data: string; // YYYY-MM-DD
+  id: number;
+  data: string;
   ordem: string;
-  valor: number; // USD
+  valor: number;
 }
 
 interface Pagamento {
-  id: string;
-  data: string; // YYYY-MM-DD
+  id: number;
+  data: string;
   remetente: string;
-  valor: number; // USD
-  tipo: string; // NAITE, MIC, etc.
+  valor: number;
+  tipo: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────
-const STORAGE_DEBITOS = 'asx_debitos';
-const STORAGE_PAGAMENTOS = 'asx_pagamentos';
-
 const TIPOS_PAGAMENTO = ['MIC', 'NAITE', 'TT', 'LC', 'OUTRO'];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-function formatUSD(valor: number): string {
-  return valor.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 function formatDateBR(dateStr: string): string {
   if (!dateStr) return '';
   const [y, m, d] = dateStr.split('-');
@@ -55,70 +41,60 @@ function parseFloatSafe(str: string): number {
   return parseFloat(cleaned) || 0;
 }
 
-// ─── Load/Save ───────────────────────────────────────────────────────
-const INITIAL_DEBITOS: Debito[] = [
-  {
-    id: 'init_debito_001',
-    data: '2026-02-25',
-    ordem: 'Saldo da planilha anterior',
-    valor: 56069.63,
-  },
-];
-
-const INITIAL_PAGAMENTOS: Pagamento[] = [
-  {
-    id: 'init_pag_001',
-    data: '2026-02-25',
-    remetente: 'Prosper ASX',
-    valor: 48444.30,
-    tipo: 'TT',
-  },
-];
-
-function loadDebitos(): Debito[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_DEBITOS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Garantir que o registro inicial existe
-      const hasInitial = parsed.some((d: Debito) => d.id === 'init_debito_001');
-      if (!hasInitial) return [...INITIAL_DEBITOS, ...parsed];
-      return parsed;
-    }
-    return [...INITIAL_DEBITOS];
-  } catch { return [...INITIAL_DEBITOS]; }
-}
-
-function saveDebitos(data: Debito[]) {
-  localStorage.setItem(STORAGE_DEBITOS, JSON.stringify(data));
-}
-
-function loadPagamentos(): Pagamento[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_PAGAMENTOS);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Garantir que o registro inicial existe
-      const hasInitial = parsed.some((p: Pagamento) => p.id === 'init_pag_001');
-      if (!hasInitial) return [...INITIAL_PAGAMENTOS, ...parsed];
-      return parsed;
-    }
-    return [...INITIAL_PAGAMENTOS];
-  } catch { return [...INITIAL_PAGAMENTOS]; }
-}
-
-function savePagamentos(data: Pagamento[]) {
-  localStorage.setItem(STORAGE_PAGAMENTOS, JSON.stringify(data));
-}
-
 // ─── Component ───────────────────────────────────────────────────────
 export default function Pagamentos() {
-  const [debitos, setDebitos] = useState<Debito[]>(loadDebitos);
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>(loadPagamentos);
+  // ─── tRPC queries ───────────────────────────────────────────────
+  const utils = trpc.useUtils();
+  const debitosQuery = trpc.debito.getAll.useQuery();
+  const pagamentosQuery = trpc.pagamentoRegistro.getAll.useQuery();
+
+  // ─── tRPC mutations — Debitos ───────────────────────────────────
+  const criarDebito = trpc.debito.criar.useMutation({
+    onSuccess: () => utils.debito.getAll.invalidate(),
+  });
+  const atualizarDebito = trpc.debito.atualizar.useMutation({
+    onSuccess: () => utils.debito.getAll.invalidate(),
+  });
+  const deletarDebito = trpc.debito.deletar.useMutation({
+    onSuccess: () => utils.debito.getAll.invalidate(),
+  });
+
+  // ─── tRPC mutations — Pagamentos ───────────────────────────────
+  const criarPagamento = trpc.pagamentoRegistro.criar.useMutation({
+    onSuccess: () => utils.pagamentoRegistro.getAll.invalidate(),
+  });
+  const atualizarPagamento = trpc.pagamentoRegistro.atualizar.useMutation({
+    onSuccess: () => utils.pagamentoRegistro.getAll.invalidate(),
+  });
+  const deletarPagamento = trpc.pagamentoRegistro.deletar.useMutation({
+    onSuccess: () => utils.pagamentoRegistro.getAll.invalidate(),
+  });
+
+  // ─── Map DB records to local shape (parseFloat on valor) ────────
+  const debitos: Debito[] = useMemo(() => {
+    if (!debitosQuery.data) return [];
+    return debitosQuery.data.map((d) => ({
+      id: d.id,
+      data: d.data,
+      ordem: d.ordem,
+      valor: parseFloat(d.valor),
+    }));
+  }, [debitosQuery.data]);
+
+  const pagamentos: Pagamento[] = useMemo(() => {
+    if (!pagamentosQuery.data) return [];
+    return pagamentosQuery.data.map((p) => ({
+      id: p.id,
+      data: p.data,
+      remetente: p.remetente,
+      valor: parseFloat(p.valor),
+      tipo: p.tipo,
+    }));
+  }, [pagamentosQuery.data]);
 
   // Edit states
-  const [editingDebitoId, setEditingDebitoId] = useState<string | null>(null);
-  const [editingPagamentoId, setEditingPagamentoId] = useState<string | null>(null);
+  const [editingDebitoId, setEditingDebitoId] = useState<number | null>(null);
+  const [editingPagamentoId, setEditingPagamentoId] = useState<number | null>(null);
 
   // New row states
   const [showNewDebito, setShowNewDebito] = useState(false);
@@ -136,10 +112,6 @@ export default function Pagamentos() {
   // Sort
   const [sortDebitos, setSortDebitos] = useState<'date-asc' | 'date-desc' | 'value-asc' | 'value-desc'>('date-desc');
   const [sortPagamentos, setSortPagamentos] = useState<'date-asc' | 'date-desc' | 'value-asc' | 'value-desc'>('date-desc');
-
-  // Persist
-  useEffect(() => { saveDebitos(debitos); }, [debitos]);
-  useEffect(() => { savePagamentos(pagamentos); }, [pagamentos]);
 
   // ─── Totals ──────────────────────────────────────────────────────
   const totalDebitos = useMemo(() => debitos.reduce((s, d) => s + d.valor, 0), [debitos]);
@@ -172,19 +144,19 @@ export default function Pagamentos() {
   // ─── CRUD Debitos ────────────────────────────────────────────────
   const addDebito = () => {
     if (!newDebito.data || !newDebito.ordem || !newDebito.valor) return;
-    const d: Debito = {
-      id: generateId(),
+    criarDebito.mutate({
       data: newDebito.data,
       ordem: newDebito.ordem.trim(),
       valor: parseFloatSafe(newDebito.valor),
-    };
-    setDebitos(prev => [...prev, d]);
+    });
     setNewDebito({ data: '', ordem: '', valor: '' });
     setShowNewDebito(false);
   };
 
-  const deleteDebito = (id: string) => {
-    setDebitos(prev => prev.filter(d => d.id !== id));
+  const deleteDebito = (id: number) => {
+    // TODO: Replace confirm() with a proper confirmation dialog component
+    if (!confirm('Deseja realmente excluir este debito?')) return;
+    deletarDebito.mutate({ id });
   };
 
   const startEditDebito = (d: Debito) => {
@@ -194,7 +166,12 @@ export default function Pagamentos() {
 
   const saveEditDebito = () => {
     if (!editDebito) return;
-    setDebitos(prev => prev.map(d => d.id === editDebito.id ? editDebito : d));
+    atualizarDebito.mutate({
+      id: editDebito.id,
+      data: editDebito.data,
+      ordem: editDebito.ordem,
+      valor: parseFloat(String(editDebito.valor)),
+    });
     setEditingDebitoId(null);
     setEditDebito(null);
   };
@@ -207,20 +184,20 @@ export default function Pagamentos() {
   // ─── CRUD Pagamentos ────────────────────────────────────────────
   const addPagamento = () => {
     if (!newPagamento.data || !newPagamento.remetente || !newPagamento.valor) return;
-    const p: Pagamento = {
-      id: generateId(),
+    criarPagamento.mutate({
       data: newPagamento.data,
       remetente: newPagamento.remetente.trim(),
       valor: parseFloatSafe(newPagamento.valor),
-      tipo: newPagamento.tipo,
-    };
-    setPagamentos(prev => [...prev, p]);
+      tipo: newPagamento.tipo as "MIC" | "NAITE" | "TT" | "LC" | "OUTRO",
+    });
     setNewPagamento({ data: '', remetente: '', valor: '', tipo: 'MIC' });
     setShowNewPagamento(false);
   };
 
-  const deletePagamento = (id: string) => {
-    setPagamentos(prev => prev.filter(p => p.id !== id));
+  const deletePagamento = (id: number) => {
+    // TODO: Replace confirm() with a proper confirmation dialog component
+    if (!confirm('Deseja realmente excluir este pagamento?')) return;
+    deletarPagamento.mutate({ id });
   };
 
   const startEditPagamento = (p: Pagamento) => {
@@ -230,7 +207,13 @@ export default function Pagamentos() {
 
   const saveEditPagamento = () => {
     if (!editPagamento) return;
-    setPagamentos(prev => prev.map(p => p.id === editPagamento.id ? editPagamento : p));
+    atualizarPagamento.mutate({
+      id: editPagamento.id,
+      data: editPagamento.data,
+      remetente: editPagamento.remetente,
+      valor: parseFloat(String(editPagamento.valor)),
+      tipo: editPagamento.tipo as "MIC" | "NAITE" | "TT" | "LC" | "OUTRO",
+    });
     setEditingPagamentoId(null);
     setEditPagamento(null);
   };
@@ -276,14 +259,14 @@ export default function Pagamentos() {
     setSortPagamentos(cycle[(idx + 1) % cycle.length]);
   };
 
-  // ─── Styles ──────────────────────────────────────────────────────
-  const bg = 'oklch(0.12 0.005 285)';
-  const bgCard = 'oklch(0.16 0.005 285)';
-  const bgRow = 'oklch(0.14 0.005 285)';
+  // ─── Styles (CSS custom properties) ──────────────────────────────
+  const bg = 'var(--color-asx-dark)';
+  const bgCard = 'var(--color-asx-surface)';
+  const bgRow = 'var(--color-asx-base)';
   const bgRowHover = 'oklch(0.18 0.005 285)';
-  const border = 'oklch(0.26 0.005 285)';
-  const textPrimary = 'oklch(0.90 0.005 65)';
-  const textSecondary = 'oklch(0.60 0.010 285)';
+  const border = 'var(--color-asx-border)';
+  const textPrimary = 'var(--color-asx-text)';
+  const textSecondary = 'var(--color-asx-text-muted)';
   const accentRed = 'oklch(0.55 0.22 25)';
   const accentGreen = 'oklch(0.55 0.18 155)';
   const accentOrange = 'oklch(0.70 0.18 65)';
@@ -315,20 +298,49 @@ export default function Pagamentos() {
     padding: '8px 12px',
     fontSize: '13px',
     color: textPrimary,
-    borderBottom: `1px solid oklch(0.20 0.005 285)`,
+    borderBottom: `1px solid var(--color-asx-surface-2)`,
     fontFamily: 'Rajdhani, sans-serif',
   };
 
+  // ─── Loading state ───────────────────────────────────────────────
+  if (debitosQuery.isLoading || pagamentosQuery.isLoading) {
+    return (
+      <div className="p-4 md:p-6 min-h-screen flex items-center justify-center" style={{ background: bg }}>
+        <p className="text-lg font-rajdhani" style={{ color: textSecondary }}>Carregando...</p>
+      </div>
+    );
+  }
+
+  // ─── Error state ─────────────────────────────────────────────────
+  if (debitosQuery.isError || pagamentosQuery.isError) {
+    return (
+      <div className="p-4 md:p-6 min-h-screen flex items-center justify-center" style={{ background: bg }}>
+        <div className="text-center">
+          <p className="text-lg font-rajdhani mb-2" style={{ color: 'var(--color-asx-error)' }}>
+            Erro ao carregar dados
+          </p>
+          <p className="text-sm font-rajdhani" style={{ color: textSecondary }}>
+            {debitosQuery.error?.message || pagamentosQuery.error?.message || 'Erro desconhecido'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Mutation pending helpers ────────────────────────────────────
+  const isDebitoMutating = criarDebito.isPending || atualizarDebito.isPending || deletarDebito.isPending;
+  const isPagamentoMutating = criarPagamento.isPending || atualizarPagamento.isPending || deletarPagamento.isPending;
+
   return (
     <div className="p-4 md:p-6 min-h-screen" style={{ background: bg }}>
-      {/* ═══ Header ═══ */}
+      {/* === Header === */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-rajdhani font-bold" style={{ color: textPrimary }}>
             Pagamentos
           </h1>
           <p className="text-sm mt-1" style={{ color: textSecondary }}>
-            Controle de débitos e pagamentos — Balanço geral
+            Controle de debitos e pagamentos — Balanco geral
           </p>
         </div>
         <button
@@ -341,16 +353,16 @@ export default function Pagamentos() {
         </button>
       </div>
 
-      {/* ═══ KPI Cards ═══ */}
+      {/* === KPI Cards === */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Total Débitos */}
+        {/* Total Debitos */}
         <div className="rounded-xl p-5 border" style={{ background: bgCard, borderColor: border }}>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'oklch(0.20 0.15 25 / 0.4)' }}>
               <TrendingDown className="w-5 h-5" style={{ color: accentRed }} />
             </div>
             <span className="text-xs font-rajdhani font-bold tracking-wider uppercase" style={{ color: textSecondary }}>
-              Total Débitos
+              Total Debitos
             </span>
           </div>
           <div className="text-2xl font-rajdhani font-bold" style={{ color: accentRed }}>
@@ -361,7 +373,7 @@ export default function Pagamentos() {
           </div>
         </div>
 
-        {/* Balanço */}
+        {/* Balanco */}
         <div className="rounded-xl p-5 border" style={{
           background: bgCard,
           borderColor: balanco >= 0 ? accentGreen : accentRed,
@@ -374,14 +386,14 @@ export default function Pagamentos() {
               <DollarSign className="w-5 h-5" style={{ color: balanco >= 0 ? accentGreen : accentRed }} />
             </div>
             <span className="text-xs font-rajdhani font-bold tracking-wider uppercase" style={{ color: textSecondary }}>
-              Balanço
+              Balanco
             </span>
           </div>
           <div className="text-3xl font-rajdhani font-bold" style={{ color: balanco >= 0 ? accentGreen : accentRed }}>
             {balanco < 0 ? '-' : ''}{formatUSD(Math.abs(balanco))}
           </div>
           <div className="text-xs mt-1" style={{ color: textSecondary }}>
-            {balanco >= 0 ? 'Crédito disponível' : 'Saldo devedor'}
+            {balanco >= 0 ? 'Credito disponivel' : 'Saldo devedor'}
           </div>
         </div>
 
@@ -404,17 +416,17 @@ export default function Pagamentos() {
         </div>
       </div>
 
-      {/* ═══ Two-column tables ═══ */}
+      {/* === Two-column tables === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-        {/* ─── DÉBITOS ─── */}
+        {/* --- DEBITOS --- */}
         <div className="rounded-xl border overflow-hidden" style={{ background: bgCard, borderColor: border }}>
           {/* Header */}
           <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: `1px solid ${border}` }}>
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full" style={{ background: accentRed }} />
               <h2 className="text-base font-rajdhani font-bold uppercase tracking-wider" style={{ color: textPrimary }}>
-                Débitos
+                Debitos
               </h2>
               <span className="text-xs px-2 py-0.5 rounded-full font-rajdhani" style={{ background: 'oklch(0.20 0.15 25 / 0.3)', color: accentRed }}>
                 {debitos.length}
@@ -424,7 +436,7 @@ export default function Pagamentos() {
               <button
                 onClick={cycleSortDebitos}
                 className="p-1.5 rounded-lg hover:opacity-80 transition-all"
-                style={{ background: 'oklch(0.20 0.005 285)' }}
+                style={{ background: 'var(--color-asx-surface-2)' }}
                 title={`Ordenar: ${sortDebitos}`}
               >
                 <ArrowUpDown className="w-3.5 h-3.5" style={{ color: textSecondary }} />
@@ -433,6 +445,7 @@ export default function Pagamentos() {
                 onClick={() => { setShowNewDebito(true); setNewDebito({ data: new Date().toISOString().slice(0, 10), ordem: '', valor: '' }); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-rajdhani font-semibold transition-all hover:opacity-80"
                 style={{ background: accentRed, color: 'white' }}
+                disabled={isDebitoMutating}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Novo
@@ -448,7 +461,7 @@ export default function Pagamentos() {
                   <th style={{ ...thStyle, width: '110px' }}>Data</th>
                   <th style={thStyle}>Ordem</th>
                   <th style={{ ...thStyle, textAlign: 'right', width: '140px' }}>Valor (USD)</th>
-                  <th style={{ ...thStyle, width: '70px', textAlign: 'center' }}>Ações</th>
+                  <th style={{ ...thStyle, width: '70px', textAlign: 'center' }}>Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -468,7 +481,7 @@ export default function Pagamentos() {
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'center' }}>
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={addDebito} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }}>
+                        <button onClick={addDebito} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }} disabled={criarDebito.isPending}>
                           <Check className="w-4 h-4" />
                         </button>
                         <button onClick={() => setShowNewDebito(false)} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }}>
@@ -498,7 +511,7 @@ export default function Pagamentos() {
                         </td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={saveEditDebito} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }}>
+                            <button onClick={saveEditDebito} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }} disabled={atualizarDebito.isPending}>
                               <Check className="w-4 h-4" />
                             </button>
                             <button onClick={cancelEditDebito} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }}>
@@ -514,10 +527,10 @@ export default function Pagamentos() {
                         <td style={{ ...tdStyle, textAlign: 'right', fontWeight: 600 }}>{formatUSD(d.valor)}</td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => startEditDebito(d)} className="p-1 rounded hover:opacity-80" style={{ color: accentOrange }}>
+                            <button onClick={() => startEditDebito(d)} className="p-1 rounded hover:opacity-80" style={{ color: accentOrange }} disabled={isDebitoMutating}>
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => deleteDebito(d.id)} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }}>
+                            <button onClick={() => deleteDebito(d.id)} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }} disabled={deletarDebito.isPending}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -530,7 +543,7 @@ export default function Pagamentos() {
                 {debitos.length === 0 && !showNewDebito && (
                   <tr>
                     <td colSpan={4} className="text-center py-12" style={{ color: textSecondary, fontSize: '13px' }}>
-                      Nenhum débito registrado. Clique em "Novo" para adicionar.
+                      Nenhum debito registrado. Clique em "Novo" para adicionar.
                     </td>
                   </tr>
                 )}
@@ -542,7 +555,7 @@ export default function Pagamentos() {
           {debitos.length > 0 && (
             <div className="px-5 py-3 flex items-center justify-between" style={{ borderTop: `1px solid ${border}`, background: 'oklch(0.13 0.005 285)' }}>
               <span className="text-xs font-rajdhani font-bold uppercase tracking-wider" style={{ color: textSecondary }}>
-                Total Débitos
+                Total Debitos
               </span>
               <span className="text-base font-rajdhani font-bold" style={{ color: accentRed }}>
                 {formatUSD(totalDebitos)}
@@ -551,7 +564,7 @@ export default function Pagamentos() {
           )}
         </div>
 
-        {/* ─── PAGAMENTOS ─── */}
+        {/* --- PAGAMENTOS --- */}
         <div className="rounded-xl border overflow-hidden" style={{ background: bgCard, borderColor: border }}>
           {/* Header */}
           <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: `1px solid ${border}` }}>
@@ -568,7 +581,7 @@ export default function Pagamentos() {
               <button
                 onClick={cycleSortPagamentos}
                 className="p-1.5 rounded-lg hover:opacity-80 transition-all"
-                style={{ background: 'oklch(0.20 0.005 285)' }}
+                style={{ background: 'var(--color-asx-surface-2)' }}
                 title={`Ordenar: ${sortPagamentos}`}
               >
                 <ArrowUpDown className="w-3.5 h-3.5" style={{ color: textSecondary }} />
@@ -577,6 +590,7 @@ export default function Pagamentos() {
                 onClick={() => { setShowNewPagamento(true); setNewPagamento({ data: new Date().toISOString().slice(0, 10), remetente: '', valor: '', tipo: 'MIC' }); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-rajdhani font-semibold transition-all hover:opacity-80"
                 style={{ background: accentGreen, color: 'white' }}
+                disabled={isPagamentoMutating}
               >
                 <Plus className="w-3.5 h-3.5" />
                 Novo
@@ -593,7 +607,7 @@ export default function Pagamentos() {
                   <th style={thStyle}>Remetente</th>
                   <th style={{ ...thStyle, textAlign: 'right', width: '140px' }}>Valor (USD)</th>
                   <th style={{ ...thStyle, width: '75px', textAlign: 'center' }}>Tipo</th>
-                  <th style={{ ...thStyle, width: '70px', textAlign: 'center' }}>Ações</th>
+                  <th style={{ ...thStyle, width: '70px', textAlign: 'center' }}>Acoes</th>
                 </tr>
               </thead>
               <tbody>
@@ -618,7 +632,7 @@ export default function Pagamentos() {
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'center' }}>
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={addPagamento} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }}>
+                        <button onClick={addPagamento} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }} disabled={criarPagamento.isPending}>
                           <Check className="w-4 h-4" />
                         </button>
                         <button onClick={() => setShowNewPagamento(false)} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }}>
@@ -653,7 +667,7 @@ export default function Pagamentos() {
                         </td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={saveEditPagamento} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }}>
+                            <button onClick={saveEditPagamento} className="p-1 rounded hover:opacity-80" style={{ color: accentGreen }} disabled={atualizarPagamento.isPending}>
                               <Check className="w-4 h-4" />
                             </button>
                             <button onClick={cancelEditPagamento} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }}>
@@ -677,10 +691,10 @@ export default function Pagamentos() {
                         </td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button onClick={() => startEditPagamento(p)} className="p-1 rounded hover:opacity-80" style={{ color: accentOrange }}>
+                            <button onClick={() => startEditPagamento(p)} className="p-1 rounded hover:opacity-80" style={{ color: accentOrange }} disabled={isPagamentoMutating}>
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => deletePagamento(p.id)} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }}>
+                            <button onClick={() => deletePagamento(p.id)} className="p-1 rounded hover:opacity-80" style={{ color: accentRed }} disabled={deletarPagamento.isPending}>
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>

@@ -219,3 +219,34 @@ export const itens_processo = mysqlTable("itens_processo", {
 
 export type ItemProcesso = typeof itens_processo.$inferSelect;
 export type InsertItemProcesso = typeof itens_processo.$inferInsert;
+
+/**
+ * Tabela de débitos financeiros
+ */
+export const debitos = mysqlTable("debitos", {
+  id: int("id").autoincrement().primaryKey(),
+  data: varchar("data", { length: 10 }).notNull(), // YYYY-MM-DD
+  ordem: varchar("ordem", { length: 255 }).notNull(),
+  valor: decimal("valor", { precision: 12, scale: 2 }).notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Debito = typeof debitos.$inferSelect;
+export type InsertDebito = typeof debitos.$inferInsert;
+
+/**
+ * Tabela de pagamentos recebidos
+ */
+export const pagamentos_registros = mysqlTable("pagamentos_registros", {
+  id: int("id").autoincrement().primaryKey(),
+  data: varchar("data", { length: 10 }).notNull(), // YYYY-MM-DD
+  remetente: varchar("remetente", { length: 255 }).notNull(),
+  valor: decimal("valor", { precision: 12, scale: 2 }).notNull(),
+  tipo: mysqlEnum("tipo", ["MIC", "NAITE", "TT", "LC", "OUTRO"]).default("TT").notNull(),
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PagamentoRegistro = typeof pagamentos_registros.$inferSelect;
+export type InsertPagamentoRegistro = typeof pagamentos_registros.$inferInsert;

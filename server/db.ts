@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import type { MySql2Database } from 'drizzle-orm/mysql2';
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso } from "../drizzle/schema";
+import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, debitos, pagamentos_registros, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertDebito, type InsertPagamentoRegistro } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc, sql } from 'drizzle-orm';
 
@@ -496,5 +496,77 @@ export async function atualizarItemProcesso(itemId: number, data: Partial<Insert
 export async function removerItemProcesso(itemId: number) {
   const db = await withDb();
   await db.delete(itens_processo).where(eq(itens_processo.id, itemId));
+  return { success: true };
+}
+
+// ============= DÉBITOS FINANCEIROS =============
+
+export async function getAllDebitos() {
+  const db = await withDb();
+  return await db.select().from(debitos).orderBy(desc(debitos.data));
+}
+
+export async function criarDebito(data: Omit<InsertDebito, 'id' | 'criadoEm' | 'atualizadoEm'>) {
+  const db = await withDb();
+  const result = await db.insert(debitos).values({
+    data: data.data,
+    ordem: data.ordem,
+    valor: String(data.valor),
+  });
+  const insertId = result[0].insertId;
+  const criado = await db.select().from(debitos).where(eq(debitos.id, insertId)).limit(1);
+  return criado[0];
+}
+
+export async function atualizarDebito(id: number, data: Partial<Omit<InsertDebito, 'id' | 'criadoEm' | 'atualizadoEm'>>) {
+  const db = await withDb();
+  const updateData: Record<string, unknown> = {};
+  if (data.data !== undefined) updateData.data = data.data;
+  if (data.ordem !== undefined) updateData.ordem = data.ordem;
+  if (data.valor !== undefined) updateData.valor = String(data.valor);
+  await db.update(debitos).set(updateData).where(eq(debitos.id, id));
+  return { success: true };
+}
+
+export async function deletarDebito(id: number) {
+  const db = await withDb();
+  await db.delete(debitos).where(eq(debitos.id, id));
+  return { success: true };
+}
+
+// ============= PAGAMENTOS REGISTROS =============
+
+export async function getAllPagamentosRegistros() {
+  const db = await withDb();
+  return await db.select().from(pagamentos_registros).orderBy(desc(pagamentos_registros.data));
+}
+
+export async function criarPagamentoRegistro(data: Omit<InsertPagamentoRegistro, 'id' | 'criadoEm' | 'atualizadoEm'>) {
+  const db = await withDb();
+  const result = await db.insert(pagamentos_registros).values({
+    data: data.data,
+    remetente: data.remetente,
+    valor: String(data.valor),
+    tipo: data.tipo,
+  });
+  const insertId = result[0].insertId;
+  const criado = await db.select().from(pagamentos_registros).where(eq(pagamentos_registros.id, insertId)).limit(1);
+  return criado[0];
+}
+
+export async function atualizarPagamentoRegistro(id: number, data: Partial<Omit<InsertPagamentoRegistro, 'id' | 'criadoEm' | 'atualizadoEm'>>) {
+  const db = await withDb();
+  const updateData: Record<string, unknown> = {};
+  if (data.data !== undefined) updateData.data = data.data;
+  if (data.remetente !== undefined) updateData.remetente = data.remetente;
+  if (data.valor !== undefined) updateData.valor = String(data.valor);
+  if (data.tipo !== undefined) updateData.tipo = data.tipo;
+  await db.update(pagamentos_registros).set(updateData).where(eq(pagamentos_registros.id, id));
+  return { success: true };
+}
+
+export async function deletarPagamentoRegistro(id: number) {
+  const db = await withDb();
+  await db.delete(pagamentos_registros).where(eq(pagamentos_registros.id, id));
   return { success: true };
 }
