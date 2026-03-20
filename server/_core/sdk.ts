@@ -4,7 +4,7 @@ import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
 // Using 'any' for Request type to avoid version conflicts with @types/express on Vercel
 import { SignJWT, jwtVerify } from "jose";
-import type { User } from "../../drizzle/schema";
+import type { User } from "../db";
 import * as db from "../db";
 import { ENV } from "./env";
 import type {

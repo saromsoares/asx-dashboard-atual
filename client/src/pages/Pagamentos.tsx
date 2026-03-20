@@ -2,7 +2,7 @@
   ASX Dark Command Center — Pagamentos
   Controle de Debitos e Pagamentos com balanco geral
   Layout: 3 KPIs no topo + duas tabelas lado a lado (Debitos | Pagamentos)
-  Data: tRPC (debito / pagamentoRegistro)
+  Data: tRPC (debito / pagamento)
 */
 
 import { useState, useMemo } from 'react';
@@ -46,7 +46,7 @@ export default function Pagamentos() {
   // ─── tRPC queries ───────────────────────────────────────────────
   const utils = trpc.useUtils();
   const debitosQuery = trpc.debito.getAll.useQuery();
-  const pagamentosQuery = trpc.pagamentoRegistro.getAll.useQuery();
+  const pagamentosQuery = trpc.pagamento.getAll.useQuery();
 
   // ─── tRPC mutations — Debitos ───────────────────────────────────
   const criarDebito = trpc.debito.criar.useMutation({
@@ -60,35 +60,35 @@ export default function Pagamentos() {
   });
 
   // ─── tRPC mutations — Pagamentos ───────────────────────────────
-  const criarPagamento = trpc.pagamentoRegistro.criar.useMutation({
-    onSuccess: () => utils.pagamentoRegistro.getAll.invalidate(),
+  const criarPagamento = trpc.pagamento.criar.useMutation({
+    onSuccess: () => utils.pagamento.getAll.invalidate(),
   });
-  const atualizarPagamento = trpc.pagamentoRegistro.atualizar.useMutation({
-    onSuccess: () => utils.pagamentoRegistro.getAll.invalidate(),
+  const atualizarPagamento = trpc.pagamento.atualizar.useMutation({
+    onSuccess: () => utils.pagamento.getAll.invalidate(),
   });
-  const deletarPagamento = trpc.pagamentoRegistro.deletar.useMutation({
-    onSuccess: () => utils.pagamentoRegistro.getAll.invalidate(),
+  const deletarPagamento = trpc.pagamento.deletar.useMutation({
+    onSuccess: () => utils.pagamento.getAll.invalidate(),
   });
 
   // ─── Map DB records to local shape (parseFloat on valor) ────────
   const debitos: Debito[] = useMemo(() => {
     if (!debitosQuery.data) return [];
-    return debitosQuery.data.map((d) => ({
+    return debitosQuery.data.map((d: any) => ({
       id: d.id,
-      data: d.data,
-      ordem: d.ordem,
+      data: d.dataVencimento ? new Date(d.dataVencimento).toISOString().slice(0, 10) : '',
+      ordem: d.descricao || '',
       valor: parseFloat(d.valor),
     }));
   }, [debitosQuery.data]);
 
   const pagamentos: Pagamento[] = useMemo(() => {
     if (!pagamentosQuery.data) return [];
-    return pagamentosQuery.data.map((p) => ({
+    return pagamentosQuery.data.map((p: any) => ({
       id: p.id,
-      data: p.data,
-      remetente: p.remetente,
+      data: p.dataPagamento ? new Date(p.dataPagamento).toISOString().slice(0, 10) : '',
+      remetente: p.observacoes || '',
       valor: parseFloat(p.valor),
-      tipo: p.tipo,
+      tipo: 'TT',
     }));
   }, [pagamentosQuery.data]);
 
@@ -145,9 +145,10 @@ export default function Pagamentos() {
   const addDebito = () => {
     if (!newDebito.data || !newDebito.ordem || !newDebito.valor) return;
     criarDebito.mutate({
-      data: newDebito.data,
-      ordem: newDebito.ordem.trim(),
+      descricao: newDebito.ordem.trim(),
       valor: parseFloatSafe(newDebito.valor),
+      dataVencimento: newDebito.data,
+      pago: 0,
     });
     setNewDebito({ data: '', ordem: '', valor: '' });
     setShowNewDebito(false);
@@ -168,9 +169,9 @@ export default function Pagamentos() {
     if (!editDebito) return;
     atualizarDebito.mutate({
       id: editDebito.id,
-      data: editDebito.data,
-      ordem: editDebito.ordem,
+      descricao: editDebito.ordem,
       valor: parseFloat(String(editDebito.valor)),
+      dataVencimento: editDebito.data,
     });
     setEditingDebitoId(null);
     setEditDebito(null);
@@ -185,10 +186,9 @@ export default function Pagamentos() {
   const addPagamento = () => {
     if (!newPagamento.data || !newPagamento.remetente || !newPagamento.valor) return;
     criarPagamento.mutate({
-      data: newPagamento.data,
-      remetente: newPagamento.remetente.trim(),
       valor: parseFloatSafe(newPagamento.valor),
-      tipo: newPagamento.tipo as "MIC" | "NAITE" | "TT" | "LC" | "OUTRO",
+      dataPagamento: newPagamento.data,
+      observacoes: newPagamento.remetente.trim(),
     });
     setNewPagamento({ data: '', remetente: '', valor: '', tipo: 'MIC' });
     setShowNewPagamento(false);
@@ -209,10 +209,9 @@ export default function Pagamentos() {
     if (!editPagamento) return;
     atualizarPagamento.mutate({
       id: editPagamento.id,
-      data: editPagamento.data,
-      remetente: editPagamento.remetente,
       valor: parseFloat(String(editPagamento.valor)),
-      tipo: editPagamento.tipo as "MIC" | "NAITE" | "TT" | "LC" | "OUTRO",
+      dataPagamento: editPagamento.data,
+      observacoes: editPagamento.remetente,
     });
     setEditingPagamentoId(null);
     setEditPagamento(null);

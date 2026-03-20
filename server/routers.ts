@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getAllDebitos, criarDebito, atualizarDebito, deletarDebito, getAllPagamentosRegistros, criarPagamentoRegistro, atualizarPagamentoRegistro, deletarPagamentoRegistro } from "./db";
+import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso, getAllDebitos, criarDebito, atualizarDebito, deletarDebito, getAllPagamentos, criarPagamento, atualizarPagamento, deletarPagamento } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
 
 export const appRouter = router({
@@ -260,9 +260,9 @@ export const appRouter = router({
 
   containerPedido: router({
     vincular: protectedProcedure
-      .input(z.object({ containerId: z.number().int().positive(), pedidoId: z.number().int().positive(), sequencia: z.number().int().min(0).optional() }))
+      .input(z.object({ containerId: z.number().int().positive(), pedidoId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
-        const result = await vincularPedidoAContainer(input.containerId, input.pedidoId, input.sequencia);
+        const result = await vincularPedidoAContainer(input.containerId, input.pedidoId);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
           userId: ctx.user.id,
@@ -337,6 +337,9 @@ export const appRouter = router({
         ncm: z.string().max(20).trim().optional(),
         custoUsd: z.number().min(0).multipleOf(0.01).max(999999.99).optional(),
         precoVendaBrl: z.number().min(0).multipleOf(0.01).max(999999.99).optional(),
+        descricaoCompleta: z.string().max(2000).trim().optional(),
+        observacoes: z.string().max(2000).trim().optional(),
+        fotoUrl: z.string().max(500).trim().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const result = await criarProduto({
@@ -350,6 +353,9 @@ export const appRouter = router({
           ncm: input.ncm || null,
           custoUsd: String(input.custoUsd || 0),
           precoVendaBrl: String(input.precoVendaBrl || 0),
+          descricaoCompleta: input.descricaoCompleta || '',
+          observacoes: input.observacoes || '',
+          fotoUrl: input.fotoUrl || '',
           ativo: 'true',
         });
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -370,27 +376,16 @@ export const appRouter = router({
   processoSR: router({
     criar: protectedProcedure
       .input(z.object({
-        numeroProcesso: z.string().min(1).max(64).trim(),
-        nomeInvoice: z.string().max(255).trim().optional(),
-        dataProcesso: z.string().max(32).trim().optional(),
+        numero: z.string().min(1).max(64).trim(),
         observacoes: z.string().max(2000).trim().optional(),
-        ncm: z.string().max(20).trim().optional(),
-        caixasPapelao: z.number().int().min(0).optional(),
-        pesoBrutoKg: z.number().min(0).optional(),
-        pesoLiquidoKg: z.number().min(0).optional(),
-        cbm: z.number().min(0).optional(),
+        confirmado: z.number().int().min(0).max(1).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const result = await criarProcessoSR({
-          numeroProcesso: input.numeroProcesso,
-          nomeInvoice: input.nomeInvoice || '',
-          dataProcesso: input.dataProcesso || '',
+          numero: input.numero,
+          status: 'Em andamento',
+          confirmado: input.confirmado ?? 0,
           observacoes: input.observacoes || null,
-          ncm: input.ncm || '',
-          caixasPapelao: input.caixasPapelao || 0,
-          pesoBrutoKg: input.pesoBrutoKg ? String(input.pesoBrutoKg) : '0',
-          pesoLiquidoKg: input.pesoLiquidoKg ? String(input.pesoLiquidoKg) : '0',
-          cbm: input.cbm ? String(input.cbm) : '0',
         });
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
@@ -398,8 +393,8 @@ export const appRouter = router({
           acao: 'criou',
           entidade: 'processo_sr',
           entidadeId: String(result?.id),
-          dadosNovos: JSON.stringify({ numeroProcesso: input.numeroProcesso }),
-          descricao: criarDescricaoAcao('criou', 'processo_sr', { numero: input.numeroProcesso }),
+          dadosNovos: JSON.stringify({ numero: input.numero }),
+          descricao: criarDescricaoAcao('criou', 'processo_sr', { numero: input.numero }),
           ipAddress,
           userAgent,
         });
@@ -417,28 +412,16 @@ export const appRouter = router({
     atualizar: protectedProcedure
       .input(z.object({
         processoId: z.number().int().positive(),
-        nomeInvoice: z.string().max(255).trim().optional(),
-        dataProcesso: z.string().max(32).trim().optional(),
         observacoes: z.string().max(2000).trim().optional(),
-        ncm: z.string().max(20).trim().optional(),
-        caixasPapelao: z.number().int().min(0).optional(),
-        pesoBrutoKg: z.number().min(0).optional(),
-        pesoLiquidoKg: z.number().min(0).optional(),
-        cbm: z.number().min(0).optional(),
         confirmado: z.number().int().min(0).max(1).optional(),
+        dataFechamento: z.date().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const { processoId, ...data } = input;
         const updateData: any = {};
-        if (data.nomeInvoice !== undefined) updateData.nomeInvoice = data.nomeInvoice;
-        if (data.dataProcesso !== undefined) updateData.dataProcesso = data.dataProcesso;
         if (data.observacoes !== undefined) updateData.observacoes = data.observacoes;
-        if (data.ncm !== undefined) updateData.ncm = data.ncm;
-        if (data.caixasPapelao !== undefined) updateData.caixasPapelao = data.caixasPapelao;
-        if (data.pesoBrutoKg !== undefined) updateData.pesoBrutoKg = String(data.pesoBrutoKg);
-        if (data.pesoLiquidoKg !== undefined) updateData.pesoLiquidoKg = String(data.pesoLiquidoKg);
-        if (data.cbm !== undefined) updateData.cbm = String(data.cbm);
         if (data.confirmado !== undefined) updateData.confirmado = data.confirmado;
+        if (data.dataFechamento !== undefined) updateData.dataFechamento = data.dataFechamento;
         const result = await atualizarProcessoSR(processoId, updateData);
         return result;
       }),
@@ -473,7 +456,7 @@ export const appRouter = router({
           acao: 'deletou',
           entidade: 'processo_sr',
           entidadeId: String(input.processoId),
-          dadosAntigos: JSON.stringify({ numero: processo?.numeroProcesso, status: processo?.status }),
+          dadosAntigos: JSON.stringify({ numero: processo?.numero, status: processo?.status }),
           descricao: criarDescricaoAcao('deletou', 'processo_sr'),
           ipAddress,
           userAgent,
@@ -486,27 +469,19 @@ export const appRouter = router({
     adicionar: protectedProcedure
       .input(z.object({
         processoId: z.number().int().positive(),
-        codigo: z.string().min(1).max(64).trim(),
+        codigoProduto: z.string().min(1).max(64).trim(),
         descricao: z.string().min(1).max(500).trim(),
-        unidade: z.string().max(32).trim().optional(),
         quantidade: z.number().int().min(0).max(999999),
-        precoUnitarioDolar: z.number().min(0).max(999999.99),
-        pedidoSarom: z.number().int().min(0).max(999999).optional(),
-        pedidoAlexandre: z.number().int().min(0).max(999999).optional(),
-        ordemCompra: z.string().max(64).trim().optional(),
+        precoUnitarioUsd: z.number().min(0).max(999999.99),
       }))
       .mutation(async ({ input }) => {
-        const precoTotal = input.quantidade * input.precoUnitarioDolar;
+        const precoTotal = input.quantidade * input.precoUnitarioUsd;
         return await adicionarItemProcesso(input.processoId, {
-          codigo: input.codigo,
+          codigoProduto: input.codigoProduto,
           descricao: input.descricao,
-          unidade: input.unidade || 'UND',
           quantidade: input.quantidade,
-          precoUnitarioDolar: String(input.precoUnitarioDolar),
-          precoTotalDolar: String(Math.round(precoTotal * 100) / 100),
-          pedidoSarom: input.pedidoSarom || 0,
-          pedidoAlexandre: input.pedidoAlexandre || 0,
-          ordemCompra: input.ordemCompra || '',
+          precoUnitarioUsd: String(input.precoUnitarioUsd),
+          precoTotalUsd: String(Math.round(precoTotal * 100) / 100),
         });
       }),
     getByProcesso: protectedProcedure
@@ -519,27 +494,20 @@ export const appRouter = router({
         itemId: z.number().int().positive(),
         processoId: z.number().int().positive(),
         quantidade: z.number().int().min(0).max(999999).optional(),
-        precoUnitarioDolar: z.number().min(0).max(999999.99).optional(),
-        pedidoSarom: z.number().int().min(0).max(999999).optional(),
-        pedidoAlexandre: z.number().int().min(0).max(999999).optional(),
-        ordemCompra: z.string().max(64).trim().optional(),
+        precoUnitarioUsd: z.number().min(0).max(999999.99).optional(),
       }))
       .mutation(async ({ input }) => {
         const { itemId, processoId, ...data } = input;
         const updateData: Record<string, unknown> = {};
         if (data.quantidade !== undefined) updateData.quantidade = data.quantidade;
-        if (data.precoUnitarioDolar !== undefined) updateData.precoUnitarioDolar = String(data.precoUnitarioDolar);
-        if (data.pedidoSarom !== undefined) updateData.pedidoSarom = data.pedidoSarom;
-        if (data.pedidoAlexandre !== undefined) updateData.pedidoAlexandre = data.pedidoAlexandre;
-        if (data.ordemCompra !== undefined) updateData.ordemCompra = data.ordemCompra;
+        if (data.precoUnitarioUsd !== undefined) updateData.precoUnitarioUsd = String(data.precoUnitarioUsd);
         // Recalcular preço total se quantidade ou preço unitário mudaram
-        if (data.quantidade !== undefined || data.precoUnitarioDolar !== undefined) {
-          // Buscar item atual para usar valores existentes como fallback
+        if (data.quantidade !== undefined || data.precoUnitarioUsd !== undefined) {
           const itensAtuais = await getItensDoProcesso(processoId);
           const itemAtual = itensAtuais.find(i => i.id === itemId);
           const qty = data.quantidade ?? (itemAtual?.quantidade ?? 0);
-          const price = data.precoUnitarioDolar ?? parseFloat(String(itemAtual?.precoUnitarioDolar ?? "0"));
-          updateData.precoTotalDolar = String(Math.round(qty * price * 100) / 100);
+          const price = data.precoUnitarioUsd ?? parseFloat(String(itemAtual?.precoUnitarioUsd ?? "0"));
+          updateData.precoTotalUsd = String(Math.round(qty * price * 100) / 100);
         }
         return await atualizarItemProcesso(itemId, updateData);
       }),
@@ -554,12 +522,20 @@ export const appRouter = router({
     getAll: protectedProcedure.query(async () => getAllDebitos()),
     criar: protectedProcedure
       .input(z.object({
-        data: z.string().min(8).max(10).trim(),
-        ordem: z.string().min(1).max(255).trim(),
+        descricao: z.string().min(1).max(255).trim(),
         valor: z.number().min(0).max(99999999.99),
+        moeda: z.string().max(10).trim().optional(),
+        dataVencimento: z.string().trim(),
+        pago: z.number().int().min(0).max(1).default(0),
       }))
       .mutation(async ({ input, ctx }) => {
-        const result = await criarDebito({ ...input, valor: String(input.valor) });
+        const result = await criarDebito({
+          descricao: input.descricao,
+          valor: String(input.valor),
+          moeda: input.moeda || 'USD',
+          dataVencimento: new Date(input.dataVencimento),
+          pago: input.pago,
+        });
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
           userId: ctx.user.id,
@@ -576,21 +552,25 @@ export const appRouter = router({
     atualizar: protectedProcedure
       .input(z.object({
         id: z.number().int().positive(),
-        data: z.string().min(8).max(10).trim().optional(),
-        ordem: z.string().min(1).max(255).trim().optional(),
+        descricao: z.string().min(1).max(255).trim().optional(),
         valor: z.number().min(0).max(99999999.99).optional(),
+        moeda: z.string().max(10).trim().optional(),
+        dataVencimento: z.string().trim().optional(),
+        pago: z.number().int().min(0).max(1).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { id, valor, ...rest } = input;
-        const data = { ...rest, ...(valor !== undefined ? { valor: String(valor) } : {}) };
-        const result = await atualizarDebito(id, data);
+        const { id, valor, dataVencimento, ...rest } = input;
+        const updateData: Record<string, unknown> = { ...rest };
+        if (valor !== undefined) updateData.valor = String(valor);
+        if (dataVencimento !== undefined) updateData.dataVencimento = new Date(dataVencimento);
+        const result = await atualizarDebito(id, updateData);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
           userId: ctx.user.id,
           acao: 'atualizou',
           entidade: 'debito',
           entidadeId: String(id),
-          dadosNovos: JSON.stringify(data),
+          dadosNovos: JSON.stringify(updateData),
           descricao: criarDescricaoAcao('atualizou', 'debito'),
           ipAddress,
           userAgent,
@@ -615,25 +595,30 @@ export const appRouter = router({
       }),
   }),
 
-  pagamentoRegistro: router({
-    getAll: protectedProcedure.query(async () => getAllPagamentosRegistros()),
+  pagamento: router({
+    getAll: protectedProcedure.query(async () => getAllPagamentos()),
     criar: protectedProcedure
       .input(z.object({
-        data: z.string().min(8).max(10).trim(),
-        remetente: z.string().min(1).max(255).trim(),
+        debitoId: z.number().int().positive().optional(),
         valor: z.number().min(0).max(99999999.99),
-        tipo: z.enum(["MIC", "NAITE", "TT", "LC", "OUTRO"]).default("TT"),
+        dataPagamento: z.string().trim(),
+        observacoes: z.string().max(2000).trim().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const result = await criarPagamentoRegistro({ ...input, valor: String(input.valor) });
+        const result = await criarPagamento({
+          debitoId: input.debitoId,
+          valor: String(input.valor),
+          dataPagamento: new Date(input.dataPagamento),
+          observacoes: input.observacoes || null,
+        });
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
           userId: ctx.user.id,
           acao: 'criou',
-          entidade: 'pagamento_registro',
+          entidade: 'pagamento',
           entidadeId: String(result.id),
           dadosNovos: JSON.stringify(input),
-          descricao: criarDescricaoAcao('criou', 'pagamento_registro'),
+          descricao: criarDescricaoAcao('criou', 'pagamento'),
           ipAddress,
           userAgent,
         });
@@ -642,23 +627,25 @@ export const appRouter = router({
     atualizar: protectedProcedure
       .input(z.object({
         id: z.number().int().positive(),
-        data: z.string().min(8).max(10).trim().optional(),
-        remetente: z.string().min(1).max(255).trim().optional(),
+        debitoId: z.number().int().positive().optional(),
         valor: z.number().min(0).max(99999999.99).optional(),
-        tipo: z.enum(["MIC", "NAITE", "TT", "LC", "OUTRO"]).optional(),
+        dataPagamento: z.string().trim().optional(),
+        observacoes: z.string().max(2000).trim().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        const { id, valor, ...rest } = input;
-        const data = { ...rest, ...(valor !== undefined ? { valor: String(valor) } : {}) };
-        const result = await atualizarPagamentoRegistro(id, data);
+        const { id, valor, dataPagamento, ...rest } = input;
+        const updateData: Record<string, unknown> = { ...rest };
+        if (valor !== undefined) updateData.valor = String(valor);
+        if (dataPagamento !== undefined) updateData.dataPagamento = new Date(dataPagamento);
+        const result = await atualizarPagamento(id, updateData as any);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
           userId: ctx.user.id,
           acao: 'atualizou',
-          entidade: 'pagamento_registro',
+          entidade: 'pagamento',
           entidadeId: String(id),
-          dadosNovos: JSON.stringify(data),
-          descricao: criarDescricaoAcao('atualizou', 'pagamento_registro'),
+          dadosNovos: JSON.stringify(updateData),
+          descricao: criarDescricaoAcao('atualizou', 'pagamento'),
           ipAddress,
           userAgent,
         });
@@ -667,14 +654,14 @@ export const appRouter = router({
     deletar: adminProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
-        const result = await deletarPagamentoRegistro(input.id);
+        const result = await deletarPagamento(input.id);
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
         await registrarAuditoria({
           userId: ctx.user.id,
           acao: 'deletou',
-          entidade: 'pagamento_registro',
+          entidade: 'pagamento',
           entidadeId: String(input.id),
-          descricao: criarDescricaoAcao('deletou', 'pagamento_registro'),
+          descricao: criarDescricaoAcao('deletou', 'pagamento'),
           ipAddress,
           userAgent,
         });

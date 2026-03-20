@@ -1,19 +1,14 @@
 import { relations } from "drizzle-orm";
 import {
-  users,
   pedidos,
   itens_pedidos,
   containers,
   container_pedidos,
   processos_sr,
   itens_processo,
-  auditLogs,
+  debitos,
+  pagamentos,
 } from "./schema";
-
-// Users
-export const usersRelations = relations(users, ({ many }) => ({
-  auditLogs: many(auditLogs),
-}));
 
 // Pedidos
 export const pedidosRelations = relations(pedidos, ({ many }) => ({
@@ -59,10 +54,15 @@ export const itensProcessoRelations = relations(itens_processo, ({ one }) => ({
   }),
 }));
 
-// Audit Logs
-export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
-  user: one(users, {
-    fields: [auditLogs.userId],
-    references: [users.id],
+// Debitos
+export const debitosRelations = relations(debitos, ({ many }) => ({
+  pagamentos: many(pagamentos),
+}));
+
+// Pagamentos
+export const pagamentosRelations = relations(pagamentos, ({ one }) => ({
+  debito: one(debitos, {
+    fields: [pagamentos.debitoId],
+    references: [debitos.id],
   }),
 }));

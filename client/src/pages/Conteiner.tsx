@@ -272,14 +272,10 @@ export default function Conteiner() {
       try {
         await adicionarItemMut.mutateAsync({
           processoId: processoSelecionado.id,
-          codigo: item.produtoId,
+          codigoProduto: item.produtoId,
           descricao: item.descricao,
-          unidade: item.unidade,
           quantidade: qtd.sarom + qtd.alexandre,
-          precoUnitarioDolar: item.precoUnitario,
-          pedidoSarom: qtd.sarom,
-          pedidoAlexandre: qtd.alexandre,
-          ordemCompra: nomePedido,
+          precoUnitarioUsd: item.precoUnitario,
         });
         importedCount++;
       } catch (err) {
@@ -422,11 +418,8 @@ export default function Conteiner() {
 
     try {
       const result = await criarProcessoMut.mutateAsync({
-        numeroProcesso: formProcesso.numeroProcesso,
-        nomeInvoice: formProcesso.nomeInvoice,
-        dataProcesso: formProcesso.dataProcesso,
-        observacoes: formProcesso.observacoes,
-        ncm: formProcesso.ncm,
+        numero: formProcesso.numeroProcesso,
+        observacoes: formProcesso.observacoes || undefined,
       });
       if (result?.id) {
         setSelectedProcessoId(result.id);
@@ -456,14 +449,10 @@ export default function Conteiner() {
     try {
       await adicionarItemMut.mutateAsync({
         processoId: processoSelecionado.id,
-        codigo: formItem.descricao,
+        codigoProduto: formItem.descricao,
         descricao: nomeProdutoEncontrado || formItem.descricao,
-        unidade: formItem.unidade || 'UND',
         quantidade: formItem.quantidade,
-        precoUnitarioDolar: formItem.precoUnitarioDolar,
-        pedidoSarom: formItem.pedidoSarom,
-        pedidoAlexandre: formItem.pedidoAlexandre,
-        ordemCompra: formItem.ordemCompra,
+        precoUnitarioUsd: formItem.precoUnitarioDolar,
       });
       setFormItem({
         descricao: '',

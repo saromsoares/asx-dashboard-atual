@@ -1,9 +1,25 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, debitos, pagamentos_registros, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertDebito, type InsertPagamentoRegistro } from "../drizzle/schema";
+import { pgTable, bigserial, text, timestamp } from 'drizzle-orm/pg-core';
+import { estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, debitos, pagamentos, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertDebito, type InsertPagamento } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc, sql } from 'drizzle-orm';
+
+// Users table defined locally (not in Supabase-mirrored schema)
+export const users = pgTable("users", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  openId: text("openId").notNull().unique(),
+  name: text("name"),
+  email: text("email"),
+  loginMethod: text("loginMethod"),
+  role: text("role").default("user"),
+  lastSignedIn: timestamp("lastSignedIn", { withTimezone: true }),
+  criadoEm: timestamp("criadoEm", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
 
 let _db: PostgresJsDatabase | null = null;
 let _client: ReturnType<typeof postgres> | null = null;
@@ -256,7 +272,7 @@ export async function getAllItensPedidos() {
 
 // ============= CONTAINERS =============
 
-export async function criarContainer(numero: string, capacidadeMaxima?: number, pesoMaximo?: number) {
+export async function criarContainer(numero: string, capacidadeMaxima: number = 0, pesoMaximo?: number) {
   const db = await withDb();
 
   const [inserted] = await db.insert(containers).values({
@@ -300,13 +316,12 @@ export async function deletarContainer(containerId: number) {
 
 // ============= CONTAINER-PEDIDOS =============
 
-export async function vincularPedidoAContainer(containerId: number, pedidoId: number, sequencia: number = 0) {
+export async function vincularPedidoAContainer(containerId: number, pedidoId: number) {
   const db = await withDb();
 
   const [inserted] = await db.insert(container_pedidos).values({
     containerId,
     pedidoId,
-    sequencia,
   }).returning();
   return { success: true, id: inserted.id };
 }
@@ -326,8 +341,7 @@ export async function getPedidosDoContainer(containerId: number) {
       id: container_pedidos.id,
       containerId: container_pedidos.containerId,
       pedidoId: container_pedidos.pedidoId,
-      sequencia: container_pedidos.sequencia,
-      dataVinculacao: container_pedidos.dataVinculacao,
+      criadoEm: container_pedidos.criadoEm,
       pedidoNome: pedidos.nome,
       pedidoStatus: pedidos.status,
     })
@@ -393,9 +407,12 @@ export async function importarProdutosDoArquivo() {
           caixa: p.caixa || 'PAR',
           voltagem: p.volt || 'BIVOLT',
           codigoBarras: p.cod_barras || null,
-          ncm: p.ncm || null,
+          ncm: p.ncm || '',
           custoUsd: String(parseFloat(p.custo_usd) || 0),
           precoVendaBrl: String(parseFloat(p.preco_venda) || 0),
+          descricaoCompleta: p.descricao_completa || '',
+          observacoes: p.observacoes || '',
+          fotoUrl: p.foto_url || '',
           ativo: 'true',
         });
         sucessoCount++;
@@ -501,15 +518,17 @@ export async function removerItemProcesso(itemId: number) {
 
 export async function getAllDebitos() {
   const db = await withDb();
-  return await db.select().from(debitos).orderBy(desc(debitos.data));
+  return await db.select().from(debitos).orderBy(desc(debitos.dataVencimento));
 }
 
 export async function criarDebito(data: Omit<InsertDebito, 'id' | 'criadoEm' | 'atualizadoEm'>) {
   const db = await withDb();
   const [inserted] = await db.insert(debitos).values({
-    data: data.data,
-    ordem: data.ordem,
+    descricao: data.descricao,
     valor: String(data.valor),
+    moeda: data.moeda || 'USD',
+    dataVencimento: data.dataVencimento,
+    pago: data.pago,
   }).returning();
   return inserted;
 }
@@ -517,9 +536,11 @@ export async function criarDebito(data: Omit<InsertDebito, 'id' | 'criadoEm' | '
 export async function atualizarDebito(id: number, data: Partial<Omit<InsertDebito, 'id' | 'criadoEm' | 'atualizadoEm'>>) {
   const db = await withDb();
   const updateData: Record<string, unknown> = {};
-  if (data.data !== undefined) updateData.data = data.data;
-  if (data.ordem !== undefined) updateData.ordem = data.ordem;
+  if (data.descricao !== undefined) updateData.descricao = data.descricao;
   if (data.valor !== undefined) updateData.valor = String(data.valor);
+  if (data.moeda !== undefined) updateData.moeda = data.moeda;
+  if (data.dataVencimento !== undefined) updateData.dataVencimento = data.dataVencimento;
+  if (data.pago !== undefined) updateData.pago = data.pago;
   await db.update(debitos).set(updateData).where(eq(debitos.id, id));
   return { success: true };
 }
@@ -530,37 +551,37 @@ export async function deletarDebito(id: number) {
   return { success: true };
 }
 
-// ============= PAGAMENTOS REGISTROS =============
+// ============= PAGAMENTOS =============
 
-export async function getAllPagamentosRegistros() {
+export async function getAllPagamentos() {
   const db = await withDb();
-  return await db.select().from(pagamentos_registros).orderBy(desc(pagamentos_registros.data));
+  return await db.select().from(pagamentos).orderBy(desc(pagamentos.dataPagamento));
 }
 
-export async function criarPagamentoRegistro(data: Omit<InsertPagamentoRegistro, 'id' | 'criadoEm' | 'atualizadoEm'>) {
+export async function criarPagamento(data: Omit<InsertPagamento, 'id' | 'criadoEm'>) {
   const db = await withDb();
-  const [inserted] = await db.insert(pagamentos_registros).values({
-    data: data.data,
-    remetente: data.remetente,
+  const [inserted] = await db.insert(pagamentos).values({
+    debitoId: data.debitoId,
     valor: String(data.valor),
-    tipo: data.tipo,
+    dataPagamento: data.dataPagamento,
+    observacoes: data.observacoes || null,
   }).returning();
   return inserted;
 }
 
-export async function atualizarPagamentoRegistro(id: number, data: Partial<Omit<InsertPagamentoRegistro, 'id' | 'criadoEm' | 'atualizadoEm'>>) {
+export async function atualizarPagamento(id: number, data: Partial<Omit<InsertPagamento, 'id' | 'criadoEm'>>) {
   const db = await withDb();
   const updateData: Record<string, unknown> = {};
-  if (data.data !== undefined) updateData.data = data.data;
-  if (data.remetente !== undefined) updateData.remetente = data.remetente;
+  if (data.debitoId !== undefined) updateData.debitoId = data.debitoId;
   if (data.valor !== undefined) updateData.valor = String(data.valor);
-  if (data.tipo !== undefined) updateData.tipo = data.tipo;
-  await db.update(pagamentos_registros).set(updateData).where(eq(pagamentos_registros.id, id));
+  if (data.dataPagamento !== undefined) updateData.dataPagamento = data.dataPagamento;
+  if (data.observacoes !== undefined) updateData.observacoes = data.observacoes;
+  await db.update(pagamentos).set(updateData).where(eq(pagamentos.id, id));
   return { success: true };
 }
 
-export async function deletarPagamentoRegistro(id: number) {
+export async function deletarPagamento(id: number) {
   const db = await withDb();
-  await db.delete(pagamentos_registros).where(eq(pagamentos_registros.id, id));
+  await db.delete(pagamentos).where(eq(pagamentos.id, id));
   return { success: true };
 }
