@@ -1,4 +1,3 @@
-import type { Request } from 'express';
 import { getDb, type Transaction } from './db';
 import { auditLogs } from '../drizzle/schema';
 import type { InsertAuditLog } from '../drizzle/schema';
@@ -52,7 +51,7 @@ export async function registrarAuditoria(
 /**
  * Extrai informações do contexto da requisição
  */
-export function extrairContextoRequisicao(req: Pick<Request, 'headers' | 'ip' | 'socket'>) {
+export function extrairContextoRequisicao(req: any) {
   const forwarded = req.headers['x-forwarded-for'];
   const ipAddress =
     (Array.isArray(forwarded) ? forwarded[0] : forwarded) ||
