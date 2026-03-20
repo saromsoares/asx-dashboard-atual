@@ -425,6 +425,7 @@ export const appRouter = router({
         pesoBrutoKg: z.number().min(0).optional(),
         pesoLiquidoKg: z.number().min(0).optional(),
         cbm: z.number().min(0).optional(),
+        confirmado: z.number().int().min(0).max(1).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         const { processoId, ...data } = input;
@@ -437,6 +438,7 @@ export const appRouter = router({
         if (data.pesoBrutoKg !== undefined) updateData.pesoBrutoKg = String(data.pesoBrutoKg);
         if (data.pesoLiquidoKg !== undefined) updateData.pesoLiquidoKg = String(data.pesoLiquidoKg);
         if (data.cbm !== undefined) updateData.cbm = String(data.cbm);
+        if (data.confirmado !== undefined) updateData.confirmado = data.confirmado;
         const result = await atualizarProcessoSR(processoId, updateData);
         return result;
       }),
