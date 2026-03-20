@@ -33,7 +33,7 @@ const getDuracaoColor = (duracao: number) => {
   if (duracao <= 0) return { bg: 'oklch(0.55 0.25 30 / 0.25)', text: 'oklch(0.75 0.22 30)' };
   if (duracao < 1) return { bg: 'oklch(0.55 0.25 30 / 0.25)', text: 'oklch(0.75 0.22 30)' };
   if (duracao < 3) return { bg: 'oklch(0.70 0.18 85 / 0.25)', text: 'oklch(0.80 0.18 85)' };
-  if (duracao < 6) return { bg: 'oklch(0.60 0.17 145 / 0.15)', text: 'oklch(0.72 0.17 145)' };
+  if (duracao < 6) return { bg: 'oklch(0.60 0.17 145 / 0.15)', text: 'var(--color-asx-success)' };
   return { bg: 'oklch(0.60 0.17 145 / 0.25)', text: 'oklch(0.80 0.17 145)' };
 };
 
@@ -210,14 +210,14 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
 
   return (
     <>
-    <div className="h-full flex flex-col" style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'oklch(0.18 0.005 285)', color: 'var(--color-asx-text)' }}>
       {/* KPIs */}
-      <div className="px-6 py-4 border-b" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.28 0.005 285)' }}>
+      <div className="px-6 py-4 border-b" style={{ background: 'var(--color-asx-base)', borderColor: 'oklch(0.28 0.005 285)' }}>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+          <div className="p-3 rounded-lg border" style={{ background: 'var(--color-asx-surface-2)', borderColor: 'var(--color-asx-border-strong)' }}>
             <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('skusAtivos') || 'SKUs ATIVOS'}</div>
-            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{kpis.totalProdutos}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>de {analise.length}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'var(--color-asx-text-heading)' }}>{kpis.totalProdutos}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>de {analise.length}</div>
           </div>
           <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.55 0.25 30 / 0.12)', borderColor: 'oklch(0.55 0.25 30 / 0.4)' }}>
             <div className="flex items-center gap-1.5">
@@ -225,7 +225,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
               <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.70 0.22 30)' }}>{t('criticos') || 'CRÍTICOS'}</span>
             </div>
             <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.70 0.22 30)' }}>{kpis.skusCriticos}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{'< 1 '}{t('mes') || 'mês'}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>{'< 1 '}{t('mes') || 'mês'}</div>
           </div>
           <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.70 0.18 85 / 0.12)', borderColor: 'oklch(0.70 0.18 85 / 0.4)' }}>
             <div className="flex items-center gap-1.5">
@@ -233,43 +233,43 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
               <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.75 0.18 85)' }}>{t('atencao') || 'ATENÇÃO'}</span>
             </div>
             <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.75 0.18 85)' }}>{kpis.skusAtencao}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>1-6 {t('meses') || 'meses'}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>1-6 {t('meses') || 'meses'}</div>
           </div>
           <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.60 0.17 145 / 0.12)', borderColor: 'oklch(0.60 0.17 145 / 0.4)' }}>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'oklch(0.72 0.17 145)' }} />
-              <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.72 0.17 145)' }}>OK</span>
+              <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--color-asx-success)' }} />
+              <span className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'var(--color-asx-success)' }}>OK</span>
             </div>
-            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.72 0.17 145)' }}>{kpis.skusOk}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{'>'}6 {t('meses') || 'meses'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'var(--color-asx-success)' }}>{kpis.skusOk}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>{'>'}6 {t('meses') || 'meses'}</div>
           </div>
-          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+          <div className="p-3 rounded-lg border" style={{ background: 'var(--color-asx-surface-2)', borderColor: 'var(--color-asx-border-strong)' }}>
             <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('estoqueTotal') || 'ESTOQUE'}</div>
-            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(kpis.totalEstoque)}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{t('unidades')}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'var(--color-asx-text-heading)' }}>{formatNum(kpis.totalEstoque)}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>{t('unidades')}</div>
           </div>
-          <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.20 0.005 285)', borderColor: 'oklch(0.30 0.005 285)' }}>
+          <div className="p-3 rounded-lg border" style={{ background: 'var(--color-asx-surface-2)', borderColor: 'var(--color-asx-border-strong)' }}>
             <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('pedidosConfirmados') || 'PEDIDOS'}</div>
-            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(kpis.totalOrdens)}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{t('confirmados') || 'confirmados'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'var(--color-asx-text-heading)' }}>{formatNum(kpis.totalOrdens)}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>{t('confirmados') || 'confirmados'}</div>
           </div>
           <div className="p-3 rounded-lg border" style={{ background: 'oklch(0.48 0.22 25 / 0.12)', borderColor: 'oklch(0.48 0.22 25 / 0.4)' }}>
-            <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'oklch(0.65 0.22 25)' }}>{t('sugestaoCompra') || 'COMPRAS'}</div>
-            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'oklch(0.65 0.22 25)' }}>{formatNum(kpis.totalSugestaoCompra)}</div>
-            <div className="text-[10px]" style={{ color: 'oklch(0.45 0.010 285)' }}>{t('sugeridas') || 'sugeridas'}</div>
+            <div className="text-[10px] uppercase font-semibold tracking-wider" style={{ color: 'var(--color-asx-error)' }}>{t('sugestaoCompra') || 'COMPRAS'}</div>
+            <div className="text-2xl font-bold font-rajdhani mt-1" style={{ color: 'var(--color-asx-error)' }}>{formatNum(kpis.totalSugestaoCompra)}</div>
+            <div className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>{t('sugeridas') || 'sugeridas'}</div>
           </div>
         </div>
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b px-6 py-3" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.28 0.005 285)' }}>
+      <header className="sticky top-0 z-40 border-b px-6 py-3" style={{ background: 'var(--color-asx-base)', borderColor: 'oklch(0.28 0.005 285)' }}>
         <div className="flex items-center justify-between mb-3 gap-4">
           <div className="flex-1 flex items-center">
             <svg width="60" height="60" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="h-14">
               <text x="50" y="65" fontSize="60" fontWeight="bold" textAnchor="middle" fill="black" fontFamily="Arial, sans-serif" stroke="white" strokeWidth="2" paintOrder="stroke">ASX</text>
             </svg>
           </div>
-          <button onClick={() => setLocation('/')} className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors" style={{ background: 'oklch(0.22 0.005 285)', color: 'oklch(0.70 0.010 285)' }}>
+          <button onClick={() => setLocation('/')} className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors" style={{ background: 'oklch(0.22 0.005 285)', color: 'var(--color-asx-text-secondary)' }}>
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">{t('menu')}</span>
           </button>
@@ -277,12 +277,12 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('buscar')}</label>
-            <input type="text" placeholder={t('codigo_ou_descricao')} value={search} onChange={e => setSearch(e.target.value)} className="w-full px-3 py-2 rounded-md border text-sm mt-1" style={{ background: 'oklch(0.22 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }} />
+            <input type="text" placeholder={t('codigo_ou_descricao')} value={search} onChange={e => setSearch(e.target.value)} className="w-full px-3 py-2 rounded-md border text-sm mt-1" style={{ background: 'oklch(0.22 0.005 285)', borderColor: 'var(--color-asx-border-strong)', color: 'var(--color-asx-text)' }} />
           </div>
           <div>
             <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('data_estoque')}</label>
             <div className="flex gap-2 mt-1">
-              <input type="date" value={dataEstoque} onChange={e => setDataEstoque(e.target.value)} className="px-3 py-2 rounded-md border text-sm" style={{ background: 'oklch(0.22 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)' }} />
+              <input type="date" value={dataEstoque} onChange={e => setDataEstoque(e.target.value)} className="px-3 py-2 rounded-md border text-sm" style={{ background: 'oklch(0.22 0.005 285)', borderColor: 'var(--color-asx-border-strong)', color: 'var(--color-asx-text)' }} />
               <button onClick={() => setShowModalEstoque(true)} className="px-4 py-2 rounded-md transition-colors flex items-center gap-2" style={{ background: 'oklch(0.60 0.18 85)', color: 'white' }}>
                 <Upload className="w-4 h-4" /><span className="text-sm">{t('importar')}</span>
               </button>
@@ -297,24 +297,24 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
       {/* Tabela */}
       <div className="flex-1 overflow-auto">
         <table className="w-full border-collapse text-xs">
-          <thead className="sticky top-0 z-10" style={{ background: 'oklch(0.12 0.005 285)' }}>
-            <tr style={{ borderBottom: '2px solid oklch(0.30 0.005 285)' }}>
-              <th className="px-2 py-2.5 text-left font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+          <thead className="sticky top-0 z-10" style={{ background: 'var(--color-asx-dark)' }}>
+            <tr style={{ borderBottom: '2px solid var(--color-asx-border-strong)' }}>
+              <th className="px-2 py-2.5 text-left font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-text-heading)' }}>
                 <button onClick={() => handleSort('codigo')} className="flex items-center gap-1 hover:opacity-75">COD <SortIcon field="codigo" /></button>
               </th>
-              <th className="px-2 py-2.5 text-left font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+              <th className="px-2 py-2.5 text-left font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-text-heading)' }}>
                 <button onClick={() => handleSort('descricao')} className="flex items-center gap-1 hover:opacity-75">{t('descricao') || 'DESCRIÇÃO'} <SortIcon field="descricao" /></button>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-text-heading)' }}>
                 <div className="flex flex-col items-center gap-0.5">
                   <button onClick={() => handleSort('estoqueAtual')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('estoqueAtual') || 'ESTOQUE ATUAL'} <SortIcon field="estoqueAtual" /></button>
                   <span className="text-[8px]" style={{ color: 'oklch(0.50 0.010 285)' }}>{dataEstoque}</span>
                 </div>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-text-heading)' }}>
                 <button onClick={() => handleSort('totalOrdens')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('totalOrdens') || 'TOTAL ORDENS'} <SortIcon field="totalOrdens" /></button>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>{t('estoquePedidos') || 'EST.+PED.'}</th>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-text-heading)' }}>{t('estoquePedidos') || 'EST.+PED.'}</th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.80 0.18 85)' }}>
                 <button onClick={() => handleSort('duracao6meses')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6m') || 'DUR. 6M'} <SortIcon field="duracao6meses" /></button>
                 <span className="text-[8px] block" style={{ color: 'oklch(0.50 0.010 285)' }}>vendas 6m</span>
@@ -323,7 +323,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                 <button onClick={() => handleSort('duracao3meses')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3m') || 'DUR. 3M'} <SortIcon field="duracao3meses" /></button>
                 <span className="text-[8px] block" style={{ color: 'oklch(0.50 0.010 285)' }}>vendas 3m</span>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.85 0.005 65)' }}>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-text-heading)' }}>
                 <button onClick={() => handleSort('totalEmbarcado')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('totalEmbarc') || 'TOTAL EMBARC.'} <SortIcon field="totalEmbarcado" /></button>
               </th>
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.70 0.17 145)' }}>
@@ -332,14 +332,14 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
               <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.70 0.17 145)' }}>
                 <button onClick={() => handleSort('duracao3mesesEmbarc')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3mEmbarc') || 'DUR. 3M EMB.'} <SortIcon field="duracao3mesesEmbarc" /></button>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-error)' }}>
                 <button onClick={() => handleSort('sugestaoCompra')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('compras') || 'COMPRAS'} <SortIcon field="sugestaoCompra" /></button>
                 <span className="text-[8px] block" style={{ color: 'oklch(0.50 0.010 285)' }}>editável</span>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-error)' }}>
                 <button onClick={() => handleSort('duracao6mesesCompras')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao6mCompras') || 'DUR. 6M COMP.'} <SortIcon field="duracao6mesesCompras" /></button>
               </th>
-              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'oklch(0.65 0.22 25)' }}>
+              <th className="px-2 py-2.5 text-center font-bold whitespace-nowrap" style={{ color: 'var(--color-asx-error)' }}>
                 <button onClick={() => handleSort('duracao3mesesCompras')} className="flex items-center justify-center gap-1 hover:opacity-75 w-full">{t('duracao3mCompras') || 'DUR. 3M COMP.'} <SortIcon field="duracao3mesesCompras" /></button>
               </th>
             </tr>
@@ -352,20 +352,20 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
               const dur3c = getDuracaoColor(item.duracao3mesesCompras);
               return (
                 <tr key={idx} style={{ borderBottom: '1px solid oklch(0.22 0.005 285)', background: idx % 2 === 0 ? 'transparent' : 'oklch(0.15 0.005 285 / 0.5)' }}>
-                  <td className="px-2 py-2 font-mono text-xs font-semibold" style={{ color: 'oklch(0.85 0.005 65)' }}>{item.codigo}</td>
-                  <td className="px-2 py-2 text-xs max-w-[200px] truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>{item.descricao}</td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>
+                  <td className="px-2 py-2 font-mono text-xs font-semibold" style={{ color: 'var(--color-asx-text-heading)' }}>{item.codigo}</td>
+                  <td className="px-2 py-2 text-xs max-w-[200px] truncate" style={{ color: 'var(--color-asx-text-secondary)' }}>{item.descricao}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'var(--color-asx-text-heading)', background: 'oklch(0.22 0.005 285)' }}>
                     <input
                       type="number"
                       value={estoqueEditando[item.codigo] ?? item.estoqueAtual}
                       onChange={e => setEstoqueEditando({...estoqueEditando, [item.codigo]: parseInt(e.target.value) || 0})}
                       min="0"
                       className="w-full px-1 py-0.5 text-center rounded border text-xs"
-                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.30 0.005 285)', color: 'oklch(0.90 0.005 65)', textAlign: 'center' }}
+                      style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border-strong)', color: 'var(--color-asx-text)', textAlign: 'center' }}
                     />
                   </td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalOrdens)}</td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoquePlusPedidos)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>{formatNum(item.totalOrdens)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'var(--color-asx-text-heading)', background: 'oklch(0.22 0.005 285)' }}>{formatNum(item.estoquePlusPedidos)}</td>
                   <td className="px-1 py-1 text-center" style={{ background: 'oklch(0.22 0.005 285)' }}>
                     <input
                       type="number"
@@ -374,7 +374,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                       onFocus={e => e.target.select()}
                       min="0"
                       className="w-full px-1 py-0.5 text-center rounded border text-xs"
-                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.40 0.18 85 / 0.5)', color: 'oklch(0.80 0.18 85)', textAlign: 'center', width: '60px' }}
+                      style={{ background: 'var(--color-asx-base)', borderColor: 'oklch(0.40 0.18 85 / 0.5)', color: 'oklch(0.80 0.18 85)', textAlign: 'center', width: '60px' }}
                     />
                   </td>
                   <td className="px-1 py-1 text-center" style={{ background: 'oklch(0.22 0.005 285)' }}>
@@ -385,10 +385,10 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                       onFocus={e => e.target.select()}
                       min="0"
                       className="w-full px-1 py-0.5 text-center rounded border text-xs"
-                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.40 0.18 85 / 0.5)', color: 'oklch(0.80 0.18 85)', textAlign: 'center', width: '60px' }}
+                      style={{ background: 'var(--color-asx-base)', borderColor: 'oklch(0.40 0.18 85 / 0.5)', color: 'oklch(0.80 0.18 85)', textAlign: 'center', width: '60px' }}
                     />
                   </td>
-                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>{formatNum(item.totalEmbarcado)}</td>
+                  <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>{formatNum(item.totalEmbarcado)}</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6e.text, background: dur6e.bg }}>{item.duracao6mesesEmbarc.toFixed(1)}m</td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur3e.text, background: dur3e.bg }}>{item.duracao3mesesEmbarc.toFixed(1)}m</td>
                   <td className="px-1 py-1 text-center" style={{ background: item.sugestaoCompra > 0 ? 'oklch(0.48 0.22 25 / 0.15)' : 'transparent' }}>
@@ -399,7 +399,7 @@ export default function CentralCompraAvancada({ comprador, titulo, corAcento }: 
                       onFocus={e => e.target.select()}
                       min="0"
                       className="w-full px-1 py-0.5 text-center rounded border text-xs font-bold"
-                      style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.48 0.22 25 / 0.5)', color: 'oklch(0.65 0.22 25)', textAlign: 'center', width: '70px' }}
+                      style={{ background: 'var(--color-asx-base)', borderColor: 'oklch(0.48 0.22 25 / 0.5)', color: 'var(--color-asx-error)', textAlign: 'center', width: '70px' }}
                     />
                   </td>
                   <td className="px-2 py-2 text-center text-xs font-bold" style={{ color: dur6c.text, background: dur6c.bg }}>{item.duracao6mesesCompras.toFixed(1)}m</td>

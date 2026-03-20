@@ -169,13 +169,13 @@ export default function Desenvolvimento() {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-asx-dark)', color: 'var(--color-asx-text)' }}>
       {/* Botão Voltar */}
       <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
         <button
           onClick={() => setLocation('/')}
           className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-          style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+          style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text-heading)' }}
           title={t('voltarMenu') || 'Voltar ao menu principal'}
         >
           <ArrowLeft className="w-4 h-4" />
@@ -184,8 +184,8 @@ export default function Desenvolvimento() {
       </div>
 
       {/* Header */}
-      <header className="sticky top-12 z-40 border-b px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-        <h1 className="font-rajdhani font-bold text-2xl" style={{ color: 'oklch(0.80 0.005 65)' }}>
+      <header className="sticky top-12 z-40 border-b px-6 py-4" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
+        <h1 className="font-rajdhani font-bold text-2xl" style={{ color: 'var(--color-asx-text-heading)' }}>
           🚀 {t('desenvolvimento') || 'Desenvolvimento de Produtos'}
         </h1>
       </header>
@@ -193,9 +193,9 @@ export default function Desenvolvimento() {
       <main className="flex-1 p-6 overflow-auto">
         <div className="max-w-7xl mx-auto">
           {/* Seletor de Categoria e Busca */}
-          <div className="mb-6 p-4 rounded-lg border flex gap-4 items-end flex-wrap" style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+          <div className="mb-6 p-4 rounded-lg border flex gap-4 items-end flex-wrap" style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)' }}>
             <div className="flex-1 min-w-48">
-              <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>
+              <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>
                 {t('categoria') || 'Categoria'}
               </label>
               <select
@@ -206,9 +206,9 @@ export default function Desenvolvimento() {
                 }}
                 className="w-full px-3 py-2 rounded-md border text-sm mt-1"
                 style={{
-                  background: 'oklch(0.14 0.005 285)',
-                  borderColor: 'oklch(0.26 0.005 285)',
-                  color: 'oklch(0.90 0.005 65)',
+                  background: 'var(--color-asx-base)',
+                  borderColor: 'var(--color-asx-border)',
+                  color: 'var(--color-asx-text)',
                 }}
               >
                 <option value="">{t('selecionarCategoria') || 'Selecione uma categoria...'}</option>
@@ -223,8 +223,8 @@ export default function Desenvolvimento() {
               disabled={importarProdutos.isPending}
               className="px-4 py-2 rounded-md border transition-colors flex items-center gap-2"
               style={{
-                background: importarProdutos.isPending ? 'oklch(0.40 0.010 285)' : 'oklch(0.48 0.22 25)',
-                borderColor: 'oklch(0.48 0.22 25)',
+                background: importarProdutos.isPending ? 'oklch(0.40 0.010 285)' : 'var(--color-asx-red)',
+                borderColor: 'var(--color-asx-red)',
                 color: 'white',
               }}
               title="Importar todos os produtos do arquivo local para o banco de dados"
@@ -234,7 +234,7 @@ export default function Desenvolvimento() {
             </button>
 
             <div className="flex-1 min-w-48">
-              <label className="text-sm font-semibold md:block hidden" style={{ color: 'oklch(0.70 0.010 285)' }}>
+              <label className="text-sm font-semibold md:block hidden" style={{ color: 'var(--color-asx-text-secondary)' }}>
                 {t('buscar') || 'Buscar'}
               </label>
               <div className="relative md:mt-1 mt-0">
@@ -246,22 +246,22 @@ export default function Desenvolvimento() {
                   onChange={e => setBusca(e.target.value)}
                   className="w-full pl-10 pr-3 py-2 md:py-2 py-3 rounded-md border text-sm md:h-auto h-11"
                   style={{
-                    background: 'oklch(0.14 0.005 285)',
-                    borderColor: 'oklch(0.26 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
+                    background: 'var(--color-asx-base)',
+                    borderColor: 'var(--color-asx-border)',
+                    color: 'var(--color-asx-text)',
                   }}
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between" style={{ color: 'oklch(0.60 0.010 285)' }}>
+            <div className="flex items-center justify-between" style={{ color: 'var(--color-asx-text-muted)' }}>
               <div className="text-xs">
                 {produtosFiltrados.length} {produtosFiltrados.length === 1 ? 'produto' : 'produtos'}
               </div>
               <button
                 onClick={() => setMostrarModalNovoProduto(true)}
                 className="px-4 py-2 md:py-2 py-3 rounded-md font-semibold text-sm transition-colors flex-shrink-0 md:h-auto h-11 md:w-auto w-full"
-                style={{ background: "oklch(0.48 0.22 25)", color: "white" }}
+                style={{ background: "var(--color-asx-red)", color: "white" }}
               >
                 + Novo Produto
               </button>
@@ -274,18 +274,18 @@ export default function Desenvolvimento() {
               <p>{t('nenhumProduto') || 'Nenhum produto encontrado'}</p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
+            <div className="overflow-x-auto rounded-lg border" style={{ borderColor: 'var(--color-asx-border)' }}>
               <table className="w-full text-sm">
-                <thead style={{ background: 'oklch(0.12 0.005 285)' }}>
-                  <tr style={{ borderBottom: '2px solid oklch(0.26 0.005 285)' }}>
-                    <th className="px-4 py-3 text-left font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>COD</th>
-                    <th className="px-4 py-3 text-left font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>{t('descricao') || 'DESCRIÇÃO'}</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>CUSTO USD</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>CUSTO BRL</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>PREÇO VENDA BRL</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>MARGEM BRL</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>MARKUP %</th>
-                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>AÇÕES</th>
+                <thead style={{ background: 'var(--color-asx-dark)' }}>
+                  <tr style={{ borderBottom: '2px solid var(--color-asx-border)' }}>
+                    <th className="px-4 py-3 text-left font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>COD</th>
+                    <th className="px-4 py-3 text-left font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>{t('descricao') || 'DESCRIÇÃO'}</th>
+                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>CUSTO USD</th>
+                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>CUSTO BRL</th>
+                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>PREÇO VENDA BRL</th>
+                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>MARGEM BRL</th>
+                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>MARKUP %</th>
+                    <th className="px-4 py-3 text-center font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>AÇÕES</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -302,11 +302,11 @@ export default function Desenvolvimento() {
                       <tr
                         key={produto.id}
                         style={{
-                          borderBottom: '1px solid oklch(0.20 0.005 285)',
-                          background: idx % 2 === 0 ? 'oklch(0.12 0.005 285)' : 'oklch(0.14 0.005 285)',
+                          borderBottom: '1px solid var(--color-asx-surface-2)',
+                          background: idx % 2 === 0 ? 'var(--color-asx-dark)' : 'var(--color-asx-base)',
                         }}
                       >
-                        <td className="px-4 py-3" style={{ color: 'oklch(0.80 0.005 65)' }}>{produto.codigo}</td>
+                        <td className="px-4 py-3" style={{ color: 'var(--color-asx-text-heading)' }}>{produto.codigo}</td>
                         <td className="px-4 py-3 text-sm" style={{ color: 'oklch(0.75 0.005 65)' }}>{produto.descricao}</td>
                         <td className="px-4 py-3 text-center">
                           {editando ? (
@@ -318,12 +318,12 @@ export default function Desenvolvimento() {
                               className="w-24 px-2 py-1 rounded text-center text-sm"
                               style={{
                                 background: 'oklch(0.18 0.005 285)',
-                                borderColor: 'oklch(0.26 0.005 285)',
-                                color: 'oklch(0.90 0.005 65)',
+                                borderColor: 'var(--color-asx-border)',
+                                color: 'var(--color-asx-text)',
                               }}
                             />
                           ) : (
-                            <span style={{ color: 'oklch(0.80 0.005 65)' }}>${custoUsd.toFixed(2)}</span>
+                            <span style={{ color: 'var(--color-asx-text-heading)' }}>${custoUsd.toFixed(2)}</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-center" style={{ color: 'oklch(0.75 0.005 65)' }}>
@@ -339,12 +339,12 @@ export default function Desenvolvimento() {
                               className="w-24 px-2 py-1 rounded text-center text-sm"
                               style={{
                                 background: 'oklch(0.18 0.005 285)',
-                                borderColor: 'oklch(0.26 0.005 285)',
-                                color: 'oklch(0.90 0.005 65)',
+                                borderColor: 'var(--color-asx-border)',
+                                color: 'var(--color-asx-text)',
                               }}
                             />
                           ) : (
-                            <span style={{ color: 'oklch(0.80 0.005 65)' }}>R$ {precoVendaBrl.toFixed(2)}</span>
+                            <span style={{ color: 'var(--color-asx-text-heading)' }}>R$ {precoVendaBrl.toFixed(2)}</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-center" style={{ color: getCorMargem(markup) }}>
@@ -382,7 +382,7 @@ export default function Desenvolvimento() {
                                 },
                               }))}
                               className="px-3 py-1 rounded text-xs font-medium transition-colors"
-                              style={{ background: 'oklch(0.48 0.22 25)', color: 'oklch(0.98 0.001 285)' }}
+                              style={{ background: 'var(--color-asx-red)', color: 'oklch(0.98 0.001 285)' }}
                             >
                               Editar
                             </button>
@@ -401,89 +401,89 @@ export default function Desenvolvimento() {
       {/* Modal de Novo Produto */}
       {mostrarModalNovoProduto && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-black rounded-lg border max-w-2xl w-full max-h-[90vh] overflow-y-auto" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
-            <div className="sticky top-0 px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'oklch(0.26 0.005 285)', background: 'oklch(0.14 0.005 285)' }}>
-              <h2 className="text-xl font-rajdhani font-bold" style={{ color: 'oklch(0.80 0.005 65)' }}>Novo Produto</h2>
+          <div className="bg-black rounded-lg border max-w-2xl w-full max-h-[90vh] overflow-y-auto" style={{ borderColor: 'var(--color-asx-border)' }}>
+            <div className="sticky top-0 px-6 py-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-asx-border)', background: 'var(--color-asx-base)' }}>
+              <h2 className="text-xl font-rajdhani font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>Novo Produto</h2>
               <button onClick={() => setMostrarModalNovoProduto(false)} className="p-1 rounded hover:bg-white/10">
                 <X className="w-5 h-5" style={{ color: 'oklch(0.65 0.010 285)' }} />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Categoria *</label>
+                <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Categoria *</label>
                 <select
                   value={novoProduto.categoria}
                   onChange={e => setNovoProduto({...novoProduto, categoria: e.target.value})}
                   className="w-full px-3 py-2 rounded-md border text-sm mt-1"
-                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text)' }}
                 >
                   <option value="">Selecione uma categoria...</option>
                   {categorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Nome do Produto *</label>
+                <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Nome do Produto *</label>
                 <input
                   type="text"
                   value={novoProduto.nome}
                   onChange={e => setNovoProduto({...novoProduto, nome: e.target.value})}
                   className="w-full px-3 py-2 rounded-md border text-sm mt-1"
-                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text)' }}
                   placeholder="Nome do produto"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Código do Produto *</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Código do Produto *</label>
                   <input
                     type="text"
                     value={novoProduto.codigoProduto}
                     onChange={e => setNovoProduto({...novoProduto, codigoProduto: e.target.value})}
                     className="w-full px-3 py-2 rounded-md border text-sm mt-1"
-                    style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                    style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text)' }}
                     placeholder="Ex: ASX1001"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Código de Barras *</label>
+                  <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Código de Barras *</label>
                   <input
                     type="text"
                     value={novoProduto.codigoBarras}
                     onChange={e => setNovoProduto({...novoProduto, codigoBarras: e.target.value})}
                     className="w-full px-3 py-2 rounded-md border text-sm mt-1"
-                    style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                    style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text)' }}
                     placeholder="EAN/UPC"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Descrição do Produto</label>
+                <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Descrição do Produto</label>
                 <textarea
                   value={novoProduto.descricao}
                   onChange={e => setNovoProduto({...novoProduto, descricao: e.target.value})}
                   className="w-full px-3 py-2 rounded-md border text-sm mt-1 resize-none"
-                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text)' }}
                   placeholder="Descrição detalhada do produto"
                   rows={3}
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Observações</label>
+                <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Observações</label>
                 <textarea
                   value={novoProduto.observacoes}
                   onChange={e => setNovoProduto({...novoProduto, observacoes: e.target.value})}
                   className="w-full px-3 py-2 rounded-md border text-sm mt-1 resize-none"
-                  style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.90 0.005 65)' }}
+                  style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text)' }}
                   placeholder="Observações adicionais"
                   rows={2}
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold" style={{ color: 'oklch(0.70 0.010 285)' }}>Foto do Produto</label>
-                <div className="mt-2 p-4 rounded-md border-2 border-dashed text-center cursor-pointer transition-colors hover:bg-white/5" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
+                <label className="text-sm font-semibold" style={{ color: 'var(--color-asx-text-secondary)' }}>Foto do Produto</label>
+                <div className="mt-2 p-4 rounded-md border-2 border-dashed text-center cursor-pointer transition-colors hover:bg-white/5" style={{ borderColor: 'var(--color-asx-border)' }}>
                   <input type="file" accept="image/*" className="hidden" id="foto-input" />
                   <label htmlFor="foto-input" className="cursor-pointer">
-                    <p style={{ color: 'oklch(0.70 0.010 285)' }}>Clique para adicionar foto</p>
+                    <p style={{ color: 'var(--color-asx-text-secondary)' }}>Clique para adicionar foto</p>
                   </label>
                 </div>
               </div>
@@ -491,7 +491,7 @@ export default function Desenvolvimento() {
                 <button
                   onClick={() => setMostrarModalNovoProduto(false)}
                   className="flex-1 px-4 py-2 rounded-md font-semibold transition-colors"
-                  style={{ background: 'oklch(0.18 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+                  style={{ background: 'oklch(0.18 0.005 285)', color: 'var(--color-asx-text-secondary)' }}
                 >
                   Cancelar
                 </button>
@@ -506,7 +506,7 @@ export default function Desenvolvimento() {
                     }
                   }}
                   className="flex-1 px-4 py-2 rounded-md font-semibold transition-colors flex items-center justify-center gap-2"
-                  style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+                  style={{ background: 'var(--color-asx-red)', color: 'white' }}
                 >
                   <Save className="w-4 h-4" />
                   Criar Produto

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { produtos, categorias } from '@/data/produtos';
 import { trpc } from '@/lib/trpc';
+import { formatUSD } from '@/lib/formatters';
 import { NotificacoesPedidos, type Notificacao } from '@/components/NotificacoesPedidos';
 import { OrderCard } from '@/components/OrderCard';
 import {
@@ -19,9 +20,6 @@ import {
   Save,
   Filter,
 } from 'lucide-react';
-
-const formatUSD = (v: number) =>
-  v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
 export default function Compras() {
   const [, setLocation] = useLocation();
@@ -280,14 +278,14 @@ export default function Compras() {
   }, []);
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-asx-dark)', color: 'var(--color-asx-text)' }}>
       {/* Header */}
-      <div className="px-4 md:px-6 py-3 border-b flex items-center gap-3" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+      <div className="px-4 md:px-6 py-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--color-asx-surface-3)' }}>
         {pedidoAtivo ? (
           <button
             onClick={() => { setPedidoAtivo(null); setCategoriaAtiva(null); setQtdPorProduto({}); setBuscaProduto(''); }}
             className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-            style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+            style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text-heading)' }}
           >
             <ChevronLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Voltar aos Pedidos</span>
@@ -296,13 +294,13 @@ export default function Compras() {
           <button
             onClick={() => setLocation('/')}
             className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-            style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+            style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text-heading)' }}
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Menu</span>
           </button>
         )}
-        <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
+        <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'var(--color-asx-text-heading)' }}>
           {pedidoAtivo ? `PEDIDO #${pedidoAtivo}` : 'GERENCIADOR DE PEDIDOS'}
         </span>
       </div>
@@ -311,8 +309,8 @@ export default function Compras() {
       {!pedidoAtivo && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Criar novo pedido */}
-          <div className="border-b px-4 md:px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
-            <p className="text-xs uppercase tracking-wider mb-3" style={{ color: 'oklch(0.45 0.010 285)' }}>GERAR NOVO PEDIDO</p>
+          <div className="border-b px-4 md:px-6 py-4" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-surface-3)' }}>
+            <p className="text-xs uppercase tracking-wider mb-3" style={{ color: 'var(--color-asx-text-muted)' }}>GERAR NOVO PEDIDO</p>
             <div className="flex gap-2 md:flex-row flex-col">
               <input
                 type="text"
@@ -322,9 +320,9 @@ export default function Compras() {
                 onKeyDown={e => e.key === 'Enter' && handleCriarPedido()}
                 className="flex-1 px-4 py-3 rounded-md border text-sm h-11"
                 style={{
-                  background: 'oklch(0.18 0.005 285)',
-                  borderColor: 'oklch(0.28 0.005 285)',
-                  color: 'oklch(0.90 0.005 65)',
+                  background: 'var(--color-asx-surface-2)',
+                  borderColor: 'var(--color-asx-border)',
+                  color: 'var(--color-asx-text)',
                 }}
               />
               <button
@@ -332,7 +330,7 @@ export default function Compras() {
                 disabled={criarPedidoMutation.isPending}
                 className="px-4 py-3 rounded-md font-medium transition-colors flex items-center gap-2 h-11 md:w-auto w-full justify-center"
                 style={{
-                  background: 'oklch(0.48 0.22 25)',
+                  background: 'var(--color-asx-red)',
                   color: 'white',
                   opacity: criarPedidoMutation.isPending ? 0.6 : 1,
                 }}
@@ -344,7 +342,7 @@ export default function Compras() {
           </div>
 
           {/* Filtros de status */}
-          <div className="border-b px-4 md:px-6 py-3 flex gap-2 flex-wrap" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+          <div className="border-b px-4 md:px-6 py-3 flex gap-2 flex-wrap" style={{ borderColor: 'var(--color-asx-surface-3)' }}>
             {(['Todos', 'Pendente', 'Confirmado', 'Recebido'] as const).map(s => {
               const count = s === 'Todos' ? pedidosDb.length : pedidosDb.filter((p: any) => p.status === s).length;
               const isActive = statusFiltro === s;
@@ -354,8 +352,8 @@ export default function Compras() {
                   onClick={() => setStatusFiltro(s)}
                   className="px-4 py-2 rounded-md text-xs font-semibold transition-colors"
                   style={{
-                    background: isActive ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-                    color: isActive ? 'white' : 'oklch(0.60 0.010 285)',
+                    background: isActive ? 'var(--color-asx-red)' : 'var(--color-asx-surface-2)',
+                    color: isActive ? 'white' : 'var(--color-asx-text-muted)',
                   }}
                 >
                   {s} ({count})
@@ -368,12 +366,12 @@ export default function Compras() {
           <div className="flex-1 overflow-auto p-4 md:p-6">
             {carregandoPedidos ? (
               <div className="text-center py-12">
-                <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>Carregando pedidos...</p>
+                <p className="text-sm" style={{ color: 'var(--color-asx-text-muted)' }}>Carregando pedidos...</p>
               </div>
             ) : pedidosFiltrados.length === 0 ? (
               <div className="text-center py-12">
-                <Package className="w-12 h-12 mx-auto mb-3" style={{ color: 'oklch(0.30 0.010 285)' }} />
-                <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                <Package className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-asx-border)' }} />
+                <p className="text-sm" style={{ color: 'var(--color-asx-text-muted)' }}>
                   {statusFiltro === 'Todos' ? 'Nenhum pedido criado ainda.' : `Nenhum pedido com status "${statusFiltro}".`}
                 </p>
               </div>
@@ -381,23 +379,23 @@ export default function Compras() {
               <div className="space-y-2">
                 {pedidosFiltrados.map((pedido: any) => {
                   const itemCount = getItemCount(pedido.id);
-                  const statusColor = pedido.status === 'Pendente' ? 'oklch(0.65 0.22 25)' :
-                    pedido.status === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'oklch(0.72 0.17 145)';
+                  const statusColor = pedido.status === 'Pendente' ? 'var(--color-asx-error)' :
+                    pedido.status === 'Confirmado' ? 'var(--color-asx-info)' : 'var(--color-asx-success)';
                   return (
                     <div key={pedido.id}>
                       {/* Desktop */}
                       <div
                         className="hidden md:flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors hover:border-red-800"
-                        style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.24 0.005 285)' }}
+                        style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-surface-3)' }}
                         onClick={() => { setPedidoAtivo(pedido.id); setCategoriaAtiva(null); setQtdPorProduto({}); }}
                       >
                         <div className="flex items-center gap-4">
-                          <span className="font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                          <span className="font-rajdhani font-bold text-sm" style={{ color: 'var(--color-asx-text-muted)' }}>
                             #{pedido.id}
                           </span>
                           <div>
-                            <p className="font-semibold text-sm" style={{ color: 'oklch(0.90 0.005 65)' }}>{pedido.nome}</p>
-                            <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                            <p className="font-semibold text-sm" style={{ color: 'var(--color-asx-text)' }}>{pedido.nome}</p>
+                            <p className="text-xs" style={{ color: 'var(--color-asx-text-muted)' }}>
                               {itemCount} {itemCount === 1 ? 'item' : 'itens'} • {new Date(pedido.dataCreacao).toLocaleDateString('pt-BR')}
                             </p>
                           </div>
@@ -413,7 +411,7 @@ export default function Compras() {
                           <button
                             onClick={e => { e.stopPropagation(); handleDeletarPedido(pedido.id); }}
                             className="p-2 rounded transition-colors hover:opacity-75"
-                            style={{ color: 'oklch(0.50 0.010 285)' }}
+                            style={{ color: 'var(--color-asx-text-muted)' }}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -445,13 +443,13 @@ export default function Compras() {
       {pedidoAtivo && pedidoAtivoObj && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Info do Pedido */}
-          <div className="border-b px-4 md:px-6 py-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
+          <div className="border-b px-4 md:px-6 py-4" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-surface-3)' }}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
-                <h2 className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.90 0.005 65)' }}>
+                <h2 className="font-rajdhani font-bold text-xl" style={{ color: 'var(--color-asx-text)' }}>
                   {pedidoAtivoObj.nome}
                 </h2>
-                <p className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-asx-text-muted)' }}>
                   Criado em {new Date(pedidoAtivoObj.dataCreacao).toLocaleDateString('pt-BR')} • {itensDoPedido.length} {itensDoPedido.length === 1 ? 'item' : 'itens'}
                 </p>
               </div>
@@ -460,16 +458,16 @@ export default function Compras() {
               <div className="flex items-center gap-2 flex-wrap">
                 {(['Pendente', 'Confirmado', 'Recebido'] as const).map(s => {
                   const isActive = pedidoAtivoObj.status === s;
-                  const color = s === 'Pendente' ? 'oklch(0.65 0.22 25)' : s === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'oklch(0.72 0.17 145)';
+                  const color = s === 'Pendente' ? 'var(--color-asx-error)' : s === 'Confirmado' ? 'var(--color-asx-info)' : 'var(--color-asx-success)';
                   return (
                     <button
                       key={s}
                       onClick={() => !isActive && handleAtualizarStatus(pedidoAtivo, s)}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-colors flex items-center gap-1"
                       style={{
-                        background: isActive ? color : 'oklch(0.18 0.005 285)',
-                        color: isActive ? 'white' : 'oklch(0.60 0.010 285)',
-                        border: `1px solid ${isActive ? color : 'oklch(0.26 0.005 285)'}`,
+                        background: isActive ? color : 'var(--color-asx-surface-2)',
+                        color: isActive ? 'white' : 'var(--color-asx-text-muted)',
+                        border: `1px solid ${isActive ? color : 'var(--color-asx-border)'}`,
                       }}
                     >
                       {getStatusIcon(s)}
@@ -483,21 +481,21 @@ export default function Compras() {
             {/* Totais */}
             {itensDoPedido.length > 0 && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                <div className="p-3 rounded-lg" style={{ background: 'oklch(0.18 0.005 285)' }}>
-                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Qtd Total</p>
-                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'oklch(0.85 0.005 65)' }}>{totais.totalItens}</p>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--color-asx-surface-2)' }}>
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Qtd Total</p>
+                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'var(--color-asx-text-heading)' }}>{totais.totalItens}</p>
                 </div>
-                <div className="p-3 rounded-lg" style={{ background: 'oklch(0.18 0.005 285)' }}>
-                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Sarom</p>
-                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'oklch(0.70 0.12 250)' }}>{formatUSD(totais.totalSarom)}</p>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--color-asx-surface-2)' }}>
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Total Sarom</p>
+                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'var(--color-asx-info)' }}>{formatUSD(totais.totalSarom)}</p>
                 </div>
-                <div className="p-3 rounded-lg" style={{ background: 'oklch(0.18 0.005 285)' }}>
-                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Alexandre</p>
-                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'oklch(0.70 0.12 145)' }}>{formatUSD(totais.totalAlexandre)}</p>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--color-asx-surface-2)' }}>
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Total Alexandre</p>
+                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'var(--color-asx-success)' }}>{formatUSD(totais.totalAlexandre)}</p>
                 </div>
-                <div className="p-3 rounded-lg" style={{ background: 'oklch(0.18 0.005 285)' }}>
-                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Total Geral</p>
-                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'oklch(0.48 0.22 25)' }}>{formatUSD(totais.totalGeral)}</p>
+                <div className="p-3 rounded-lg" style={{ background: 'var(--color-asx-surface-2)' }}>
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Total Geral</p>
+                  <p className="font-rajdhani font-bold text-lg" style={{ color: 'var(--color-asx-red)' }}>{formatUSD(totais.totalGeral)}</p>
                 </div>
               </div>
             )}
@@ -507,15 +505,15 @@ export default function Compras() {
           <div className="flex-1 overflow-auto p-4 md:p-6 space-y-6">
 
             {/* ===== SELETOR DE CATEGORIA + BUSCA ===== */}
-            <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                <Plus className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 25)' }} />
+            <div className="p-4 rounded-lg border" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--color-asx-text-heading)' }}>
+                <Plus className="w-4 h-4" style={{ color: 'var(--color-asx-red)' }} />
                 Adicionar Produtos ao Pedido
               </h3>
 
               {/* Busca rápida por código */}
               <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-asx-text-muted)' }} />
                 <input
                   type="text"
                   placeholder="Busca rápida por código, nome ou cód. barras..."
@@ -523,23 +521,23 @@ export default function Compras() {
                   onChange={e => { setBuscaProduto(e.target.value); if (e.target.value.trim()) setCategoriaAtiva(null); }}
                   className="w-full pl-9 pr-10 py-3 rounded-md border text-sm h-11"
                   style={{
-                    background: 'oklch(0.18 0.005 285)',
-                    borderColor: 'oklch(0.28 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
+                    background: 'var(--color-asx-surface-2)',
+                    borderColor: 'var(--color-asx-border)',
+                    color: 'var(--color-asx-text)',
                   }}
                 />
                 {buscaProduto && (
                   <button onClick={() => setBuscaProduto('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <X className="w-3.5 h-3.5" style={{ color: 'oklch(0.60 0.010 285)' }} />
+                    <X className="w-3.5 h-3.5" style={{ color: 'var(--color-asx-text-muted)' }} />
                   </button>
                 )}
               </div>
 
               {/* Separador */}
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex-1 h-px" style={{ background: 'oklch(0.24 0.005 285)' }} />
-                <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'oklch(0.40 0.010 285)' }}>ou selecione uma categoria</span>
-                <div className="flex-1 h-px" style={{ background: 'oklch(0.24 0.005 285)' }} />
+                <div className="flex-1 h-px" style={{ background: 'var(--color-asx-surface-3)' }} />
+                <span className="text-[10px] uppercase tracking-widest font-semibold" style={{ color: 'var(--color-asx-text-muted)' }}>ou selecione uma categoria</span>
+                <div className="flex-1 h-px" style={{ background: 'var(--color-asx-surface-3)' }} />
               </div>
 
               {/* Grid de Categorias */}
@@ -553,9 +551,9 @@ export default function Compras() {
                       onClick={() => { setCategoriaAtiva(cat); setBuscaProduto(''); }}
                       className="p-3 rounded-lg border text-left transition-all"
                       style={{
-                        background: isActive ? 'oklch(0.48 0.22 25)' : 'oklch(0.16 0.005 285)',
-                        borderColor: isActive ? 'oklch(0.48 0.22 25)' : 'oklch(0.24 0.005 285)',
-                        color: isActive ? 'white' : 'oklch(0.70 0.010 285)',
+                        background: isActive ? 'var(--color-asx-red)' : 'var(--color-asx-surface)',
+                        borderColor: isActive ? 'var(--color-asx-red)' : 'var(--color-asx-surface-3)',
+                        color: isActive ? 'white' : 'var(--color-asx-text-secondary)',
                       }}
                     >
                       <FolderOpen className="w-4 h-4 mb-1" style={{ opacity: 0.7 }} />
@@ -571,7 +569,7 @@ export default function Compras() {
                 <>
                   {/* Header com botão Salvar Todos */}
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-semibold" style={{ color: 'oklch(0.60 0.010 285)' }}>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--color-asx-text-muted)' }}>
                       {buscaProduto.trim() ? (
                         <>Resultados para "{buscaProduto}" — {produtosDaCategoria.length} produto(s)</>
                       ) : (
@@ -584,7 +582,7 @@ export default function Compras() {
                         disabled={salvandoBatch}
                         className="px-4 py-2 rounded-md text-xs font-semibold transition-colors flex items-center gap-2"
                         style={{
-                          background: 'oklch(0.72 0.17 145)',
+                          background: 'var(--color-asx-success)',
                           color: 'white',
                           opacity: salvandoBatch ? 0.6 : 1,
                         }}
@@ -596,10 +594,10 @@ export default function Compras() {
                   </div>
 
                   {/* Tabela de produtos */}
-                  <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'oklch(0.24 0.005 285)' }}>
+                  <div className="rounded-lg border overflow-hidden" style={{ borderColor: 'var(--color-asx-surface-3)' }}>
                     {/* Header Desktop */}
                     <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold"
-                      style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.45 0.010 285)' }}>
+                      style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text-muted)' }}>
                       <div className="col-span-2">Código</div>
                       <div className="col-span-4">Produto</div>
                       <div className="col-span-1 text-center">Custo USD</div>
@@ -609,7 +607,7 @@ export default function Compras() {
                       <div className="col-span-2 text-center">Ação</div>
                     </div>
 
-                    <div className="max-h-[400px] overflow-auto divide-y" style={{ borderColor: 'oklch(0.20 0.005 285)' }}>
+                    <div className="max-h-[400px] overflow-auto divide-y" style={{ borderColor: 'var(--color-asx-surface-2)' }}>
                       {produtosDaCategoria.map(produto => {
                         const qtd = getQtd(produto.id);
                         const jaAdicionado = itensNoPedido.has(produto.codigo);
@@ -621,26 +619,26 @@ export default function Compras() {
                             <div
                               className="hidden md:grid grid-cols-12 gap-2 px-4 py-3 items-center transition-colors"
                               style={{
-                                background: jaAdicionado ? 'oklch(0.16 0.04 145 / 0.15)' : temQtd ? 'oklch(0.16 0.04 250 / 0.15)' : 'oklch(0.13 0.005 285)',
+                                background: jaAdicionado ? 'color-mix(in oklch, var(--color-asx-success) 15%, transparent)' : temQtd ? 'color-mix(in oklch, var(--color-asx-info) 15%, transparent)' : 'var(--color-asx-dark)',
                               }}
                             >
                               <div className="col-span-2">
-                                <span className="font-rajdhani font-bold text-sm" style={{ color: jaAdicionado ? 'oklch(0.72 0.17 145)' : 'oklch(0.48 0.22 25)' }}>
+                                <span className="font-rajdhani font-bold text-sm" style={{ color: jaAdicionado ? 'var(--color-asx-success)' : 'var(--color-asx-red)' }}>
                                   {produto.codigo}
                                 </span>
                                 {jaAdicionado && (
-                                  <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'oklch(0.72 0.17 145)', color: 'white' }}>
+                                  <span className="ml-1 text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-asx-success)', color: 'white' }}>
                                     ✓ no pedido
                                   </span>
                                 )}
                               </div>
-                              <div className="col-span-4 text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>
+                              <div className="col-span-4 text-xs truncate" style={{ color: 'var(--color-asx-text-secondary)' }}>
                                 {produto.descricao}
                               </div>
-                              <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.80 0.005 65)' }}>
+                              <div className="col-span-1 text-center text-xs" style={{ color: 'var(--color-asx-text-heading)' }}>
                                 {formatUSD(produto.custo_usd)}
                               </div>
-                              <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.60 0.010 285)' }}>
+                              <div className="col-span-1 text-center text-xs" style={{ color: 'var(--color-asx-text-muted)' }}>
                                 R$ {produto.preco_venda.toFixed(2)}
                               </div>
                               <div className="col-span-1 text-center">
@@ -652,9 +650,9 @@ export default function Compras() {
                                   onChange={e => setQtdSarom(produto.id, parseInt(e.target.value) || 0)}
                                   className="w-full px-2 py-1.5 rounded border text-center text-sm"
                                   style={{
-                                    background: 'oklch(0.18 0.005 285)',
-                                    borderColor: qtd.sarom > 0 ? 'oklch(0.48 0.22 250)' : 'oklch(0.28 0.005 285)',
-                                    color: 'oklch(0.90 0.005 65)',
+                                    background: 'var(--color-asx-surface-2)',
+                                    borderColor: qtd.sarom > 0 ? 'var(--color-asx-info)' : 'var(--color-asx-border)',
+                                    color: 'var(--color-asx-text)',
                                   }}
                                 />
                               </div>
@@ -667,9 +665,9 @@ export default function Compras() {
                                   onChange={e => setQtdAlexandre(produto.id, parseInt(e.target.value) || 0)}
                                   className="w-full px-2 py-1.5 rounded border text-center text-sm"
                                   style={{
-                                    background: 'oklch(0.18 0.005 285)',
-                                    borderColor: qtd.alexandre > 0 ? 'oklch(0.48 0.22 145)' : 'oklch(0.28 0.005 285)',
-                                    color: 'oklch(0.90 0.005 65)',
+                                    background: 'var(--color-asx-surface-2)',
+                                    borderColor: qtd.alexandre > 0 ? 'var(--color-asx-success)' : 'var(--color-asx-border)',
+                                    color: 'var(--color-asx-text)',
                                   }}
                                 />
                               </div>
@@ -679,8 +677,8 @@ export default function Compras() {
                                   disabled={adicionarItemMutation.isPending || (!qtd.sarom && !qtd.alexandre)}
                                   className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
                                   style={{
-                                    background: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'oklch(0.48 0.22 25)' : 'oklch(0.20 0.005 285)',
-                                    color: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'white' : 'oklch(0.40 0.010 285)',
+                                    background: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'var(--color-asx-red)' : 'var(--color-asx-surface-2)',
+                                    color: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'white' : 'var(--color-asx-text-muted)',
                                     opacity: adicionarItemMutation.isPending ? 0.6 : 1,
                                   }}
                                 >
@@ -694,30 +692,30 @@ export default function Compras() {
                             <div
                               className="md:hidden p-3 space-y-2"
                               style={{
-                                background: jaAdicionado ? 'oklch(0.16 0.04 145 / 0.15)' : temQtd ? 'oklch(0.16 0.04 250 / 0.15)' : 'oklch(0.13 0.005 285)',
+                                background: jaAdicionado ? 'color-mix(in oklch, var(--color-asx-success) 15%, transparent)' : temQtd ? 'color-mix(in oklch, var(--color-asx-info) 15%, transparent)' : 'var(--color-asx-dark)',
                               }}
                             >
                               <div className="flex items-start justify-between">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <span className="font-rajdhani font-bold text-sm" style={{ color: jaAdicionado ? 'oklch(0.72 0.17 145)' : 'oklch(0.48 0.22 25)' }}>
+                                    <span className="font-rajdhani font-bold text-sm" style={{ color: jaAdicionado ? 'var(--color-asx-success)' : 'var(--color-asx-red)' }}>
                                       {produto.codigo}
                                     </span>
                                     {jaAdicionado && (
-                                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'oklch(0.72 0.17 145)', color: 'white' }}>
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'var(--color-asx-success)', color: 'white' }}>
                                         ✓
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>{produto.descricao}</p>
-                                  <p className="text-xs mt-1" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                                  <p className="text-xs truncate" style={{ color: 'var(--color-asx-text-secondary)' }}>{produto.descricao}</p>
+                                  <p className="text-xs mt-1" style={{ color: 'var(--color-asx-text-muted)' }}>
                                     Custo: {formatUSD(produto.custo_usd)} • Venda: R$ {produto.preco_venda.toFixed(2)}
                                   </p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="flex-1">
-                                  <label className="text-[10px] uppercase block mb-1" style={{ color: 'oklch(0.45 0.010 285)' }}>Sarom</label>
+                                  <label className="text-[10px] uppercase block mb-1" style={{ color: 'var(--color-asx-text-muted)' }}>Sarom</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -726,14 +724,14 @@ export default function Compras() {
                                     onChange={e => setQtdSarom(produto.id, parseInt(e.target.value) || 0)}
                                     className="w-full px-2 py-2 rounded border text-center text-sm"
                                     style={{
-                                      background: 'oklch(0.18 0.005 285)',
-                                      borderColor: qtd.sarom > 0 ? 'oklch(0.48 0.22 250)' : 'oklch(0.28 0.005 285)',
-                                      color: 'oklch(0.90 0.005 65)',
+                                      background: 'var(--color-asx-surface-2)',
+                                      borderColor: qtd.sarom > 0 ? 'var(--color-asx-info)' : 'var(--color-asx-border)',
+                                      color: 'var(--color-asx-text)',
                                     }}
                                   />
                                 </div>
                                 <div className="flex-1">
-                                  <label className="text-[10px] uppercase block mb-1" style={{ color: 'oklch(0.45 0.010 285)' }}>Alexandre</label>
+                                  <label className="text-[10px] uppercase block mb-1" style={{ color: 'var(--color-asx-text-muted)' }}>Alexandre</label>
                                   <input
                                     type="number"
                                     min="0"
@@ -742,9 +740,9 @@ export default function Compras() {
                                     onChange={e => setQtdAlexandre(produto.id, parseInt(e.target.value) || 0)}
                                     className="w-full px-2 py-2 rounded border text-center text-sm"
                                     style={{
-                                      background: 'oklch(0.18 0.005 285)',
-                                      borderColor: qtd.alexandre > 0 ? 'oklch(0.48 0.22 145)' : 'oklch(0.28 0.005 285)',
-                                      color: 'oklch(0.90 0.005 65)',
+                                      background: 'var(--color-asx-surface-2)',
+                                      borderColor: qtd.alexandre > 0 ? 'var(--color-asx-success)' : 'var(--color-asx-border)',
+                                      color: 'var(--color-asx-text)',
                                     }}
                                   />
                                 </div>
@@ -753,8 +751,8 @@ export default function Compras() {
                                   disabled={adicionarItemMutation.isPending || (!qtd.sarom && !qtd.alexandre)}
                                   className="px-3 py-2 rounded-md text-xs font-medium transition-colors mt-4"
                                   style={{
-                                    background: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'oklch(0.48 0.22 25)' : 'oklch(0.20 0.005 285)',
-                                    color: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'white' : 'oklch(0.40 0.010 285)',
+                                    background: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'var(--color-asx-red)' : 'var(--color-asx-surface-2)',
+                                    color: (qtd.sarom > 0 || qtd.alexandre > 0) ? 'white' : 'var(--color-asx-text-muted)',
                                   }}
                                 >
                                   <Plus className="w-4 h-4" />
@@ -775,7 +773,7 @@ export default function Compras() {
                         disabled={salvandoBatch}
                         className="px-6 py-3 rounded-md text-sm font-semibold transition-colors flex items-center gap-2"
                         style={{
-                          background: 'oklch(0.72 0.17 145)',
+                          background: 'var(--color-asx-success)',
                           color: 'white',
                           opacity: salvandoBatch ? 0.6 : 1,
                         }}
@@ -791,30 +789,30 @@ export default function Compras() {
               {/* Mensagem quando nenhuma categoria selecionada */}
               {!categoriaAtiva && !buscaProduto.trim() && (
                 <div className="text-center py-6">
-                  <Filter className="w-8 h-8 mx-auto mb-2" style={{ color: 'oklch(0.30 0.010 285)' }} />
-                  <p className="text-xs" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                  <Filter className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--color-asx-border)' }} />
+                  <p className="text-xs" style={{ color: 'var(--color-asx-text-muted)' }}>
                     Selecione uma categoria acima ou use a busca rápida para encontrar produtos
                   </p>
                 </div>
               )}
 
               {buscaProduto.trim() && produtosDaCategoria.length === 0 && (
-                <p className="text-xs text-center py-4" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                <p className="text-xs text-center py-4" style={{ color: 'var(--color-asx-text-muted)' }}>
                   Nenhum produto encontrado para "{buscaProduto}"
                 </p>
               )}
             </div>
 
             {/* ===== ITENS JÁ NO PEDIDO ===== */}
-            <div className="p-4 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>
+            <div className="p-4 rounded-lg border" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-asx-text-heading)' }}>
                 Itens do Pedido ({itensDoPedido.length})
               </h3>
 
               {itensDoPedido.length === 0 ? (
                 <div className="text-center py-8">
-                  <Package className="w-10 h-10 mx-auto mb-2" style={{ color: 'oklch(0.30 0.010 285)' }} />
-                  <p className="text-sm" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                  <Package className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--color-asx-border)' }} />
+                  <p className="text-sm" style={{ color: 'var(--color-asx-text-muted)' }}>
                     Nenhum item adicionado ainda. Selecione uma categoria e preencha as quantidades.
                   </p>
                 </div>
@@ -822,7 +820,7 @@ export default function Compras() {
                 <div className="space-y-2">
                   {/* Header Desktop */}
                   <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-2 text-[10px] uppercase tracking-wider font-semibold"
-                    style={{ color: 'oklch(0.45 0.010 285)' }}>
+                    style={{ color: 'var(--color-asx-text-muted)' }}>
                     <div className="col-span-2">Código</div>
                     <div className="col-span-3">Produto</div>
                     <div className="col-span-1 text-center">Custo USD</div>
@@ -845,36 +843,36 @@ export default function Compras() {
                       <div key={item.id}>
                         {/* Desktop */}
                         <div className="hidden md:grid grid-cols-12 gap-2 px-3 py-3 rounded-md items-center"
-                          style={{ background: 'oklch(0.16 0.005 285)' }}>
-                          <div className="col-span-2 font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                          style={{ background: 'var(--color-asx-surface)' }}>
+                          <div className="col-span-2 font-rajdhani font-bold text-sm" style={{ color: 'var(--color-asx-red)' }}>
                             {item.produtoId}
                           </div>
-                          <div className="col-span-3 text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>
+                          <div className="col-span-3 text-xs truncate" style={{ color: 'var(--color-asx-text-secondary)' }}>
                             {produto?.descricao || 'Produto não encontrado'}
                           </div>
-                          <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.80 0.005 65)' }}>
+                          <div className="col-span-1 text-center text-xs" style={{ color: 'var(--color-asx-text-heading)' }}>
                             {formatUSD(preco)}
                           </div>
-                          <div className="col-span-1 text-center text-sm font-medium" style={{ color: 'oklch(0.70 0.12 250)' }}>
+                          <div className="col-span-1 text-center text-sm font-medium" style={{ color: 'var(--color-asx-info)' }}>
                             {item.quantidadeSarom}
                           </div>
-                          <div className="col-span-1 text-center text-sm font-medium" style={{ color: 'oklch(0.70 0.12 145)' }}>
+                          <div className="col-span-1 text-center text-sm font-medium" style={{ color: 'var(--color-asx-success)' }}>
                             {item.quantidadeAlexandre}
                           </div>
-                          <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.70 0.12 250)' }}>
+                          <div className="col-span-1 text-center text-xs" style={{ color: 'var(--color-asx-info)' }}>
                             {formatUSD(subtotalSarom)}
                           </div>
-                          <div className="col-span-1 text-center text-xs" style={{ color: 'oklch(0.70 0.12 145)' }}>
+                          <div className="col-span-1 text-center text-xs" style={{ color: 'var(--color-asx-success)' }}>
                             {formatUSD(subtotalAlexandre)}
                           </div>
-                          <div className="col-span-1 text-center text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                          <div className="col-span-1 text-center text-xs font-bold" style={{ color: 'var(--color-asx-red)' }}>
                             {formatUSD(total)}
                           </div>
                           <div className="col-span-1 text-center">
                             <button
                               onClick={() => handleRemoverItem(item.id)}
                               className="p-1.5 rounded transition-colors hover:opacity-75"
-                              style={{ color: 'oklch(0.65 0.22 25)' }}
+                              style={{ color: 'var(--color-asx-error)' }}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -883,40 +881,40 @@ export default function Compras() {
 
                         {/* Mobile */}
                         <div className="md:hidden p-3 rounded-md space-y-2"
-                          style={{ background: 'oklch(0.16 0.005 285)' }}>
+                          style={{ background: 'var(--color-asx-surface)' }}>
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <p className="font-rajdhani font-bold text-sm" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                              <p className="font-rajdhani font-bold text-sm" style={{ color: 'var(--color-asx-red)' }}>
                                 {item.produtoId}
                               </p>
-                              <p className="text-xs truncate" style={{ color: 'oklch(0.70 0.010 285)' }}>
+                              <p className="text-xs truncate" style={{ color: 'var(--color-asx-text-secondary)' }}>
                                 {produto?.descricao || 'Produto não encontrado'}
                               </p>
                             </div>
                             <button
                               onClick={() => handleRemoverItem(item.id)}
                               className="p-1.5 rounded transition-colors"
-                              style={{ color: 'oklch(0.65 0.22 25)' }}
+                              style={{ color: 'var(--color-asx-error)' }}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                           <div className="grid grid-cols-3 gap-2 text-xs">
                             <div>
-                              <p style={{ color: 'oklch(0.45 0.010 285)' }}>Custo</p>
-                              <p style={{ color: 'oklch(0.80 0.005 65)' }}>{formatUSD(preco)}</p>
+                              <p style={{ color: 'var(--color-asx-text-muted)' }}>Custo</p>
+                              <p style={{ color: 'var(--color-asx-text-heading)' }}>{formatUSD(preco)}</p>
                             </div>
                             <div>
-                              <p style={{ color: 'oklch(0.45 0.010 285)' }}>Sarom</p>
-                              <p style={{ color: 'oklch(0.70 0.12 250)' }}>{item.quantidadeSarom}</p>
+                              <p style={{ color: 'var(--color-asx-text-muted)' }}>Sarom</p>
+                              <p style={{ color: 'var(--color-asx-info)' }}>{item.quantidadeSarom}</p>
                             </div>
                             <div>
-                              <p style={{ color: 'oklch(0.45 0.010 285)' }}>Alexandre</p>
-                              <p style={{ color: 'oklch(0.70 0.12 145)' }}>{item.quantidadeAlexandre}</p>
+                              <p style={{ color: 'var(--color-asx-text-muted)' }}>Alexandre</p>
+                              <p style={{ color: 'var(--color-asx-success)' }}>{item.quantidadeAlexandre}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                            <span className="text-xs font-bold" style={{ color: 'var(--color-asx-red)' }}>
                               Total: {formatUSD(total)}
                             </span>
                           </div>

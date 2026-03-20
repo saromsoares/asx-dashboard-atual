@@ -1,7 +1,7 @@
 /*
   ASX Dark Command Center — Sidebar
   Design: Painel lateral escuro com navegação por ícones e labels
-  Cores: fundo oklch(0.14), acento vermelho ASX oklch(0.48 0.22 25)
+  Cores: fundo var(--color-asx-base), acento vermelho ASX var(--color-asx-red)
   Cotação USD/BRL: API oficial do Banco Central do Brasil (PTAX)
   Alertas: Badges de estoque crítico nas Centrais de Compra
 */
@@ -218,20 +218,20 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           {cotacao ? (
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                <span className="font-rajdhani font-bold text-xl" style={{ color: 'var(--color-asx-red)' }}>
                   R$ {formatCotacao(cotacao.cotacaoVenda)}
                 </span>
               </div>
               <div className="flex gap-4 mt-1.5">
                 <div>
                   <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Compra</span>
-                  <p className="text-[11px] font-mono" style={{ color: 'oklch(0.65 0.010 285)' }}>
+                  <p className="text-[11px] font-mono" style={{ color: 'var(--color-asx-text-muted)' }}>
                     R$ {formatCotacao(cotacao.cotacaoCompra)}
                   </p>
                 </div>
                 <div>
                   <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Venda</span>
-                  <p className="text-[11px] font-mono" style={{ color: 'oklch(0.65 0.010 285)' }}>
+                  <p className="text-[11px] font-mono" style={{ color: 'var(--color-asx-text-muted)' }}>
                     R$ {formatCotacao(cotacao.cotacaoVenda)}
                   </p>
                 </div>
@@ -252,7 +252,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
               {loading ? (
                 <span className="text-[11px]" style={{ color: 'oklch(0.50 0.010 285)' }}>{t('carregando')}</span>
               ) : error ? (
-                <span className="text-[11px]" style={{ color: 'oklch(0.48 0.22 25)' }}>N/A</span>
+                <span className="text-[11px]" style={{ color: 'var(--color-asx-red)' }}>N/A</span>
               ) : (
                 <span className="text-[11px]" style={{ color: 'oklch(0.50 0.010 285)' }}>--</span>
               )}
@@ -265,7 +265,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       {collapsed && cotacao && (
         <div className="px-2 py-2 border-b text-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
           <span className="text-[8px] uppercase block" style={{ color: 'oklch(0.40 0.010 285)' }}>USD</span>
-          <span className="text-[11px] font-rajdhani font-bold block" style={{ color: 'oklch(0.48 0.22 25)' }}>
+          <span className="text-[11px] font-rajdhani font-bold block" style={{ color: 'var(--color-asx-red)' }}>
             {formatCotacao(cotacao.cotacaoVenda).slice(0, 6)}
           </span>
         </div>
@@ -287,19 +287,19 @@ export default function Sidebar({ currentPage }: SidebarProps) {
                 style={{
                   padding: collapsed ? '10px' : '10px 14px',
                   justifyContent: collapsed ? 'center' : 'flex-start',
-                  background: isActive ? 'oklch(0.48 0.22 25)' : 'transparent',
-                  color: isActive ? 'white' : 'oklch(0.65 0.010 285)',
+                  background: isActive ? 'var(--color-asx-red)' : 'transparent',
+                  color: isActive ? 'white' : 'var(--color-asx-text-muted)',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
                     e.currentTarget.style.background = 'oklch(0.18 0.005 285)';
-                    e.currentTarget.style.color = 'oklch(0.90 0.005 65)';
+                    e.currentTarget.style.color = 'var(--color-asx-text)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
                     e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'oklch(0.65 0.010 285)';
+                    e.currentTarget.style.color = 'var(--color-asx-text-muted)';
                   }
                 }}
               >
@@ -385,7 +385,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
             {kpisSarom.skusCriticos > 0 && (
               <Link href="/central-sarom">
                 <div className="flex items-center justify-between text-[11px] px-2 py-1 rounded transition-colors hover:bg-white/5 cursor-pointer">
-                  <span style={{ color: 'oklch(0.80 0.005 65)' }}>Sarom</span>
+                  <span style={{ color: 'var(--color-asx-text-heading)' }}>Sarom</span>
                   <span className="font-rajdhani font-bold" style={{ color: 'oklch(0.65 0.22 30)' }}>
                     {kpisSarom.skusCriticos} SKU{kpisSarom.skusCriticos > 1 ? 's' : ''}
                   </span>
@@ -395,7 +395,7 @@ export default function Sidebar({ currentPage }: SidebarProps) {
             {kpisAlexandre.skusCriticos > 0 && (
               <Link href="/central-alexandre">
                 <div className="flex items-center justify-between text-[11px] px-2 py-1 rounded transition-colors hover:bg-white/5 cursor-pointer">
-                  <span style={{ color: 'oklch(0.80 0.005 65)' }}>Alexandre</span>
+                  <span style={{ color: 'var(--color-asx-text-heading)' }}>Alexandre</span>
                   <span className="font-rajdhani font-bold" style={{ color: 'oklch(0.65 0.22 30)' }}>
                     {kpisAlexandre.skusCriticos} SKU{kpisAlexandre.skusCriticos > 1 ? 's' : ''}
                   </span>
@@ -409,12 +409,12 @@ export default function Sidebar({ currentPage }: SidebarProps) {
       {/* Cards de Porcentagem Total - Cobertura de Estoque */}
       {!collapsed && (
         <div className="mx-3 mb-2 px-3 py-2.5 rounded-lg border space-y-2" style={{
-          background: 'oklch(0.14 0.005 285)',
-          borderColor: 'oklch(0.26 0.005 285)',
+          background: 'var(--color-asx-base)',
+          borderColor: 'var(--color-asx-border)',
         }}>
           <div>
             <span className="text-[9px] uppercase" style={{ color: 'oklch(0.40 0.010 285)' }}>Pedido Sarom</span>
-            <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'oklch(0.72 0.17 145)' }}>
+            <p className="text-[13px] font-rajdhani font-bold" style={{ color: 'var(--color-asx-success)' }}>
               {kpisSarom && kpisSarom.totalSkus > 0 ? Math.round((kpisSarom.skusOk / kpisSarom.totalSkus) * 100) : 0}%
             </p>
           </div>
@@ -436,11 +436,11 @@ export default function Sidebar({ currentPage }: SidebarProps) {
           onClick={() => setCollapsed(!collapsed)}
           className="w-full flex items-center justify-center p-2 rounded-lg transition-colors"
           style={{
-            background: 'oklch(0.16 0.005 285)',
+            background: 'var(--color-asx-surface)',
             color: 'oklch(0.55 0.010 285)',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = 'oklch(0.80 0.005 65)';
+            e.currentTarget.style.color = 'var(--color-asx-text-heading)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.color = 'oklch(0.55 0.010 285)';
@@ -477,11 +477,11 @@ function LogoutButton({ collapsed }: { collapsed: boolean }) {
         onClick={handleLogout}
         className="w-full flex items-center justify-center gap-2 p-2 rounded-lg transition-colors"
         style={{
-          background: 'oklch(0.16 0.005 285)',
+          background: 'var(--color-asx-surface)',
           color: 'oklch(0.55 0.010 285)',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = 'oklch(0.65 0.22 25)';
+          e.currentTarget.style.color = 'var(--color-asx-error)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.color = 'oklch(0.55 0.010 285)';

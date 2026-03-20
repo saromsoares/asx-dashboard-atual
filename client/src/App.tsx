@@ -23,8 +23,8 @@ function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
-        <div style={{ color: 'oklch(0.60 0.010 285)' }}>Carregando...</div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--color-asx-dark)' }}>
+        <div style={{ color: 'var(--color-asx-text-muted)' }}>Carregando...</div>
       </div>
     );
   }
@@ -32,8 +32,8 @@ function ProtectedRouter() {
   if (!isAuthenticated) {
     window.location.href = getLoginUrl();
     return (
-      <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
-        <div style={{ color: 'oklch(0.60 0.010 285)' }}>Redirecionando para login...</div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--color-asx-dark)' }}>
+        <div style={{ color: 'var(--color-asx-text-muted)' }}>Redirecionando para login...</div>
       </div>
     );
   }
@@ -59,13 +59,13 @@ function AuthenticatedRouter() {
 
   // make sure to consider if you need authentication for certain routes
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: 'oklch(0.12 0.005 285)' }}>
+    <div className="flex flex-col md:flex-row h-screen overflow-hidden" style={{ background: 'var(--color-asx-dark)' }}>
       {/* Sidebar - hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar currentPage={getCurrentPage()} />
       </div>
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 border-b px-4 flex items-center gap-4" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 border-b px-4 flex items-center gap-4" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
         <MobileMenu items={[
           { label: 'Dashboard', href: '/' },
           { label: 'Pedidos', href: '/compras' },

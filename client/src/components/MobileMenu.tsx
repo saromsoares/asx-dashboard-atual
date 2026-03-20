@@ -30,7 +30,7 @@ export function MobileMenu({ items, currentPath }: MobileMenuProps) {
         className="md:hidden p-2 rounded-md transition-colors"
         style={{
           background: 'oklch(0.18 0.005 285)',
-          color: 'oklch(0.70 0.010 285)',
+          color: 'var(--color-asx-text-secondary)',
         }}
         aria-label="Toggle menu"
       >

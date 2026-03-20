@@ -4,9 +4,9 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { produtos, categorias, type Produto } from '@/data/produtos';
 import { useCustos } from '@/hooks/useCustos';
-import { useIdioma } from '@/hooks/useIdioma';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
+import { formatUSD, formatBRL } from '@/lib/formatters';
 import { Ship } from 'lucide-react';
 import { ImageUploadButton } from '@/components/ImageUploadButton';
 import { CategoryAdjustmentPanel } from '@/components/CategoryAdjustmentPanel';
@@ -32,15 +32,14 @@ function dispatchProcessosChange() {
   window.dispatchEvent(new Event('processosChange'));
 }
 
-const formatBRL = (v: number) =>
-  v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-const formatUSD = (v: number) =>
-  v.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-
 type ViewMode = 'grid' | 'list' | 'cards';
 type SortField = 'codigo' | 'descricao' | 'preco_venda' | 'lucro' | 'lucro_pct';
 type SortDir = 'asc' | 'desc';
+
+const SortIcon = ({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: SortDir }) => {
+  if (sortField !== field) return <ChevronDown className="w-3 h-3 opacity-30" />;
+  return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-red-400" /> : <ChevronDown className="w-3 h-3 text-red-400" />;
+};
 
 export default function Home() {
   // The userAuth hooks provides authentication state
@@ -48,7 +47,6 @@ export default function Home() {
   let { user, loading, error, isAuthenticated, logout } = useAuth();
 
   const [, setLocation] = useLocation();
-  const { t } = useIdioma();
   const [search, setSearch] = useState('');
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('Todas');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -118,7 +116,7 @@ export default function Home() {
         const custoUsd = getCusto(p.id);
         const precoVenda = p.preco_venda;
         if (custoUsd === 0) return false;
-        const custoBrl = custoUsd * 8.5;
+        const custoBrl = custoUsd * taxaCambio;
         const markup = ((precoVenda - custoBrl) / custoBrl) * 100;
         
         if (markupFilter === '0-20') return markup >= 0 && markup <= 20;
@@ -178,11 +176,6 @@ export default function Home() {
     else { setSortField(field); setSortDir('asc'); }
   }, [sortField]);
 
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ChevronDown className="w-3 h-3 opacity-30" />;
-    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-red-400" /> : <ChevronDown className="w-3 h-3 text-red-400" />;
-  };
-
   const handleExportCSV = () => {
     const headers = ['Código', 'Descrição', 'Categoria', 'Unid', 'Volt', 'Cód. Barras', 'NCM', 'Preço Venda (R$)', 'Custo (USD)', 'Custo (R$)', 'Lucro (R$)', 'Margem (%)'];
     const rows = filtered.map(p => [
@@ -211,13 +204,13 @@ export default function Home() {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-asx-dark)', color: 'var(--color-asx-text)' }}>
       {/* Botão Voltar */}
-      <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+      <div className="px-6 py-3 border-b flex items-center" style={{ borderColor: 'var(--color-asx-border)' }}>
         <button
           onClick={() => setLocation('/')}
           className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-          style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+          style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text-heading)' }}
           title="Voltar ao menu principal"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -225,8 +218,8 @@ export default function Home() {
         </button>
       </div>
       {/* Header */}
-      <header className="z-40 border-b px-6 h-14 flex items-center gap-4 flex-shrink-0" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-        <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
+      <header className="z-40 border-b px-6 h-14 flex items-center gap-4 flex-shrink-0" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
+        <span className="font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'var(--color-asx-text-heading)' }}>
           DASHBOARD DE PRODUTOS
         </span>
 
@@ -234,7 +227,7 @@ export default function Home() {
 
         {/* Search */}
         <div className="relative w-80 md:w-80 md:block hidden">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-asx-text-muted)' }} />
           <input
             type="text"
             placeholder="Buscar código, nome, cód. barras..."
@@ -242,23 +235,23 @@ export default function Home() {
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-8 py-2 text-sm rounded-md border"
             style={{
-              background: 'oklch(0.18 0.005 285)',
-              borderColor: 'oklch(0.28 0.005 285)',
-              color: 'oklch(0.90 0.005 65)',
+              background: 'var(--color-asx-surface)',
+              borderColor: 'var(--color-asx-border)',
+              color: 'var(--color-asx-text)',
               outline: 'none',
             }}
-            onFocus={e => (e.target.style.borderColor = 'oklch(0.48 0.22 25)')}
-            onBlur={e => (e.target.style.borderColor = 'oklch(0.28 0.005 285)')}
+            onFocus={e => (e.target.style.borderColor = 'var(--color-asx-red)')}
+            onBlur={e => (e.target.style.borderColor = 'var(--color-asx-border)')}
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-3.5 h-3.5" style={{ color: 'oklch(0.60 0.010 285)' }} />
+              <X className="w-3.5 h-3.5" style={{ color: 'var(--color-asx-text-muted)' }} />
             </button>
           )}
         </div>
         {/* Search Mobile */}
         <div className="relative flex-1 md:hidden">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'oklch(0.50 0.010 285)' }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-asx-text-muted)' }} />
           <input
             type="text"
             placeholder="Buscar..."
@@ -266,17 +259,17 @@ export default function Home() {
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-9 pr-8 py-3 text-sm rounded-md border h-11"
             style={{
-              background: 'oklch(0.18 0.005 285)',
-              borderColor: 'oklch(0.28 0.005 285)',
-              color: 'oklch(0.90 0.005 65)',
+              background: 'var(--color-asx-surface)',
+              borderColor: 'var(--color-asx-border)',
+              color: 'var(--color-asx-text)',
               outline: 'none',
             }}
-            onFocus={e => (e.target.style.borderColor = 'oklch(0.48 0.22 25)')}
-            onBlur={e => (e.target.style.borderColor = 'oklch(0.28 0.005 285)')}
+            onFocus={e => (e.target.style.borderColor = 'var(--color-asx-red)')}
+            onBlur={e => (e.target.style.borderColor = 'var(--color-asx-border)')}
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-              <X className="w-3.5 h-3.5" style={{ color: 'oklch(0.60 0.010 285)' }} />
+              <X className="w-3.5 h-3.5" style={{ color: 'var(--color-asx-text-muted)' }} />
             </button>
           )}
         </div>
@@ -287,9 +280,9 @@ export default function Home() {
           onChange={e => setVoltFilter(e.target.value)}
           className="px-3 py-2 text-sm rounded-md border"
           style={{
-            background: 'oklch(0.18 0.005 285)',
-            borderColor: 'oklch(0.28 0.005 285)',
-            color: 'oklch(0.80 0.005 65)',
+            background: 'var(--color-asx-surface)',
+            borderColor: 'var(--color-asx-border)',
+            color: 'var(--color-asx-text-heading)',
           }}
         >
           {volts.map(v => <option key={v} value={v}>{v === 'TODOS' ? 'Volt: Todos' : v}</option>)}
@@ -300,9 +293,9 @@ export default function Home() {
           onChange={e => setUnidFilter(e.target.value)}
           className="px-3 py-2 text-sm rounded-md border"
           style={{
-            background: 'oklch(0.18 0.005 285)',
-            borderColor: 'oklch(0.28 0.005 285)',
-            color: 'oklch(0.80 0.005 65)',
+            background: 'var(--color-asx-surface)',
+            borderColor: 'var(--color-asx-border)',
+            color: 'var(--color-asx-text-heading)',
           }}
         >
           {unids.map(u => <option key={u} value={u}>{u === 'TODOS' ? 'Unid: Todas' : u}</option>)}
@@ -314,9 +307,9 @@ export default function Home() {
           onChange={e => setMarkupFilter(e.target.value as any)}
           className="px-3 py-2 text-sm rounded-md border"
           style={{
-            background: 'oklch(0.18 0.005 285)',
-            borderColor: 'oklch(0.28 0.005 285)',
-            color: 'oklch(0.80 0.005 65)',
+            background: 'var(--color-asx-surface)',
+            borderColor: 'var(--color-asx-border)',
+            color: 'var(--color-asx-text-heading)',
           }}
           title="Filtrar por faixa de markup"
         >
@@ -331,9 +324,9 @@ export default function Home() {
           onClick={() => setApenasComCusto(!apenasComCusto)}
           className="px-3 py-2 text-sm rounded-md border transition-colors"
           style={{
-            background: apenasComCusto ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-            borderColor: apenasComCusto ? 'oklch(0.48 0.22 25)' : 'oklch(0.26 0.005 285)',
-            color: apenasComCusto ? 'white' : 'oklch(0.80 0.005 65)',
+            background: apenasComCusto ? 'var(--color-asx-red)' : 'var(--color-asx-surface)',
+            borderColor: apenasComCusto ? 'var(--color-asx-red)' : 'var(--color-asx-border)',
+            color: apenasComCusto ? 'white' : 'var(--color-asx-text-heading)',
           }}
           title="Mostrar apenas produtos com custo em USD"
         >
@@ -341,13 +334,13 @@ export default function Home() {
         </button>
 
         {/* View toggle */}
-        <div className="flex rounded-md overflow-hidden border" style={{ borderColor: 'oklch(0.26 0.005 285)' }}>
+        <div className="flex rounded-md overflow-hidden border" style={{ borderColor: 'var(--color-asx-border)' }}>
           <button
             onClick={() => setViewMode('grid')}
             className="px-3 py-2 transition-colors"
             style={{
-              background: viewMode === 'grid' ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-              color: viewMode === 'grid' ? 'white' : 'oklch(0.60 0.010 285)',
+              background: viewMode === 'grid' ? 'var(--color-asx-red)' : 'var(--color-asx-surface)',
+              color: viewMode === 'grid' ? 'white' : 'var(--color-asx-text-muted)',
             }}
           >
             <LayoutGrid className="w-4 h-4" />
@@ -356,8 +349,8 @@ export default function Home() {
             onClick={() => setViewMode('list')}
             className="px-3 py-2 transition-colors"
             style={{
-              background: viewMode === 'list' ? 'oklch(0.48 0.22 25)' : 'oklch(0.18 0.005 285)',
-              color: viewMode === 'list' ? 'white' : 'oklch(0.60 0.010 285)',
+              background: viewMode === 'list' ? 'var(--color-asx-red)' : 'var(--color-asx-surface)',
+              color: viewMode === 'list' ? 'white' : 'var(--color-asx-text-muted)',
             }}
           >
             <List className="w-4 h-4" />
@@ -368,7 +361,7 @@ export default function Home() {
         <button
           onClick={handleExportCSV}
           className="p-2 rounded-md border transition-colors hover:border-green-500"
-          style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+          style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text-secondary)' }}
           title="Exportar CSV"
         >
           <Download className="w-4 h-4" />
@@ -378,7 +371,7 @@ export default function Home() {
         <button
           onClick={() => setShowCategoryPanel(true)}
           className="p-2 rounded-md border transition-colors hover:border-blue-500"
-          style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+          style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text-secondary)' }}
           title="Ajustar categorias de produtos"
         >
           <Tag className="w-4 h-4" />
@@ -388,7 +381,7 @@ export default function Home() {
         <button
           onClick={() => setShowSettings(true)}
           className="p-2 rounded-md border transition-colors hover:border-red-500"
-          style={{ background: 'oklch(0.18 0.005 285)', borderColor: 'oklch(0.26 0.005 285)', color: 'oklch(0.70 0.010 285)' }}
+          style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)', color: 'var(--color-asx-text-secondary)' }}
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -397,9 +390,9 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {/* Sidebar Categorias */}
         <aside className="w-52 flex-shrink-0 border-r overflow-y-auto"
-          style={{ background: 'oklch(0.13 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
+          style={{ background: 'var(--color-asx-dark)', borderColor: 'var(--color-asx-border)' }}>
           <div className="p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'oklch(0.45 0.010 285)' }}>Categorias</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--color-asx-text-muted)' }}>Categorias</p>
             <div className="space-y-1">
               {['Todas', ...categorias].map(cat => {
                 const count = cat === 'Todas' ? produtos.length : produtos.filter(p => p.categoria === cat).length;
@@ -409,8 +402,8 @@ export default function Home() {
                     onClick={() => setCategoriaAtiva(cat)}
                     className="w-full text-left px-3 py-2 rounded-md text-xs transition-colors flex items-center justify-between"
                     style={{
-                      background: categoriaAtiva === cat ? 'oklch(0.48 0.22 25)' : 'transparent',
-                      color: categoriaAtiva === cat ? 'white' : 'oklch(0.65 0.010 285)',
+                      background: categoriaAtiva === cat ? 'var(--color-asx-red)' : 'transparent',
+                      color: categoriaAtiva === cat ? 'white' : 'var(--color-asx-text-secondary)',
                     }}
                   >
                     <span className="truncate">{cat}</span>
@@ -426,14 +419,14 @@ export default function Home() {
         <main className="flex-1 overflow-auto flex flex-col">
           {/* Stats Bar */}
           <div className="border-b px-6 py-3 grid grid-cols-4 gap-4"
-            style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.22 0.005 285)' }}>
+            style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
             <div>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Produtos</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.85 0.005 65)' }}>{stats.total}</p>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Produtos</p>
+              <p className="font-rajdhani font-bold text-xl" style={{ color: 'var(--color-asx-text-heading)' }}>{stats.total}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Com Custo</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: 'oklch(0.72 0.17 145)' }}>{stats.comCusto}</p>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Com Custo</p>
+              <p className="font-rajdhani font-bold text-xl" style={{ color: 'var(--color-asx-success)' }}>{stats.comCusto}</p>
             </div>
             <div>
               <button
@@ -441,24 +434,24 @@ export default function Home() {
                 className="text-left w-full group"
                 title={showOnlySemCusto ? 'Clique para mostrar todos' : 'Clique para filtrar sem custo'}
               >
-                <p className="text-[10px] uppercase tracking-wider flex items-center gap-1" style={{ color: stats.semCusto > 0 ? 'oklch(0.65 0.22 25)' : 'oklch(0.45 0.010 285)' }}>
+                <p className="text-[10px] uppercase tracking-wider flex items-center gap-1" style={{ color: stats.semCusto > 0 ? 'var(--color-asx-error)' : 'var(--color-asx-text-muted)' }}>
                   <AlertTriangle className="w-3 h-3" /> Sem Custo
                 </p>
-                <p className="font-rajdhani font-bold text-xl" style={{ color: stats.semCusto > 0 ? 'oklch(0.65 0.22 25)' : 'oklch(0.85 0.005 65)' }}>
+                <p className="font-rajdhani font-bold text-xl" style={{ color: stats.semCusto > 0 ? 'var(--color-asx-error)' : 'var(--color-asx-text-heading)' }}>
                   {stats.semCusto}
-                  {showOnlySemCusto && <span className="text-xs font-normal ml-1" style={{ color: 'oklch(0.65 0.22 25)' }}>(filtrado)</span>}
+                  {showOnlySemCusto && <span className="text-xs font-normal ml-1" style={{ color: 'var(--color-asx-error)' }}>(filtrado)</span>}
                 </p>
               </button>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Margem Média</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: stats.avgLucroPct >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Margem Média</p>
+              <p className="font-rajdhani font-bold text-xl" style={{ color: stats.avgLucroPct >= 0 ? 'var(--color-asx-success)' : 'var(--color-asx-error)' }}>
                 {stats.avgLucroPct.toFixed(1)}%
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Markup Médio</p>
-              <p className="font-rajdhani font-bold text-xl" style={{ color: stats.avgMarkup >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Markup Médio</p>
+              <p className="font-rajdhani font-bold text-xl" style={{ color: stats.avgMarkup >= 0 ? 'var(--color-asx-success)' : 'var(--color-asx-error)' }}>
                 {stats.avgMarkup.toFixed(1)}%
               </p>
             </div>
@@ -469,23 +462,23 @@ export default function Home() {
             <div
               className="mx-6 mt-3 px-4 py-3 rounded-lg border flex items-center gap-3 cursor-pointer transition-all hover:brightness-110"
               style={{
-                background: 'oklch(0.18 0.08 25 / 0.3)',
-                borderColor: 'oklch(0.50 0.22 25 / 0.5)',
+                background: 'color-mix(in oklch, var(--color-asx-red) 15%, transparent)',
+                borderColor: 'color-mix(in oklch, var(--color-asx-red) 50%, transparent)',
               }}
               onClick={() => setShowOnlySemCusto(true)}
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'oklch(0.30 0.18 25)' }}>
-                <AlertTriangle className="w-5 h-5" style={{ color: 'oklch(0.90 0.15 65)' }} />
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--color-asx-border-strong)' }}>
+                <AlertTriangle className="w-5 h-5" style={{ color: 'var(--color-asx-text)' }} />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold" style={{ color: 'oklch(0.90 0.15 65)' }}>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-asx-text)' }}>
                   {stats.semCusto} produtos sem preço de custo em dólar
                 </p>
-                <p className="text-xs" style={{ color: 'oklch(0.65 0.08 65)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-asx-text-secondary)' }}>
                   Clique para filtrar e preencher os custos USD pendentes
                 </p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'oklch(0.50 0.22 25)', color: 'white' }}>
+              <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'var(--color-asx-red)', color: 'white' }}>
                 Filtrar
               </span>
             </div>
@@ -496,24 +489,24 @@ export default function Home() {
             <div
               className="mx-6 mt-3 px-4 py-3 rounded-lg border flex items-center gap-3 cursor-pointer transition-all hover:brightness-110"
               style={{
-                background: 'oklch(0.18 0.08 250 / 0.3)',
-                borderColor: 'oklch(0.50 0.18 250 / 0.5)',
+                background: 'color-mix(in oklch, oklch(0.50 0.18 250) 15%, transparent)',
+                borderColor: 'color-mix(in oklch, oklch(0.50 0.18 250) 50%, transparent)',
               }}
               onClick={() => setLocation('/rastreamento')}
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'oklch(0.30 0.15 250)' }}>
-                <Ship className="w-5 h-5" style={{ color: 'oklch(0.90 0.10 250)' }} />
+              <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--color-asx-border-strong)' }}>
+                <Ship className="w-5 h-5" style={{ color: 'var(--color-asx-text)' }} />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold" style={{ color: 'oklch(0.90 0.10 250)' }}>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-asx-text)' }}>
                   {pedidosPendentes.count} pedido{pedidosPendentes.count > 1 ? 's' : ''} com saldo pendente de embarque
                 </p>
-                <p className="text-xs" style={{ color: 'oklch(0.65 0.08 250)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-asx-text-secondary)' }}>
                   {pedidosPendentes.totalUnidPend.toLocaleString('pt-BR')} unidades pendentes
                   {pedidosPendentes.totalUsdPend > 0 && ` • $${pedidosPendentes.totalUsdPend.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} em valor`}
                 </p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'oklch(0.45 0.18 250)', color: 'white' }}>
+              <span className="text-xs px-3 py-1 rounded-full font-semibold" style={{ background: 'var(--color-asx-text-muted)', color: 'white' }}>
                 Ver Rastreamento
               </span>
             </div>
@@ -524,18 +517,18 @@ export default function Home() {
             <div
               className="mx-6 mt-3 px-4 py-2 rounded-lg border flex items-center gap-3"
               style={{
-                background: 'oklch(0.20 0.15 25 / 0.4)',
-                borderColor: 'oklch(0.55 0.22 25)',
+                background: 'color-mix(in oklch, var(--color-asx-red) 20%, transparent)',
+                borderColor: 'var(--color-asx-error)',
               }}
             >
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.90 0.15 65)' }} />
-              <p className="text-xs flex-1" style={{ color: 'oklch(0.90 0.10 65)' }}>
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-asx-text)' }} />
+              <p className="text-xs flex-1" style={{ color: 'var(--color-asx-text)' }}>
                 Mostrando apenas <strong>{stats.total} produtos sem custo USD</strong>. Preencha os valores na coluna "Custo (USD)".
               </p>
               <button
                 onClick={() => setShowOnlySemCusto(false)}
                 className="text-xs px-3 py-1 rounded-full font-semibold transition-colors hover:brightness-110"
-                style={{ background: 'oklch(0.35 0.010 285)', color: 'oklch(0.85 0.005 65)' }}
+                style={{ background: 'var(--color-asx-border-strong)', color: 'var(--color-asx-text-heading)' }}
               >
                 Mostrar Todos
               </button>
@@ -585,40 +578,40 @@ export default function Home() {
               </div>
             ) : (
               <div className="overflow-auto flex-1" style={{ minHeight: 0 }}>
-                <table className="w-full text-sm" style={{ color: 'oklch(0.85 0.005 65)', minWidth: '1200px' }}>
+                <table className="w-full text-sm" style={{ color: 'var(--color-asx-text-heading)', minWidth: '1200px' }}>
                   <thead>
-                    <tr style={{ borderColor: 'oklch(0.22 0.005 285)' }} className="border-b">
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', width: '100px' }}>
+                    <tr style={{ borderColor: 'var(--color-asx-border)' }} className="border-b">
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-0 z-20" style={{ color: 'var(--color-asx-text-muted)', background: 'var(--color-asx-base)', width: '100px' }}>
                         <button onClick={() => toggleSort('codigo')} className="flex items-center gap-1">
-                          Código <SortIcon field="codigo" />
+                          Código <SortIcon field="codigo" sortField={sortField} sortDir={sortDir} />
                         </button>
                       </th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[100px] z-20" style={{ color: 'oklch(0.50 0.010 285)', background: 'oklch(0.14 0.005 285)', minWidth: '200px', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider sticky left-[100px] z-20" style={{ color: 'var(--color-asx-text-muted)', background: 'var(--color-asx-base)', minWidth: '200px', boxShadow: '4px 0 8px -2px rgb(0 0 0 / 0.3)' }}>
                         <button onClick={() => toggleSort('descricao')} className="flex items-center gap-1">
-                          Descrição <SortIcon field="descricao" />
+                          Descrição <SortIcon field="descricao" sortField={sortField} sortDir={sortDir} />
                         </button>
                       </th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Cód. Barras</th>
-                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Unid</th>
-                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Cód. Barras</th>
+                      <th className="text-left px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Unid</th>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>
                         <button onClick={() => toggleSort('preco_venda')} className="flex items-center gap-1 ml-auto">
-                          Venda <SortIcon field="preco_venda" />
+                          Venda <SortIcon field="preco_venda" sortField={sortField} sortDir={sortDir} />
                         </button>
                       </th>
-                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.48 0.22 25)' }}>Custo USD</th>
-                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Custo R$</th>
-                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-red)' }}>Custo USD</th>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Custo R$</th>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>
                         <button onClick={() => toggleSort('lucro')} className="flex items-center gap-1 ml-auto">
-                          Lucro <SortIcon field="lucro" />
+                          Lucro <SortIcon field="lucro" sortField={sortField} sortDir={sortDir} />
                         </button>
                       </th>
-                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>
                         <button onClick={() => toggleSort('lucro_pct')} className="flex items-center gap-1 ml-auto">
-                          Margem <SortIcon field="lucro_pct" />
+                          Margem <SortIcon field="lucro_pct" sortField={sortField} sortDir={sortDir} />
                         </button>
                       </th>
-                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.48 0.22 25)' }}>Markup %</th>
-                      <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Foto</th>
+                      <th className="text-right px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-red)' }}>Markup %</th>
+                      <th className="text-center px-3 py-2 text-[11px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Foto</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -632,18 +625,18 @@ export default function Home() {
                         <tr
                           key={p.id}
                           style={{
-                            borderColor: 'oklch(0.18 0.005 285)',
-                            borderLeft: custo <= 0 ? '3px solid oklch(0.55 0.22 25)' : '3px solid transparent',
-                            background: custo <= 0 ? 'oklch(0.14 0.03 25 / 0.15)' : 'transparent',
+                            borderColor: 'var(--color-asx-surface)',
+                            borderLeft: custo <= 0 ? '3px solid var(--color-asx-error)' : '3px solid transparent',
+                            background: custo <= 0 ? 'color-mix(in oklch, var(--color-asx-red) 10%, transparent)' : 'transparent',
                           }}
                           className="border-b transition-colors"
-                          onMouseEnter={e => (e.currentTarget.style.background = custo <= 0 ? 'oklch(0.16 0.05 25 / 0.25)' : 'oklch(0.16 0.005 285)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = custo <= 0 ? 'oklch(0.14 0.03 25 / 0.15)' : 'transparent')}
+                          onMouseEnter={e => (e.currentTarget.style.background = custo <= 0 ? 'color-mix(in oklch, var(--color-asx-red) 15%, transparent)' : 'var(--color-asx-surface)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = custo <= 0 ? 'color-mix(in oklch, var(--color-asx-red) 10%, transparent)' : 'transparent')}
                         >
-                          <td className="px-3 py-2 font-rajdhani font-semibold text-xs tracking-wide sticky left-0 z-10" style={{ color: 'oklch(0.48 0.22 25)', background: 'inherit' }}>{p.codigo}</td>
-                          <td className="px-3 py-2 text-xs max-w-[280px] truncate sticky left-[100px] z-10" style={{ background: 'inherit', boxShadow: '4px 0 8px -2px oklch(0 0 0 / 0.3)' }}>{p.descricao}</td>
-                          <td className="px-3 py-2 font-mono text-[11px]" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.cod_barras}</td>
-                          <td className="px-3 py-2 text-xs" style={{ color: 'oklch(0.55 0.010 285)' }}>{p.unid}</td>
+                          <td className="px-3 py-2 font-rajdhani font-semibold text-xs tracking-wide sticky left-0 z-10" style={{ color: 'var(--color-asx-red)', background: 'inherit' }}>{p.codigo}</td>
+                          <td className="px-3 py-2 text-xs max-w-[280px] truncate sticky left-[100px] z-10" style={{ background: 'inherit', boxShadow: '4px 0 8px -2px rgb(0 0 0 / 0.3)' }}>{p.descricao}</td>
+                          <td className="px-3 py-2 font-mono text-[11px]" style={{ color: 'var(--color-asx-text-muted)' }}>{p.cod_barras}</td>
+                          <td className="px-3 py-2 text-xs" style={{ color: 'var(--color-asx-text-muted)' }}>{p.unid}</td>
                           <td className="px-3 py-2 text-right">
                             <InlinePrecoInput
                               value={p.preco_venda}
@@ -691,7 +684,7 @@ export default function Home() {
                                 label="Lucro"
                               />
                             ) : (
-                              <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
+                              <span style={{ color: 'var(--color-asx-text-muted)' }}>—</span>
                             )}
                           </td>
                           <td className="px-3 py-2 text-right">
@@ -711,16 +704,16 @@ export default function Home() {
                                 label="Margem"
                               />
                             ) : (
-                              <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
+                              <span style={{ color: 'var(--color-asx-text-muted)' }}>—</span>
                             )}
                           </td>
                           <td className="px-3 py-2 text-right">
                             {custo > 0 ? (
-                              <span className="font-rajdhani font-semibold text-sm" style={{ color: markup >= 0 ? 'oklch(0.72 0.17 145)' : 'oklch(0.65 0.22 25)' }}>
+                              <span className="font-rajdhani font-semibold text-sm" style={{ color: markup >= 0 ? 'var(--color-asx-success)' : 'var(--color-asx-error)' }}>
                                 {markup.toFixed(1)}%
                               </span>
                             ) : (
-                              <span style={{ color: 'oklch(0.40 0.010 285)' }}>—</span>
+                              <span style={{ color: 'var(--color-asx-text-muted)' }}>—</span>
                             )}
                           </td>
                           <td className="px-3 py-2 text-center">
@@ -735,7 +728,7 @@ export default function Home() {
             )}
 
             {filtered.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20" style={{ color: 'oklch(0.45 0.010 285)' }}>
+              <div className="flex flex-col items-center justify-center py-20" style={{ color: 'var(--color-asx-text-muted)' }}>
                 <Package className="w-12 h-12 mb-4" />
                 <p className="text-lg font-rajdhani">Nenhum produto encontrado</p>
                 <p className="text-sm mt-1">Tente ajustar os filtros ou a busca</p>
@@ -755,15 +748,15 @@ export default function Home() {
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowSettings(false)}>
           <div
             className="rounded-xl p-6 w-96 shadow-2xl border"
-            style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}
+            style={{ background: 'var(--color-asx-surface)', borderColor: 'var(--color-asx-border)' }}
             onClick={e => e.stopPropagation()}
           >
-            <h2 className="text-lg font-rajdhani font-bold mb-4" style={{ color: 'oklch(0.85 0.005 65)' }}>
+            <h2 className="text-lg font-rajdhani font-bold mb-4" style={{ color: 'var(--color-asx-text-heading)' }}>
               Configurações Rápidas
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="text-xs uppercase tracking-wider" style={{ color: 'oklch(0.50 0.010 285)' }}>Taxa de Câmbio (USD → R$)</label>
+                <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Taxa de Câmbio (USD → R$)</label>
                 <input
                   type="number"
                   value={taxaCambio}
@@ -771,12 +764,12 @@ export default function Home() {
                   step="0.01"
                   className="w-full mt-2 px-4 py-2.5 rounded-md border font-rajdhani font-semibold text-lg"
                   style={{
-                    background: 'oklch(0.14 0.005 285)',
-                    borderColor: 'oklch(0.26 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
+                    background: 'var(--color-asx-base)',
+                    borderColor: 'var(--color-asx-border)',
+                    color: 'var(--color-asx-text)',
                   }}
                 />
-                <p className="text-[11px] mt-2" style={{ color: 'oklch(0.45 0.010 285)' }}>
+                <p className="text-[11px] mt-2" style={{ color: 'var(--color-asx-text-muted)' }}>
                   Fórmula: Custo R$ = Custo USD × {taxaCambio.toFixed(2)}
                 </p>
               </div>
@@ -784,7 +777,7 @@ export default function Home() {
             <button
               onClick={() => setShowSettings(false)}
               className="mt-6 w-full px-4 py-2.5 rounded-md font-medium transition-colors"
-              style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+              style={{ background: 'var(--color-asx-red)', color: 'white' }}
             >
               Fechar
             </button>
@@ -822,7 +815,7 @@ const InlinePrecoInput = React.memo(function InlinePrecoInput({
   if (editing) {
     return (
       <div className="flex items-center gap-1 justify-end md:flex-row flex-col md:w-auto w-full">
-        <span className="text-xs font-bold md:block hidden" style={{ color: 'oklch(0.48 0.22 25)' }}>R$</span>
+        <span className="text-xs font-bold md:block hidden" style={{ color: 'var(--color-asx-red)' }}>R$</span>
         <input
           type="number"
           value={inputVal}
@@ -843,8 +836,8 @@ const InlinePrecoInput = React.memo(function InlinePrecoInput({
       disabled={disabled}
       className="font-rajdhani font-semibold text-sm px-2 py-0.5 rounded transition-colors"
       style={{
-        color: value > 0 ? 'oklch(0.85 0.005 65)' : 'oklch(0.45 0.010 285)',
-        background: value > 0 ? 'oklch(0.20 0.005 285)' : 'oklch(0.16 0.005 285)',
+        color: value > 0 ? 'var(--color-asx-text-heading)' : 'var(--color-asx-text-muted)',
+        background: value > 0 ? 'var(--color-asx-surface-2)' : 'var(--color-asx-surface)',
         opacity: disabled ? 0.5 : 1,
         cursor: disabled ? 'not-allowed' : 'pointer',
       }}
@@ -888,7 +881,7 @@ const InlinePercentInput = React.memo(function InlinePercentInput({
           step="0.1"
           className="asx-input-usd w-16"
         />
-        <span className="text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>%</span>
+        <span className="text-xs font-bold" style={{ color: 'var(--color-asx-red)' }}>%</span>
       </div>
     );
   }
@@ -920,7 +913,7 @@ const InlineCustoInput = React.memo(function InlineCustoInput({ value, onChange 
   if (editing) {
     return (
       <div className="flex items-center gap-1 justify-end">
-        <span className="text-xs font-bold" style={{ color: 'oklch(0.48 0.22 25)' }}>$</span>
+        <span className="text-xs font-bold" style={{ color: 'var(--color-asx-red)' }}>$</span>
         <input
           type="number"
           value={inputVal}
@@ -940,8 +933,8 @@ const InlineCustoInput = React.memo(function InlineCustoInput({ value, onChange 
       onClick={() => { setInputVal(value > 0 ? value.toString() : ''); setEditing(true); }}
       className="font-rajdhani font-semibold text-sm px-2 py-0.5 rounded transition-colors"
       style={{
-        color: value > 0 ? 'oklch(0.85 0.005 65)' : 'oklch(0.48 0.22 25)',
-        background: value > 0 ? 'oklch(0.20 0.005 285)' : 'oklch(0.48 0.22 25 / 0.12)',
+        color: value > 0 ? 'var(--color-asx-text-heading)' : 'var(--color-asx-red)',
+        background: value > 0 ? 'var(--color-asx-surface-2)' : 'color-mix(in oklch, var(--color-asx-red) 12%, transparent)',
       }}
     >
       {value > 0 ? `$${value.toFixed(2)}` : '+ Custo'}
@@ -980,23 +973,23 @@ const ProductCard = React.memo(function ProductCard({
     <div className="asx-card p-4">
       {/* Imagem */}
       <div className="mb-3 h-28 rounded-md flex items-center justify-center overflow-hidden relative group" style={{
-        background: 'oklch(0.12 0.005 285)',
+        background: 'var(--color-asx-dark)',
       }}>
         <ImageUploadButton productId={produto.id} size="lg" showPreview={true} />
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          <Package className="w-8 h-8" style={{ color: 'oklch(0.30 0.010 285)' }} />
+          <Package className="w-8 h-8" style={{ color: 'var(--color-asx-border-strong)' }} />
         </div>
       </div>
 
       {/* Info */}
-      <p className="font-rajdhani font-semibold text-xs tracking-wide" style={{ color: 'oklch(0.48 0.22 25)' }}>{produto.codigo}</p>
-      <p className="text-xs font-medium line-clamp-2 mt-0.5 mb-1" style={{ color: 'oklch(0.80 0.005 65)' }}>{produto.descricao}</p>
-      <p className="text-[10px] font-mono mb-3" style={{ color: 'oklch(0.40 0.010 285)' }}>EAN: {produto.cod_barras}</p>
+      <p className="font-rajdhani font-semibold text-xs tracking-wide" style={{ color: 'var(--color-asx-red)' }}>{produto.codigo}</p>
+      <p className="text-xs font-medium line-clamp-2 mt-0.5 mb-1" style={{ color: 'var(--color-asx-text-heading)' }}>{produto.descricao}</p>
+      <p className="text-[10px] font-mono mb-3" style={{ color: 'var(--color-asx-text-muted)' }}>EAN: {produto.cod_barras}</p>
 
       {/* Preço Venda */}
-      <div className="mb-3 pb-3 border-b" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-        <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Preço Venda</p>
-        <p className="font-rajdhani text-lg font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>
+      <div className="mb-3 pb-3 border-b" style={{ borderColor: 'var(--color-asx-border)' }}>
+        <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Preço Venda</p>
+        <p className="font-rajdhani text-lg font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>
           {produto.preco_venda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         </p>
       </div>
@@ -1004,9 +997,9 @@ const ProductCard = React.memo(function ProductCard({
       {/* Custo */}
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Custo USD</p>
+          <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Custo USD</p>
           {custo > 0 && (
-            <button onClick={() => onCustoChange(0)} className="text-[10px]" style={{ color: 'oklch(0.50 0.010 285)' }}>limpar</button>
+            <button onClick={() => onCustoChange(0)} className="text-[10px]" style={{ color: 'var(--color-asx-text-muted)' }}>limpar</button>
           )}
         </div>
         {!showCustoInput ? (
@@ -1014,8 +1007,8 @@ const ProductCard = React.memo(function ProductCard({
             onClick={() => { setInputValue(custo > 0 ? custo.toString() : ''); setShowCustoInput(true); }}
             className="w-full px-2 py-1.5 rounded text-sm font-rajdhani font-semibold transition-colors"
             style={{
-              background: custo > 0 ? 'oklch(0.20 0.005 285)' : 'oklch(0.48 0.22 25 / 0.12)',
-              color: custo > 0 ? 'oklch(0.85 0.005 65)' : 'oklch(0.48 0.22 25)',
+              background: custo > 0 ? 'var(--color-asx-surface-2)' : 'color-mix(in oklch, var(--color-asx-red) 12%, transparent)',
+              color: custo > 0 ? 'var(--color-asx-text-heading)' : 'var(--color-asx-red)',
             }}
           >
             {custo > 0 ? `$ ${custo.toFixed(2)}` : '+ Inserir Custo'}
@@ -1035,7 +1028,7 @@ const ProductCard = React.memo(function ProductCard({
             <button
               onClick={handleSaveCusto}
               className="px-3 py-1 rounded text-sm font-bold"
-              style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+              style={{ background: 'var(--color-asx-red)', color: 'white' }}
             >
               OK
             </button>
@@ -1046,8 +1039,8 @@ const ProductCard = React.memo(function ProductCard({
       {/* Custo R$ */}
       {custoReal > 0 && (
         <div className="mb-3">
-          <p className="text-[10px] uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>Custo R$</p>
-          <p className="font-mono text-sm" style={{ color: 'oklch(0.65 0.010 285)' }}>
+          <p className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>Custo R$</p>
+          <p className="font-mono text-sm" style={{ color: 'var(--color-asx-text-secondary)' }}>
             {custoReal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </p>
         </div>
@@ -1055,8 +1048,8 @@ const ProductCard = React.memo(function ProductCard({
 
       {/* Lucro */}
       {custo > 0 && (
-        <div className="pt-2 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
-          <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: 'oklch(0.45 0.010 285)' }}>Lucro Bruto</p>
+        <div className="pt-2 border-t" style={{ borderColor: 'var(--color-asx-border)' }}>
+          <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: 'var(--color-asx-text-muted)' }}>Lucro Bruto</p>
           <div className="flex items-baseline gap-2">
             <span className={lucro >= 0 ? 'asx-badge-profit-pos' : 'asx-badge-profit-neg'}>
               {lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}

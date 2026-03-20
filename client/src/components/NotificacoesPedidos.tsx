@@ -23,14 +23,14 @@ export function NotificacoesPedidos({ notificacoes, onRemover }: NotificacoesPed
           bg: 'oklch(0.20 0.10 145 / 0.9)',
           border: 'oklch(0.50 0.17 145)',
           text: 'oklch(0.90 0.10 145)',
-          icon: 'oklch(0.72 0.17 145)',
+          icon: 'var(--color-asx-success)',
         };
       case 'erro':
         return {
           bg: 'oklch(0.20 0.10 25 / 0.9)',
           border: 'oklch(0.50 0.22 25)',
           text: 'oklch(0.90 0.15 25)',
-          icon: 'oklch(0.65 0.22 25)',
+          icon: 'var(--color-asx-error)',
         };
       case 'info':
       default:

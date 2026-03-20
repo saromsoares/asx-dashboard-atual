@@ -81,7 +81,7 @@ export default function ModalEstoque({ isOpen, onClose, onSaveManual, onImportEx
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4" style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4" style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text)' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'oklch(0.32 0.005 285)' }}>
           <h2 className="font-rajdhani font-bold text-xl">Adicionar Estoque</h2>
@@ -98,7 +98,7 @@ export default function ModalEstoque({ isOpen, onClose, onSaveManual, onImportEx
             style={{
               background: modo === 'manual' ? 'oklch(0.22 0.005 285)' : 'transparent',
               color: modo === 'manual' ? 'oklch(0.80 0.005 65)' : 'oklch(0.50 0.010 285)',
-              borderBottom: modo === 'manual' ? '2px solid oklch(0.48 0.22 25)' : 'none',
+              borderBottom: modo === 'manual' ? '2px solid var(--color-asx-red)' : 'none',
             }}
           >
             Manual
@@ -133,7 +133,7 @@ export default function ModalEstoque({ isOpen, onClose, onSaveManual, onImportEx
                   style={{
                     background: 'oklch(0.22 0.005 285)',
                     borderColor: 'oklch(0.32 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
+                    color: 'var(--color-asx-text)',
                   }}
                 />
               </div>
@@ -150,14 +150,14 @@ export default function ModalEstoque({ isOpen, onClose, onSaveManual, onImportEx
                   style={{
                     background: 'oklch(0.22 0.005 285)',
                     borderColor: 'oklch(0.32 0.005 285)',
-                    color: 'oklch(0.90 0.005 65)',
+                    color: 'var(--color-asx-text)',
                   }}
                 />
               </div>
               <button
                 onClick={handleSaveManual}
                 className="w-full px-4 py-2 rounded-md font-semibold transition-colors"
-                style={{ background: 'oklch(0.48 0.22 25)', color: 'white' }}
+                style={{ background: 'var(--color-asx-red)', color: 'white' }}
               >
                 Adicionar
               </button>

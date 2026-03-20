@@ -73,7 +73,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
         <div className="flex items-center justify-between p-4 border-b" style={{
           borderColor: 'oklch(0.20 0.010 285)',
         }}>
-          <h2 className="text-lg font-bold" style={{ color: 'oklch(0.85 0.005 65)' }}>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--color-asx-text-heading)' }}>
             Ajustar Categorias de Produtos
           </h2>
           <button
@@ -89,7 +89,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
           {/* Coluna 1: Busca e seleção por categoria */}
           <div className="flex-1 flex flex-col gap-4 overflow-hidden">
             <div>
-              <label className="text-xs uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>
+              <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>
                 Buscar Produto
               </label>
               <div className="relative mt-1">
@@ -102,7 +102,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                   className="w-full pl-9 pr-3 py-2 rounded text-sm"
                   style={{
                     background: 'oklch(0.15 0.005 285)',
-                    color: 'oklch(0.85 0.005 65)',
+                    color: 'var(--color-asx-text-heading)',
                     borderColor: 'oklch(0.25 0.010 285)',
                     borderWidth: '1px',
                   }}
@@ -123,13 +123,13 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                         className="p-3 hover:bg-gray-800 cursor-pointer transition-colors"
                         onClick={() => setEditingProductId(p.id)}
                       >
-                        <p className="text-xs font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                        <p className="text-xs font-semibold" style={{ color: 'var(--color-asx-red)' }}>
                           {p.codigo}
                         </p>
                         <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'oklch(0.70 0.005 65)' }}>
                           {p.descricao}
                         </p>
-                        <p className="text-[10px] mt-1" style={{ color: 'oklch(0.45 0.010 285)' }}>
+                        <p className="text-[10px] mt-1" style={{ color: 'var(--color-asx-text-muted)' }}>
                           Cat: {p.categoria}
                         </p>
                       </div>
@@ -145,7 +145,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
 
             {/* Seleção por categoria */}
             <div>
-              <label className="text-xs uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>
+              <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>
                 Ou Selecione uma Categoria
               </label>
               <div className="grid grid-cols-2 gap-2 mt-2">
@@ -158,8 +158,8 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                     }`}
                     style={{
                       background: selectedCategory === cat ? 'oklch(0.20 0.010 285)' : 'oklch(0.15 0.005 285)',
-                      color: selectedCategory === cat ? 'oklch(0.85 0.005 65)' : 'oklch(0.70 0.005 65)',
-                      outlineColor: selectedCategory === cat ? 'oklch(0.48 0.22 25)' : '',
+                      color: selectedCategory === cat ? 'var(--color-asx-text-heading)' : 'oklch(0.70 0.005 65)',
+                      outlineColor: selectedCategory === cat ? 'var(--color-asx-red)' : '',
                     } as React.CSSProperties}
                   >
                     {cat}
@@ -175,7 +175,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
               borderColor: 'oklch(0.20 0.010 285)',
               paddingLeft: '1rem',
             }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: 'oklch(0.85 0.005 65)' }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-asx-text-heading)' }}>
                 {productsByCategory.length} produtos em "{selectedCategory}"
               </h3>
               <div className="flex-1 overflow-y-auto rounded border" style={{
@@ -198,7 +198,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                           className="flex-shrink-0 mt-0.5"
                         >
                           {selectedProducts.has(p.id) ? (
-                            <CheckSquare className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 25)' }} />
+                            <CheckSquare className="w-4 h-4" style={{ color: 'var(--color-asx-red)' }} />
                           ) : (
                             <Square className="w-4 h-4" style={{ color: 'oklch(0.40 0.010 285)' }} />
                           )}
@@ -207,7 +207,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                           className="flex-1"
                           onClick={() => setEditingProductId(p.id)}
                         >
-                          <p className="text-xs font-semibold" style={{ color: 'oklch(0.48 0.22 25)' }}>
+                          <p className="text-xs font-semibold" style={{ color: 'var(--color-asx-red)' }}>
                             {p.codigo}
                           </p>
                           <p className="text-xs line-clamp-1 mt-0.5" style={{ color: 'oklch(0.70 0.005 65)' }}>
@@ -227,7 +227,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
               {/* Seção de mudança em lote */}
               {selectedProducts.size > 0 && (
                 <div className="border-t p-3" style={{ borderColor: 'oklch(0.20 0.010 285)' }}>
-                  <p className="text-xs mb-2" style={{ color: 'oklch(0.45 0.010 285)' }}>
+                  <p className="text-xs mb-2" style={{ color: 'var(--color-asx-text-muted)' }}>
                     {selectedProducts.size} produto(s) selecionado(s)
                   </p>
                   <select
@@ -236,7 +236,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                     className="w-full p-2 rounded text-xs mb-2"
                     style={{
                       background: 'oklch(0.15 0.005 285)',
-                      color: 'oklch(0.85 0.005 65)',
+                      color: 'var(--color-asx-text-heading)',
                       borderColor: 'oklch(0.25 0.010 285)',
                       borderWidth: '1px',
                     }}
@@ -255,7 +255,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                       bulkNewCategory ? 'hover:opacity-90' : 'opacity-50 cursor-not-allowed'
                     }`}
                     style={{
-                      background: 'oklch(0.48 0.22 25)',
+                      background: 'var(--color-asx-red)',
                       color: 'white',
                     }}
                   >
@@ -280,24 +280,24 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                 return (
                   <>
                     <div>
-                      <h3 className="text-sm font-semibold mb-2" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                      <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-asx-text-heading)' }}>
                         Editando Produto
                       </h3>
                       <div className="space-y-1 text-xs">
                         <p>
-                          <span style={{ color: 'oklch(0.45 0.010 285)' }}>Código:</span>{' '}
-                          <span style={{ color: 'oklch(0.48 0.22 25)' }} className="font-semibold">
+                          <span style={{ color: 'var(--color-asx-text-muted)' }}>Código:</span>{' '}
+                          <span style={{ color: 'var(--color-asx-red)' }} className="font-semibold">
                             {product.codigo}
                           </span>
                         </p>
                         <p>
-                          <span style={{ color: 'oklch(0.45 0.010 285)' }}>Descrição:</span>{' '}
+                          <span style={{ color: 'var(--color-asx-text-muted)' }}>Descrição:</span>{' '}
                           <span style={{ color: 'oklch(0.70 0.005 65)' }} className="line-clamp-2">
                             {product.descricao}
                           </span>
                         </p>
                         <p>
-                          <span style={{ color: 'oklch(0.45 0.010 285)' }}>Categoria Atual:</span>{' '}
+                          <span style={{ color: 'var(--color-asx-text-muted)' }}>Categoria Atual:</span>{' '}
                           <span style={{ color: 'oklch(0.70 0.005 65)' }} className="font-semibold">
                             {product.categoria}
                           </span>
@@ -306,7 +306,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                     </div>
 
                     <div>
-                      <label className="text-xs uppercase tracking-wider" style={{ color: 'oklch(0.45 0.010 285)' }}>
+                      <label className="text-xs uppercase tracking-wider" style={{ color: 'var(--color-asx-text-muted)' }}>
                         Nova Categoria
                       </label>
                       <select
@@ -315,7 +315,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                         className="w-full mt-2 p-2 rounded text-sm"
                         style={{
                           background: 'oklch(0.15 0.005 285)',
-                          color: 'oklch(0.85 0.005 65)',
+                          color: 'var(--color-asx-text-heading)',
                           borderColor: 'oklch(0.25 0.010 285)',
                           borderWidth: '1px',
                         }}
@@ -343,7 +343,7 @@ export const CategoryAdjustmentPanel: React.FC<CategoryAdjustmentPanelProps> = (
                           : 'opacity-50 cursor-not-allowed'
                       }`}
                       style={{
-                        background: 'oklch(0.48 0.22 25)',
+                        background: 'var(--color-asx-red)',
                         color: 'white',
                       }}
                     >

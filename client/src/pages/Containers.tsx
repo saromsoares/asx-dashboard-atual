@@ -126,18 +126,18 @@ export default function Containers() {
   }, [pedidosDb, pedidosDoContainer, containerExpandido]);
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'oklch(0.12 0.005 285)', color: 'oklch(0.95 0.005 65)' }}>
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-asx-dark)', color: 'var(--color-asx-text)' }}>
       {/* Botão Voltar */}
-      <div className="px-4 md:px-6 py-3 border-b flex items-center" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+      <div className="px-4 md:px-6 py-3 border-b flex items-center" style={{ borderColor: 'var(--color-asx-border-subtle)' }}>
         <button
           onClick={() => setLocation('/')}
           className="flex items-center gap-2 px-3 py-2 rounded-md transition-colors"
-          style={{ background: 'oklch(0.16 0.005 285)', color: 'oklch(0.80 0.005 65)' }}
+          style={{ background: 'var(--color-asx-surface)', color: 'var(--color-asx-text-heading)' }}
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="text-sm font-medium">Menu</span>
         </button>
-        <span className="ml-3 font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'oklch(0.80 0.005 65)' }}>
+        <span className="ml-3 font-rajdhani font-bold text-lg tracking-wide" style={{ color: 'var(--color-asx-text-heading)' }}>
           GERENCIAMENTO DE CONTAINERS
         </span>
       </div>
@@ -145,8 +145,8 @@ export default function Containers() {
       {/* Conteúdo Principal */}
       <main className="flex-1 overflow-auto p-4 md:p-6">
         {/* Seção de Criar Container */}
-        <div className="mb-6 p-4 md:p-6 rounded-lg border" style={{ background: 'oklch(0.14 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}>
-          <h2 className="text-sm font-semibold mb-3" style={{ color: 'oklch(0.80 0.005 65)' }}>Criar Novo Container</h2>
+        <div className="mb-6 p-4 md:p-6 rounded-lg border" style={{ background: 'var(--color-asx-base)', borderColor: 'var(--color-asx-border)' }}>
+          <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-asx-text-heading)' }}>Criar Novo Container</h2>
           <div className="flex gap-3 md:flex-row flex-col">
             <input
               type="text"
@@ -158,7 +158,7 @@ export default function Containers() {
               style={{
                 background: 'oklch(0.18 0.005 285)',
                 borderColor: 'oklch(0.28 0.005 285)',
-                color: 'oklch(0.90 0.005 65)',
+                color: 'var(--color-asx-text)',
               }}
             />
             <button
@@ -166,7 +166,7 @@ export default function Containers() {
               disabled={criarContainerMutation.isPending}
               className="px-6 py-3 rounded-md font-semibold flex items-center gap-2 transition-colors h-11 md:w-auto w-full justify-center"
               style={{
-                background: 'oklch(0.48 0.22 25)',
+                background: 'var(--color-asx-red)',
                 color: 'white',
                 opacity: criarContainerMutation.isPending ? 0.6 : 1,
               }}
@@ -197,7 +197,7 @@ export default function Containers() {
                 <div
                   key={container.id}
                   className="rounded-lg border overflow-hidden"
-                  style={{ borderColor: 'oklch(0.26 0.005 285)', background: 'oklch(0.14 0.005 285)' }}
+                  style={{ borderColor: 'var(--color-asx-border)', background: 'var(--color-asx-base)' }}
                 >
                   {/* Header do Container */}
                   <div
@@ -247,7 +247,7 @@ export default function Containers() {
                           handleDeletarContainer(container.id);
                         }}
                         className="p-2 rounded hover:opacity-75 transition-opacity"
-                        style={{ color: 'oklch(0.65 0.22 25)' }}
+                        style={{ color: 'var(--color-asx-error)' }}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -258,10 +258,10 @@ export default function Containers() {
 
                   {/* Conteúdo Expandido */}
                   {isExpanded && (
-                    <div className="p-4 border-t" style={{ borderColor: 'oklch(0.22 0.005 285)' }}>
+                    <div className="p-4 border-t" style={{ borderColor: 'var(--color-asx-border-subtle)' }}>
                       {/* Pedidos Vinculados */}
                       <div className="mb-6">
-                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
+                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--color-asx-text-heading)' }}>
                           <Link2 className="w-4 h-4" style={{ color: 'oklch(0.48 0.22 250)' }} />
                           Pedidos Vinculados ({pedidosDoContainer.length})
                         </h3>
@@ -273,14 +273,14 @@ export default function Containers() {
                         ) : (
                           <div className="space-y-2">
                             {pedidosDoContainer.map((pc: any) => {
-                              const statusColor = pc.pedidoStatus === 'Pendente' ? 'oklch(0.65 0.22 25)' :
-                                pc.pedidoStatus === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'oklch(0.72 0.17 145)';
+                              const statusColor = pc.pedidoStatus === 'Pendente' ? 'var(--color-asx-error)' :
+                                pc.pedidoStatus === 'Confirmado' ? 'oklch(0.48 0.22 250)' : 'var(--color-asx-success)';
 
                               return (
                                 <div
                                   key={pc.id}
                                   className="flex items-center justify-between p-3 rounded-md"
-                                  style={{ background: 'oklch(0.16 0.005 285)', border: '1px solid oklch(0.24 0.005 285)' }}
+                                  style={{ background: 'var(--color-asx-surface)', border: '1px solid var(--color-asx-surface-3)' }}
                                 >
                                   <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <div
@@ -290,7 +290,7 @@ export default function Containers() {
                                       {pc.pedidoStatus}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium truncate" style={{ color: 'oklch(0.85 0.005 65)' }}>
+                                      <p className="text-sm font-medium truncate" style={{ color: 'var(--color-asx-text-heading)' }}>
                                         #{pc.pedidoId} - {pc.pedidoNome}
                                       </p>
                                       <p className="text-[10px]" style={{ color: 'oklch(0.50 0.010 285)' }}>
@@ -301,7 +301,7 @@ export default function Containers() {
                                   <button
                                     onClick={() => handleDesvincularPedido(pc.id)}
                                     className="p-2 rounded-md transition-colors hover:opacity-75 flex items-center gap-1 text-xs flex-shrink-0"
-                                    style={{ color: 'oklch(0.65 0.22 25)' }}
+                                    style={{ color: 'var(--color-asx-error)' }}
                                     title="Desvincular pedido"
                                   >
                                     <Unlink2 className="w-3.5 h-3.5" />
@@ -316,8 +316,8 @@ export default function Containers() {
 
                       {/* Vincular Novo Pedido */}
                       <div>
-                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'oklch(0.80 0.005 65)' }}>
-                          <Plus className="w-4 h-4" style={{ color: 'oklch(0.72 0.17 145)' }} />
+                        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--color-asx-text-heading)' }}>
+                          <Plus className="w-4 h-4" style={{ color: 'var(--color-asx-success)' }} />
                           Vincular Pedido Confirmado
                         </h3>
 
@@ -338,7 +338,7 @@ export default function Containers() {
                                 className="w-full p-3 rounded-md text-left text-sm transition-colors flex items-center justify-between hover:brightness-110"
                                 style={{
                                   background: 'oklch(0.18 0.005 285)',
-                                  color: 'oklch(0.80 0.005 65)',
+                                  color: 'var(--color-asx-text-heading)',
                                   border: '1px solid oklch(0.28 0.005 285)',
                                   opacity: vincularPedidoMutation.isPending ? 0.6 : 1,
                                 }}
@@ -349,7 +349,7 @@ export default function Containers() {
                                     {new Date(pedido.dataCreacao).toLocaleDateString('pt-BR')}
                                   </p>
                                 </div>
-                                <Plus className="w-4 h-4 flex-shrink-0" style={{ color: 'oklch(0.48 0.22 25)' }} />
+                                <Plus className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--color-asx-red)' }} />
                               </button>
                             ))}
                           </div>
