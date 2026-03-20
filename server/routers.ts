@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { upsertEstoque, getEstoque, getAllEstoques, upsertPreco, getPreco, getAllPrecos, criarPedido, getPedido, getAllPedidos, atualizarStatusPedido, deletarPedido, adicionarItemPedido, removerItemPedido, getItensDoPedido, getAllItensPedidos, criarContainer, getContainer, getAllContainers, atualizarStatusContainer, deletarContainer, vincularPedidoAContainer, desvincularPedidoDoContainer, getPedidosDoContainer, getContainersComPedidos, importarProdutosDoArquivo, listarProdutos, getProduto, criarProduto, criarProcessoSR, getProcessoSR, getAllProcessosSR, atualizarProcessoSR, atualizarStatusProcessoSR, deletarProcessoSR, adicionarItemProcesso, getItensDoProcesso, atualizarItemProcesso, removerItemProcesso } from "./db";
 import { registrarAuditoria, extrairContextoRequisicao, criarDescricaoAcao } from "./audit";
@@ -10,7 +10,11 @@ export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => {
+      if (!opts.ctx.user) return null;
+      const { id, name, email, role } = opts.ctx.user;
+      return { id, name, email, role };
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -104,7 +108,7 @@ export const appRouter = router({
         });
         return result;
       }),
-    deletar: protectedProcedure
+    deletar: adminProcedure
       .input(z.object({ pedidoId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
         const pedido = await getPedido(input.pedidoId);
@@ -234,7 +238,7 @@ export const appRouter = router({
         });
         return result;
       }),
-    deletar: protectedProcedure
+    deletar: adminProcedure
       .input(z.object({ containerId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
         const container = await getContainer(input.containerId);
@@ -296,7 +300,7 @@ export const appRouter = router({
   }),
 
   produto: router({
-    importarDoArquivo: protectedProcedure
+    importarDoArquivo: adminProcedure
       .mutation(async ({ ctx }) => {
         const result = await importarProdutosDoArquivo();
         const { ipAddress, userAgent } = extrairContextoRequisicao(ctx.req);
@@ -456,7 +460,7 @@ export const appRouter = router({
         });
         return result;
       }),
-    deletar: protectedProcedure
+    deletar: adminProcedure
       .input(z.object({ processoId: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
         const processo = await getProcessoSR(input.processoId);

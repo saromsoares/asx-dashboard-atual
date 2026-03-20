@@ -1,25 +1,10 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useLocation } from 'wouter';
-import { LogIn, AlertCircle } from 'lucide-react';
+import { LogIn } from 'lucide-react';
+import { getLoginUrl } from '@/const';
 
 export default function Login() {
-  const [email, setEmail] = useState('sarom@asxstore.com');
-  const [password, setPassword] = useState('');
-  const [, setLocation] = useLocation();
-  const { login, loading, error, isAuthenticated } = useAuth();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    login(email, password);
+  const handleLogin = () => {
+    window.location.href = getLoginUrl();
   };
-
-  // Redirecionar para home se login bem-sucedido
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      setLocation('/');
-    }
-  }, [isAuthenticated, setLocation]);
 
   return (
     <div
@@ -47,84 +32,28 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Formulário */}
-        <form
-          onSubmit={handleSubmit}
+        {/* Login Card */}
+        <div
           className="rounded-xl p-8 border shadow-2xl"
           style={{ background: 'oklch(0.16 0.005 285)', borderColor: 'oklch(0.26 0.005 285)' }}
         >
-          {/* Email */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2" style={{ color: 'oklch(0.70 0.010 285)' }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border font-rajdhani"
-              style={{
-                background: 'oklch(0.14 0.005 285)',
-                borderColor: 'oklch(0.26 0.005 285)',
-                color: 'oklch(0.90 0.005 65)',
-              }}
-              placeholder="seu@email.com"
-              required
-            />
-          </div>
+          <p className="text-center mb-6 text-sm" style={{ color: 'oklch(0.70 0.010 285)' }}>
+            Faça login com sua conta ASX para acessar o dashboard.
+          </p>
 
-          {/* Senha */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2" style={{ color: 'oklch(0.70 0.010 285)' }}>
-              Senha
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border font-rajdhani"
-              style={{
-                background: 'oklch(0.14 0.005 285)',
-                borderColor: 'oklch(0.26 0.005 285)',
-                color: 'oklch(0.90 0.005 65)',
-              }}
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          {/* Erro */}
-          {error && (
-            <div
-              className="mb-6 p-4 rounded-lg flex items-center gap-3 border"
-              style={{
-                background: 'oklch(0.20 0.15 25 / 0.4)',
-                borderColor: 'oklch(0.55 0.22 25)',
-              }}
-            >
-              <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'oklch(0.90 0.15 65)' }} />
-              <p className="text-sm" style={{ color: 'oklch(0.90 0.10 65)' }}>
-                {error}
-              </p>
-            </div>
-          )}
-
-          {/* Botão */}
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-lg font-rajdhani font-semibold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            type="button"
+            onClick={handleLogin}
+            className="w-full py-3 rounded-lg font-rajdhani font-semibold flex items-center justify-center gap-2 transition-all hover:opacity-90"
             style={{
               background: 'oklch(0.48 0.22 25)',
               color: 'white',
             }}
           >
             <LogIn className="w-5 h-5" />
-            {loading ? 'Autenticando...' : 'Entrar'}
+            Entrar com SSO
           </button>
-
-          {/* Dica removida por segurança */}
-        </form>
+        </div>
 
         {/* Footer */}
         <p className="text-xs text-center mt-8" style={{ color: 'oklch(0.35 0.010 285)' }}>

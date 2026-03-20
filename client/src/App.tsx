@@ -1,11 +1,11 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import Login from "@/pages/Login";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { useAuth } from "./hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Compras from "./pages/Compras";
@@ -18,12 +18,9 @@ import Pagamentos from "./pages/Pagamentos";
 import CentralSarom from "./pages/CentralSarom";
 import CentralAlexandre from "./pages/CentralAlexandre";
 import { MobileMenu } from "./components/MobileMenu";
-import { ToastContainer } from "./components/Toast";
-import { useToast } from "./hooks/useToast";
 
 function ProtectedRouter() {
   const { isAuthenticated, loading } = useAuth();
-  const [location, setLocation] = useLocation();
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
@@ -33,7 +30,12 @@ function ProtectedRouter() {
   }
 
   if (!isAuthenticated) {
-    return <Login />;
+    window.location.href = getLoginUrl();
+    return (
+      <div className="h-screen flex items-center justify-center" style={{ background: 'oklch(0.12 0.005 285)' }}>
+        <div style={{ color: 'oklch(0.60 0.010 285)' }}>Redirecionando para login...</div>
+      </div>
+    );
   }
 
   return <AuthenticatedRouter />;
@@ -41,7 +43,6 @@ function ProtectedRouter() {
 
 function AuthenticatedRouter() {
   const [location] = useLocation();
-  const { toasts, removeToast } = useToast();
 
   const getCurrentPage = () => {
     if (location === "/compras") return "compras";
@@ -95,20 +96,17 @@ function AuthenticatedRouter() {
           <Route component={NotFound} />
         </Switch>
       </main>
-      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }
 
 function App() {
-  const { toasts, removeToast } = useToast();
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <ProtectedRouter />
-          <ToastContainer toasts={toasts} onClose={removeToast} />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
