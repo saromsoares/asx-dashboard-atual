@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "../server/_core/oauth";
 import { appRouter } from "../server/routers";
@@ -13,31 +13,7 @@ const app = express();
 app.set("trust proxy", 1);
 
 // Security headers
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-  })
-);
-
-// Rate limiting
-app.use(
-  rateLimit({
-    windowMs: 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
-
-app.use(
-  "/api/oauth",
-  rateLimit({
-    windowMs: 60 * 1000,
-    max: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // Body parser
 app.use(express.json({ limit: "2mb" }));
@@ -55,4 +31,7 @@ app.use(
   })
 );
 
-export default app;
+// Vercel serverless handler
+export default function handler(req: VercelRequest, res: VercelResponse) {
+  return app(req as any, res as any);
+}

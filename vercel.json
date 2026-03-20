@@ -3,13 +3,14 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist/public",
   "framework": "vite",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
   "functions": {
     "api/index.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    { "source": "/api/trpc/:path*", "destination": "/api" },
+    { "source": "/api/oauth/:path*", "destination": "/api" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
 }
