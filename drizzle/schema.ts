@@ -1,24 +1,31 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, uniqueIndex } from "drizzle-orm/mysql-core";
+import { serial, integer, pgEnum, pgTable, text, timestamp, varchar, numeric, uniqueIndex } from "drizzle-orm/pg-core";
+
+// Enum definitions
+export const roleEnum = pgEnum("role", ["user", "admin"]);
+export const statusPedidoEnum = pgEnum("status_pedido", ["Pendente", "Confirmado", "Recebido"]);
+export const statusContainerEnum = pgEnum("status_container", ["Vazio", "Preenchendo", "Cheio", "Enviado", "Entregue"]);
+export const statusProcessoEnum = pgEnum("status_processo", ["Em andamento", "Finalizado", "Cancelado"]);
+export const tipoPagamentoEnum = pgEnum("tipo_pagamento", ["MIC", "NAITE", "TT", "LC", "OUTRO"]);
 
 /**
  * Core user table backing auth flow.
  * Extend this file with additional tables as your product grows.
  * Columns use camelCase to match both database fields and generated types.
  */
-export const users = mysqlTable("users", {
+export const users = pgTable("users", {
   /**
    * Surrogate primary key. Auto-incremented numeric value managed by the database.
    * Use this for relations between tables.
    */
-  id: int("id").autoincrement().primaryKey(),
+  id: serial("id").primaryKey(),
   /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: roleEnum("role").default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
@@ -29,13 +36,13 @@ export type InsertUser = typeof users.$inferInsert;
  * Tabela de estoque de produtos
  * Armazena quantidade de estoque por produto e data de atualização
  */
-export const estoques = mysqlTable("estoques", {
-  id: int("id").autoincrement().primaryKey(),
+export const estoques = pgTable("estoques", {
+  id: serial("id").primaryKey(),
   produtoId: varchar("produtoId", { length: 64 }).notNull().unique(), // Referência ao código do produto
-  quantidade: int("quantidade").default(0).notNull(),
+  quantidade: integer("quantidade").default(0).notNull(),
   dataAtualizacao: timestamp("dataAtualizacao").defaultNow().notNull(),
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type Estoque = typeof estoques.$inferSelect;
@@ -45,13 +52,13 @@ export type InsertEstoque = typeof estoques.$inferInsert;
  * Tabela de preços de produtos
  * Armazena custo em USD e preço de venda em BRL
  */
-export const precos = mysqlTable("precos", {
-  id: int("id").autoincrement().primaryKey(),
+export const precos = pgTable("precos", {
+  id: serial("id").primaryKey(),
   produtoId: varchar("produtoId", { length: 64 }).notNull().unique(), // Referência ao código do produto
-  custoUsd: decimal("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
-  precoVendaBrl: decimal("precoVendaBrl", { precision: 10, scale: 2 }).default("0").notNull(),
+  custoUsd: numeric("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
+  precoVendaBrl: numeric("precoVendaBrl", { precision: 10, scale: 2 }).default("0").notNull(),
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type Preco = typeof precos.$inferSelect;
@@ -61,8 +68,8 @@ export type InsertPreco = typeof precos.$inferInsert;
  * Tabela de produtos
  * Armazena informações completas de todos os produtos
  */
-export const produtos = mysqlTable("produtos", {
-  id: int("id").autoincrement().primaryKey(),
+export const produtos = pgTable("produtos", {
+  id: serial("id").primaryKey(),
   codigo: varchar("codigo", { length: 64 }).notNull().unique(), // Ex: ASX1001
   descricao: text("descricao").notNull(),
   categoria: varchar("categoria", { length: 128 }).notNull(),
@@ -71,14 +78,14 @@ export const produtos = mysqlTable("produtos", {
   voltagem: varchar("voltagem", { length: 32 }).default("BIVOLT"),
   codigoBarras: varchar("codigoBarras", { length: 64 }).unique(),
   ncm: varchar("ncm", { length: 12 }),
-  custoUsd: decimal("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
-  precoVendaBrl: decimal("precoVendaBrl", { precision: 10, scale: 2 }).default("0").notNull(),
+  custoUsd: numeric("custoUsd", { precision: 10, scale: 2 }).default("0").notNull(),
+  precoVendaBrl: numeric("precoVendaBrl", { precision: 10, scale: 2 }).default("0").notNull(),
   descricaoCompleta: text("descricaoCompleta"),
   observacoes: text("observacoes"),
   fotoUrl: varchar("fotoUrl", { length: 512 }),
   ativo: varchar("ativo", { length: 10 }).default("true").notNull(), // true or false
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type Produto = typeof produtos.$inferSelect;
@@ -88,12 +95,12 @@ export type InsertProduto = typeof produtos.$inferInsert;
  * Tabela de pedidos de compra
  * Armazena informações dos pedidos com status de progresso
  */
-export const pedidos = mysqlTable("pedidos", {
-  id: int("id").autoincrement().primaryKey(),
+export const pedidos = pgTable("pedidos", {
+  id: serial("id").primaryKey(),
   nome: varchar("nome", { length: 255 }).notNull(),
-  status: mysqlEnum("status", ["Pendente", "Confirmado", "Recebido"]).default("Pendente").notNull(),
+  status: statusPedidoEnum("status").default("Pendente").notNull(),
   dataCreacao: timestamp("dataCreacao").defaultNow().notNull(),
-  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().notNull(),
 });
 
 export type Pedido = typeof pedidos.$inferSelect;
@@ -103,13 +110,13 @@ export type InsertPedido = typeof pedidos.$inferInsert;
  * Tabela de itens de pedidos
  * Armazena os produtos incluídos em cada pedido
  */
-export const itens_pedidos = mysqlTable("itens_pedidos", {
-  id: int("id").autoincrement().primaryKey(),
-  pedidoId: int("pedidoId").notNull().references(() => pedidos.id, { onDelete: "cascade" }),
+export const itens_pedidos = pgTable("itens_pedidos", {
+  id: serial("id").primaryKey(),
+  pedidoId: integer("pedidoId").notNull().references(() => pedidos.id, { onDelete: "cascade" }),
   produtoId: varchar("produtoId", { length: 64 }).notNull(),
-  quantidadeSarom: int("quantidadeSarom").default(0).notNull(),
-  quantidadeAlexandre: int("quantidadeAlexandre").default(0).notNull(),
-  precoUnitario: decimal("precoUnitario", { precision: 10, scale: 2 }).default("0").notNull(),
+  quantidadeSarom: integer("quantidadeSarom").default(0).notNull(),
+  quantidadeAlexandre: integer("quantidadeAlexandre").default(0).notNull(),
+  precoUnitario: numeric("precoUnitario", { precision: 10, scale: 2 }).default("0").notNull(),
   dataAdicao: timestamp("dataAdicao").defaultNow().notNull(),
 });
 
@@ -120,9 +127,9 @@ export type InsertItensPedido = typeof itens_pedidos.$inferInsert;
  * Tabela de logs de auditoria
  * Registra todas as ações realizadas no sistema para rastreabilidade
  */
-export const auditLogs = mysqlTable("auditLogs", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull().references(() => users.id),
+export const auditLogs = pgTable("auditLogs", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().references(() => users.id),
   acao: varchar("acao", { length: 255 }).notNull(), // Ex: "criou_pedido", "atualizou_status", "deletou_item"
   entidade: varchar("entidade", { length: 64 }).notNull(), // Ex: "pedido", "item_pedido", "estoque"
   entidadeId: varchar("entidadeId", { length: 64 }).notNull(), // ID do registro afetado
@@ -141,14 +148,14 @@ export type InsertAuditLog = typeof auditLogs.$inferInsert;
  * Tabela de containers
  * Armazena informações de containers que recebem pedidos
  */
-export const containers = mysqlTable("containers", {
-  id: int("id").autoincrement().primaryKey(),
+export const containers = pgTable("containers", {
+  id: serial("id").primaryKey(),
   numero: varchar("numero", { length: 64 }).notNull().unique(), // Ex: "CONT-001", "CONT-002"
-  status: mysqlEnum("status", ["Vazio", "Preenchendo", "Cheio", "Enviado", "Entregue"]).default("Vazio").notNull(),
-  capacidadeMaxima: int("capacidadeMaxima").default(1000).notNull(), // Capacidade em unidades
-  pesoMaximo: decimal("pesoMaximo", { precision: 10, scale: 2 }).default("0").notNull(), // Peso máximo em kg
+  status: statusContainerEnum("status").default("Vazio").notNull(),
+  capacidadeMaxima: integer("capacidadeMaxima").default(1000).notNull(), // Capacidade em unidades
+  pesoMaximo: numeric("pesoMaximo", { precision: 10, scale: 2 }).default("0").notNull(), // Peso máximo em kg
   dataCreacao: timestamp("dataCreacao").defaultNow().notNull(),
-  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().notNull(),
 });
 
 export type Container = typeof containers.$inferSelect;
@@ -158,13 +165,13 @@ export type InsertContainer = typeof containers.$inferInsert;
  * Tabela de relacionamento entre containers e pedidos
  * Armazena quais pedidos estão vinculados a cada container
  */
-export const container_pedidos = mysqlTable("container_pedidos", {
-  id: int("id").autoincrement().primaryKey(),
-  containerId: int("containerId").notNull().references(() => containers.id, { onDelete: "cascade" }), // Referência ao container
-  pedidoId: int("pedidoId").notNull().references(() => pedidos.id, { onDelete: "cascade" }), // Referência ao pedido
-  sequencia: int("sequencia").default(0).notNull(), // Ordem de inclusão no container
+export const container_pedidos = pgTable("container_pedidos", {
+  id: serial("id").primaryKey(),
+  containerId: integer("containerId").notNull().references(() => containers.id, { onDelete: "cascade" }), // Referência ao container
+  pedidoId: integer("pedidoId").notNull().references(() => pedidos.id, { onDelete: "cascade" }), // Referência ao pedido
+  sequencia: integer("sequencia").default(0).notNull(), // Ordem de inclusão no container
   dataVinculacao: timestamp("dataVinculacao").defaultNow().notNull(),
-  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
+  dataAtualizacao: timestamp("dataAtualizacao").defaultNow().notNull(),
 }, (table) => ({
   containerPedidoUnique: uniqueIndex("container_pedido_unique").on(table.containerId, table.pedidoId),
 }));
@@ -177,21 +184,21 @@ export type InsertContainerPedido = typeof container_pedidos.$inferInsert;
  * Armazena processos com invoice, NCM e dados de embarque
  * (Migração de localStorage para banco de dados)
  */
-export const processos_sr = mysqlTable("processos_sr", {
-  id: int("id").autoincrement().primaryKey(),
+export const processos_sr = pgTable("processos_sr", {
+  id: serial("id").primaryKey(),
   numeroProcesso: varchar("numeroProcesso", { length: 64 }).notNull().unique(),
   nomeInvoice: varchar("nomeInvoice", { length: 255 }).default("").notNull(),
   dataProcesso: varchar("dataProcesso", { length: 32 }).default("").notNull(),
   observacoes: text("observacoes"),
   ncm: varchar("ncm", { length: 20 }).default(""),
-  status: mysqlEnum("status", ["Em andamento", "Finalizado", "Cancelado"]).default("Em andamento").notNull(),
-  confirmado: int("confirmado").default(0).notNull(), // 0 = false, 1 = true
-  caixasPapelao: int("caixasPapelao").default(0).notNull(),
-  pesoBrutoKg: decimal("pesoBrutoKg", { precision: 10, scale: 2 }).default("0").notNull(),
-  pesoLiquidoKg: decimal("pesoLiquidoKg", { precision: 10, scale: 2 }).default("0").notNull(),
-  cbm: decimal("cbm", { precision: 10, scale: 4 }).default("0").notNull(),
+  status: statusProcessoEnum("status").default("Em andamento").notNull(),
+  confirmado: integer("confirmado").default(0).notNull(), // 0 = false, 1 = true
+  caixasPapelao: integer("caixasPapelao").default(0).notNull(),
+  pesoBrutoKg: numeric("pesoBrutoKg", { precision: 10, scale: 2 }).default("0").notNull(),
+  pesoLiquidoKg: numeric("pesoLiquidoKg", { precision: 10, scale: 2 }).default("0").notNull(),
+  cbm: numeric("cbm", { precision: 10, scale: 4 }).default("0").notNull(),
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type ProcessoSR = typeof processos_sr.$inferSelect;
@@ -201,20 +208,20 @@ export type InsertProcessoSR = typeof processos_sr.$inferInsert;
  * Tabela de itens de processos de importação
  * Armazena os produtos incluídos em cada processo SR
  */
-export const itens_processo = mysqlTable("itens_processo", {
-  id: int("id").autoincrement().primaryKey(),
-  processoId: int("processoId").notNull().references(() => processos_sr.id, { onDelete: "cascade" }), // Referência ao processo SR
+export const itens_processo = pgTable("itens_processo", {
+  id: serial("id").primaryKey(),
+  processoId: integer("processoId").notNull().references(() => processos_sr.id, { onDelete: "cascade" }), // Referência ao processo SR
   codigo: varchar("codigo", { length: 64 }).notNull(),
   descricao: text("descricao").notNull(),
   unidade: varchar("unidade", { length: 32 }).default("UND").notNull(),
-  quantidade: int("quantidade").default(0).notNull(),
-  precoUnitarioDolar: decimal("precoUnitarioDolar", { precision: 10, scale: 2 }).default("0").notNull(),
-  precoTotalDolar: decimal("precoTotalDolar", { precision: 10, scale: 2 }).default("0").notNull(),
-  pedidoSarom: int("pedidoSarom").default(0).notNull(),
-  pedidoAlexandre: int("pedidoAlexandre").default(0).notNull(),
+  quantidade: integer("quantidade").default(0).notNull(),
+  precoUnitarioDolar: numeric("precoUnitarioDolar", { precision: 10, scale: 2 }).default("0").notNull(),
+  precoTotalDolar: numeric("precoTotalDolar", { precision: 10, scale: 2 }).default("0").notNull(),
+  pedidoSarom: integer("pedidoSarom").default(0).notNull(),
+  pedidoAlexandre: integer("pedidoAlexandre").default(0).notNull(),
   ordemCompra: varchar("ordemCompra", { length: 64 }).default("").notNull(),
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type ItemProcesso = typeof itens_processo.$inferSelect;
@@ -223,13 +230,13 @@ export type InsertItemProcesso = typeof itens_processo.$inferInsert;
 /**
  * Tabela de débitos financeiros
  */
-export const debitos = mysqlTable("debitos", {
-  id: int("id").autoincrement().primaryKey(),
+export const debitos = pgTable("debitos", {
+  id: serial("id").primaryKey(),
   data: varchar("data", { length: 10 }).notNull(), // YYYY-MM-DD
   ordem: varchar("ordem", { length: 255 }).notNull(),
-  valor: decimal("valor", { precision: 12, scale: 2 }).notNull(),
+  valor: numeric("valor", { precision: 12, scale: 2 }).notNull(),
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type Debito = typeof debitos.$inferSelect;
@@ -238,14 +245,14 @@ export type InsertDebito = typeof debitos.$inferInsert;
 /**
  * Tabela de pagamentos recebidos
  */
-export const pagamentos_registros = mysqlTable("pagamentos_registros", {
-  id: int("id").autoincrement().primaryKey(),
+export const pagamentos_registros = pgTable("pagamentos_registros", {
+  id: serial("id").primaryKey(),
   data: varchar("data", { length: 10 }).notNull(), // YYYY-MM-DD
   remetente: varchar("remetente", { length: 255 }).notNull(),
-  valor: decimal("valor", { precision: 12, scale: 2 }).notNull(),
-  tipo: mysqlEnum("tipo", ["MIC", "NAITE", "TT", "LC", "OUTRO"]).default("TT").notNull(),
+  valor: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+  tipo: tipoPagamentoEnum("tipo").default("TT").notNull(),
   criadoEm: timestamp("criadoEm").defaultNow().notNull(),
-  atualizadoEm: timestamp("atualizadoEm").defaultNow().onUpdateNow().notNull(),
+  atualizadoEm: timestamp("atualizadoEm").defaultNow().notNull(),
 });
 
 export type PagamentoRegistro = typeof pagamentos_registros.$inferSelect;

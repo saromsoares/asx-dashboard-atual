@@ -1,19 +1,22 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import type { MySql2Database } from 'drizzle-orm/mysql2';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import { InsertUser, users, estoques, precos, pedidos, itens_pedidos, containers, container_pedidos, produtos, processos_sr, itens_processo, debitos, pagamentos_registros, type InsertEstoque, type InsertPreco, type InsertPedido, type InsertItensPedido, type InsertProduto, type InsertProcessoSR, type InsertItemProcesso, type InsertDebito, type InsertPagamentoRegistro } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { eq, desc, sql } from 'drizzle-orm';
 
-let _db: MySql2Database | null = null;
+let _db: PostgresJsDatabase | null = null;
+let _client: ReturnType<typeof postgres> | null = null;
 
 /** The type Drizzle passes to .transaction() callbacks. */
-export type Transaction = Parameters<Parameters<MySql2Database['transaction']>[0]>[0];
+export type Transaction = Parameters<Parameters<PostgresJsDatabase['transaction']>[0]>[0];
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _client = postgres(process.env.DATABASE_URL, { ssl: 'require' });
+      _db = drizzle(_client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -23,7 +26,7 @@ export async function getDb() {
 }
 
 /** Obtain the DB instance or throw if unavailable. Eliminates repeated null checks. */
-async function withDb(): Promise<MySql2Database> {
+async function withDb(): Promise<PostgresJsDatabase> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   return db;
@@ -83,7 +86,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     updateSet.lastSignedIn = new Date();
   }
 
-  await db.insert(users).values(values).onDuplicateKeyUpdate({
+  await db.insert(users).values(values).onConflictDoUpdate({
+    target: users.openId,
     set: updateSet,
   });
 }
@@ -106,7 +110,8 @@ export async function upsertEstoque(produtoId: string, quantidade: number, dataA
     dataAtualizacao: dataAtualizacao || new Date(),
   };
 
-  await db.insert(estoques).values(values).onDuplicateKeyUpdate({
+  await db.insert(estoques).values(values).onConflictDoUpdate({
+    target: estoques.produtoId,
     set: {
       quantidade,
       dataAtualizacao: dataAtualizacao || new Date(),
@@ -135,7 +140,8 @@ export async function upsertPreco(produtoId: string, custoUsd: number, precoVend
     precoVendaBrl: precoVendaBrl.toString(),
   };
 
-  await db.insert(precos).values(values).onDuplicateKeyUpdate({
+  await db.insert(precos).values(values).onConflictDoUpdate({
+    target: precos.produtoId,
     set: {
       custoUsd: custoUsd.toString(),
       precoVendaBrl: precoVendaBrl.toString(),
@@ -164,11 +170,8 @@ export async function criarPedido(nome: string) {
     status: "Pendente",
   };
 
-  const result = await db.insert(pedidos).values(values);
-  // Usar insertId em vez de buscar por nome (evita duplicatas)
-  const insertId = result[0].insertId;
-  const pedidoCriado = await db.select().from(pedidos).where(eq(pedidos.id, insertId)).limit(1);
-  return pedidoCriado[0];
+  const [inserted] = await db.insert(pedidos).values(values).returning();
+  return inserted;
 }
 
 export async function getPedido(pedidoId: number) {
@@ -224,14 +227,14 @@ export async function adicionarItemPedido(pedidoId: number, produtoId: string, q
     return { id: existente[0].id, updated: true };
   } else {
     // Inserir novo item
-    const result = await db.insert(itens_pedidos).values({
+    const [inserted] = await db.insert(itens_pedidos).values({
       pedidoId,
       produtoId,
       quantidadeSarom,
       quantidadeAlexandre,
       precoUnitario: String(precoUnitario),
-    });
-    return { id: result[0].insertId, updated: false };
+    }).returning();
+    return { id: inserted.id, updated: false };
   }
 }
 
@@ -256,13 +259,13 @@ export async function getAllItensPedidos() {
 export async function criarContainer(numero: string, capacidadeMaxima?: number, pesoMaximo?: number) {
   const db = await withDb();
 
-  const result = await db.insert(containers).values({
+  const [inserted] = await db.insert(containers).values({
     numero,
     capacidadeMaxima,
     pesoMaximo: pesoMaximo ? String(pesoMaximo) : "0",
     status: "Vazio",
-  });
-  return { id: result[0].insertId, numero, status: "Vazio" };
+  }).returning();
+  return inserted;
 }
 
 export async function getContainer(containerId: number) {
@@ -300,12 +303,12 @@ export async function deletarContainer(containerId: number) {
 export async function vincularPedidoAContainer(containerId: number, pedidoId: number, sequencia: number = 0) {
   const db = await withDb();
 
-  const result = await db.insert(container_pedidos).values({
+  const [inserted] = await db.insert(container_pedidos).values({
     containerId,
     pedidoId,
     sequencia,
-  });
-  return { success: true, id: result[0].insertId };
+  }).returning();
+  return { success: true, id: inserted.id };
 }
 
 export async function desvincularPedidoDoContainer(containerPedidoId: number) {
@@ -421,11 +424,8 @@ export async function getProduto(produtoId: number) {
 export async function criarProduto(data: InsertProduto) {
   const db = await withDb();
 
-  const result = await db.insert(produtos).values(data);
-  // Usar insertId em vez de buscar por código (evita race condition)
-  const insertId = result[0].insertId;
-  const produtoCriado = await db.select().from(produtos).where(eq(produtos.id, insertId)).limit(1);
-  return produtoCriado[0];
+  const [inserted] = await db.insert(produtos).values(data).returning();
+  return inserted;
 }
 
 // ============= PROCESSOS SR (Importação) =============
@@ -433,10 +433,8 @@ export async function criarProduto(data: InsertProduto) {
 export async function criarProcessoSR(data: InsertProcessoSR) {
   const db = await withDb();
 
-  const result = await db.insert(processos_sr).values(data);
-  const insertId = result[0].insertId;
-  const processoCriado = await db.select().from(processos_sr).where(eq(processos_sr.id, insertId)).limit(1);
-  return processoCriado[0];
+  const [inserted] = await db.insert(processos_sr).values(data).returning();
+  return inserted;
 }
 
 export async function getProcessoSR(processoId: number) {
@@ -478,8 +476,8 @@ export async function deletarProcessoSR(processoId: number) {
 
 export async function adicionarItemProcesso(processoId: number, data: Omit<InsertItemProcesso, 'processoId'>) {
   const db = await withDb();
-  const result = await db.insert(itens_processo).values({ ...data, processoId });
-  return { id: result[0].insertId, success: true };
+  const [inserted] = await db.insert(itens_processo).values({ ...data, processoId }).returning();
+  return { id: inserted.id, success: true };
 }
 
 export async function getItensDoProcesso(processoId: number) {
@@ -508,14 +506,12 @@ export async function getAllDebitos() {
 
 export async function criarDebito(data: Omit<InsertDebito, 'id' | 'criadoEm' | 'atualizadoEm'>) {
   const db = await withDb();
-  const result = await db.insert(debitos).values({
+  const [inserted] = await db.insert(debitos).values({
     data: data.data,
     ordem: data.ordem,
     valor: String(data.valor),
-  });
-  const insertId = result[0].insertId;
-  const criado = await db.select().from(debitos).where(eq(debitos.id, insertId)).limit(1);
-  return criado[0];
+  }).returning();
+  return inserted;
 }
 
 export async function atualizarDebito(id: number, data: Partial<Omit<InsertDebito, 'id' | 'criadoEm' | 'atualizadoEm'>>) {
@@ -543,15 +539,13 @@ export async function getAllPagamentosRegistros() {
 
 export async function criarPagamentoRegistro(data: Omit<InsertPagamentoRegistro, 'id' | 'criadoEm' | 'atualizadoEm'>) {
   const db = await withDb();
-  const result = await db.insert(pagamentos_registros).values({
+  const [inserted] = await db.insert(pagamentos_registros).values({
     data: data.data,
     remetente: data.remetente,
     valor: String(data.valor),
     tipo: data.tipo,
-  });
-  const insertId = result[0].insertId;
-  const criado = await db.select().from(pagamentos_registros).where(eq(pagamentos_registros.id, insertId)).limit(1);
-  return criado[0];
+  }).returning();
+  return inserted;
 }
 
 export async function atualizarPagamentoRegistro(id: number, data: Partial<Omit<InsertPagamentoRegistro, 'id' | 'criadoEm' | 'atualizadoEm'>>) {
