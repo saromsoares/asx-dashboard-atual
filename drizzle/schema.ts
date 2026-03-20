@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, uniqueIndex } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -105,7 +105,7 @@ export type InsertPedido = typeof pedidos.$inferInsert;
  */
 export const itens_pedidos = mysqlTable("itens_pedidos", {
   id: int("id").autoincrement().primaryKey(),
-  pedidoId: int("pedidoId").notNull(),
+  pedidoId: int("pedidoId").notNull().references(() => pedidos.id, { onDelete: "cascade" }),
   produtoId: varchar("produtoId", { length: 64 }).notNull(),
   quantidadeSarom: int("quantidadeSarom").default(0).notNull(),
   quantidadeAlexandre: int("quantidadeAlexandre").default(0).notNull(),
@@ -122,7 +122,7 @@ export type InsertItensPedido = typeof itens_pedidos.$inferInsert;
  */
 export const auditLogs = mysqlTable("auditLogs", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+  userId: int("userId").notNull().references(() => users.id),
   acao: varchar("acao", { length: 255 }).notNull(), // Ex: "criou_pedido", "atualizou_status", "deletou_item"
   entidade: varchar("entidade", { length: 64 }).notNull(), // Ex: "pedido", "item_pedido", "estoque"
   entidadeId: varchar("entidadeId", { length: 64 }).notNull(), // ID do registro afetado
@@ -160,12 +160,14 @@ export type InsertContainer = typeof containers.$inferInsert;
  */
 export const container_pedidos = mysqlTable("container_pedidos", {
   id: int("id").autoincrement().primaryKey(),
-  containerId: int("containerId").notNull(), // Referência ao container
-  pedidoId: int("pedidoId").notNull(), // Referência ao pedido
+  containerId: int("containerId").notNull().references(() => containers.id, { onDelete: "cascade" }), // Referência ao container
+  pedidoId: int("pedidoId").notNull().references(() => pedidos.id, { onDelete: "cascade" }), // Referência ao pedido
   sequencia: int("sequencia").default(0).notNull(), // Ordem de inclusão no container
   dataVinculacao: timestamp("dataVinculacao").defaultNow().notNull(),
   dataAtualizacao: timestamp("dataAtualizacao").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  containerPedidoUnique: uniqueIndex("container_pedido_unique").on(table.containerId, table.pedidoId),
+}));
 
 export type ContainerPedido = typeof container_pedidos.$inferSelect;
 export type InsertContainerPedido = typeof container_pedidos.$inferInsert;
@@ -201,7 +203,7 @@ export type InsertProcessoSR = typeof processos_sr.$inferInsert;
  */
 export const itens_processo = mysqlTable("itens_processo", {
   id: int("id").autoincrement().primaryKey(),
-  processoId: int("processoId").notNull(), // Referência ao processo SR
+  processoId: int("processoId").notNull().references(() => processos_sr.id, { onDelete: "cascade" }), // Referência ao processo SR
   codigo: varchar("codigo", { length: 64 }).notNull(),
   descricao: text("descricao").notNull(),
   unidade: varchar("unidade", { length: 32 }).default("UND").notNull(),

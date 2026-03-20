@@ -6,7 +6,8 @@ import { eq, desc, sql } from 'drizzle-orm';
 
 let _db: MySql2Database | null = null;
 
-export type Transaction = any; // TODO: Tipagem correta de transação Drizzle
+/** The type Drizzle passes to .transaction() callbacks. */
+export type Transaction = Parameters<Parameters<MySql2Database['transaction']>[0]>[0];
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -19,6 +20,13 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+/** Obtain the DB instance or throw if unavailable. Eliminates repeated null checks. */
+async function withDb(): Promise<MySql2Database> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return db;
 }
 
 // Helper para executar operações em transação
@@ -35,69 +43,54 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     throw new Error("User openId is required for upsert");
   }
 
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
+  const db = await withDb();
+
+  const values: InsertUser = {
+    openId: user.openId,
+  };
+  const updateSet: Record<string, unknown> = {};
+
+  const textFields = ["name", "email", "loginMethod"] as const;
+  type TextField = (typeof textFields)[number];
+
+  const assignNullable = (field: TextField) => {
+    const value = user[field];
+    if (value === undefined) return;
+    const normalized = value ?? null;
+    values[field] = normalized;
+    updateSet[field] = normalized;
+  };
+
+  textFields.forEach(assignNullable);
+
+  if (user.lastSignedIn !== undefined) {
+    values.lastSignedIn = user.lastSignedIn;
+    updateSet.lastSignedIn = user.lastSignedIn;
+  }
+  if (user.role !== undefined) {
+    values.role = user.role;
+    updateSet.role = user.role;
+  } else if (user.openId === ENV.ownerOpenId) {
+    values.role = 'admin';
+    updateSet.role = 'admin';
   }
 
-  try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
-
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
+  if (!values.lastSignedIn) {
+    values.lastSignedIn = new Date();
   }
+
+  if (Object.keys(updateSet).length === 0) {
+    updateSet.lastSignedIn = new Date();
+  }
+
+  await db.insert(users).values(values).onDuplicateKeyUpdate({
+    set: updateSet,
+  });
 }
 
 export async function getUserByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
+  const db = await withDb();
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
   return result.length > 0 ? result[0] : undefined;
 }
 
@@ -105,742 +98,403 @@ export async function getUserByOpenId(openId: string) {
 
 // Estoque queries
 export async function upsertEstoque(produtoId: string, quantidade: number, dataAtualizacao?: Date) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert estoque: database not available");
-    return;
-  }
+  const db = await withDb();
 
-  try {
-    const values: InsertEstoque = {
-      produtoId,
+  const values: InsertEstoque = {
+    produtoId,
+    quantidade,
+    dataAtualizacao: dataAtualizacao || new Date(),
+  };
+
+  await db.insert(estoques).values(values).onDuplicateKeyUpdate({
+    set: {
       quantidade,
       dataAtualizacao: dataAtualizacao || new Date(),
-    };
-
-    await db.insert(estoques).values(values).onDuplicateKeyUpdate({
-      set: {
-        quantidade,
-        dataAtualizacao: dataAtualizacao || new Date(),
-      },
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert estoque:", error);
-    throw error;
-  }
+    },
+  });
 }
 
 export async function getEstoque(produtoId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get estoque: database not available");
-    return undefined;
-  }
-
-  try {
-    const result = await db.select().from(estoques).where(eq(estoques.produtoId, produtoId)).limit(1);
-    return result.length > 0 ? result[0] : undefined;
-  } catch (error) {
-    console.error("[Database] Failed to get estoque:", error);
-    return undefined;
-  }
+  const db = await withDb();
+  const result = await db.select().from(estoques).where(eq(estoques.produtoId, produtoId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getAllEstoques() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get estoques: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(estoques);
-  } catch (error) {
-    console.error("[Database] Failed to get estoques:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(estoques);
 }
 
 // Precos queries
 export async function upsertPreco(produtoId: string, custoUsd: number, precoVendaBrl: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert preco: database not available");
-    return;
-  }
+  const db = await withDb();
 
-  try {
-    const values: InsertPreco = {
-      produtoId,
+  const values: InsertPreco = {
+    produtoId,
+    custoUsd: custoUsd.toString(),
+    precoVendaBrl: precoVendaBrl.toString(),
+  };
+
+  await db.insert(precos).values(values).onDuplicateKeyUpdate({
+    set: {
       custoUsd: custoUsd.toString(),
       precoVendaBrl: precoVendaBrl.toString(),
-    };
-
-    await db.insert(precos).values(values).onDuplicateKeyUpdate({
-      set: {
-        custoUsd: custoUsd.toString(),
-        precoVendaBrl: precoVendaBrl.toString(),
-      },
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert preco:", error);
-    throw error;
-  }
+    },
+  });
 }
 
 export async function getPreco(produtoId: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get preco: database not available");
-    return undefined;
-  }
-
-  try {
-    const result = await db.select().from(precos).where(eq(precos.produtoId, produtoId)).limit(1);
-    return result.length > 0 ? result[0] : undefined;
-  } catch (error) {
-    console.error("[Database] Failed to get preco:", error);
-    return undefined;
-  }
+  const db = await withDb();
+  const result = await db.select().from(precos).where(eq(precos.produtoId, produtoId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getAllPrecos() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get precos: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(precos);
-  } catch (error) {
-    console.error("[Database] Failed to get precos:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(precos);
 }
 
 
 // Pedidos queries
 export async function criarPedido(nome: string) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot create pedido: database not available");
-    return undefined;
-  }
+  const db = await withDb();
 
-  try {
-    const values: InsertPedido = {
-      nome,
-      status: "Pendente",
-    };
+  const values: InsertPedido = {
+    nome,
+    status: "Pendente",
+  };
 
-    const result = await db.insert(pedidos).values(values);
-    // Usar insertId em vez de buscar por nome (evita duplicatas)
-    const insertId = result[0].insertId;
-    const pedidoCriado = await db.select().from(pedidos).where(eq(pedidos.id, insertId)).limit(1);
-    return pedidoCriado[0];
-  } catch (error) {
-    console.error("[Database] Failed to create pedido:", error);
-    throw error;
-  }
+  const result = await db.insert(pedidos).values(values);
+  // Usar insertId em vez de buscar por nome (evita duplicatas)
+  const insertId = result[0].insertId;
+  const pedidoCriado = await db.select().from(pedidos).where(eq(pedidos.id, insertId)).limit(1);
+  return pedidoCriado[0];
 }
 
 export async function getPedido(pedidoId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get pedido: database not available");
-    return undefined;
-  }
-
-  try {
-    const result = await db.select().from(pedidos).where(eq(pedidos.id, pedidoId)).limit(1);
-    return result.length > 0 ? result[0] : undefined;
-  } catch (error) {
-    console.error("[Database] Failed to get pedido:", error);
-    return undefined;
-  }
+  const db = await withDb();
+  const result = await db.select().from(pedidos).where(eq(pedidos.id, pedidoId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getAllPedidos() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get pedidos: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(pedidos);
-  } catch (error) {
-    console.error("[Database] Failed to get pedidos:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(pedidos);
 }
 
 export async function atualizarStatusPedido(pedidoId: number, novoStatus: "Pendente" | "Confirmado" | "Recebido") {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot update pedido status: database not available");
-    return;
-  }
-
-  try {
-    await db.update(pedidos).set({ status: novoStatus }).where(eq(pedidos.id, pedidoId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to update pedido status:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.update(pedidos).set({ status: novoStatus }).where(eq(pedidos.id, pedidoId));
+  return { success: true };
 }
 
 export async function deletarPedido(pedidoId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot delete pedido: database not available");
-    return;
-  }
+  const db = await withDb();
 
-  try {
-    // Envolver em transação para garantir atomicidade (igual deletarContainer)
-    await db.transaction(async (tx) => {
-      // 1. Remover vínculos com containers
-      await tx.delete(container_pedidos).where(eq(container_pedidos.pedidoId, pedidoId));
-      // 2. Remover itens do pedido
-      await tx.delete(itens_pedidos).where(eq(itens_pedidos.pedidoId, pedidoId));
-      // 3. Remover o pedido
-      await tx.delete(pedidos).where(eq(pedidos.id, pedidoId));
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to delete pedido:", error);
-    throw error;
-  }
+  // Envolver em transação para garantir atomicidade (igual deletarContainer)
+  await db.transaction(async (tx) => {
+    // 1. Remover vínculos com containers
+    await tx.delete(container_pedidos).where(eq(container_pedidos.pedidoId, pedidoId));
+    // 2. Remover itens do pedido
+    await tx.delete(itens_pedidos).where(eq(itens_pedidos.pedidoId, pedidoId));
+    // 3. Remover o pedido
+    await tx.delete(pedidos).where(eq(pedidos.id, pedidoId));
+  });
+  return { success: true };
 }
 
 
 // ============= ITENS DE PEDIDO =============
 
 export async function adicionarItemPedido(pedidoId: number, produtoId: string, quantidadeSarom: number, quantidadeAlexandre: number, precoUnitario: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot add item to pedido: database not available");
-    return null;
-  }
+  const db = await withDb();
 
-  try {
-    // Verificar se o item já existe no pedido
-    const existente = await db.select().from(itens_pedidos)
-      .where(sql`${itens_pedidos.pedidoId} = ${pedidoId} AND ${itens_pedidos.produtoId} = ${produtoId}`)
-      .limit(1);
+  // Verificar se o item já existe no pedido
+  const existente = await db.select().from(itens_pedidos)
+    .where(sql`${itens_pedidos.pedidoId} = ${pedidoId} AND ${itens_pedidos.produtoId} = ${produtoId}`)
+    .limit(1);
 
-    if (existente.length > 0) {
-      // Atualizar quantidades
-      await db.update(itens_pedidos).set({
-        quantidadeSarom,
-        quantidadeAlexandre,
-        precoUnitario: String(precoUnitario),
-      }).where(eq(itens_pedidos.id, existente[0].id));
-      return { id: existente[0].id, updated: true };
-    } else {
-      // Inserir novo item
-      const result = await db.insert(itens_pedidos).values({
-        pedidoId,
-        produtoId,
-        quantidadeSarom,
-        quantidadeAlexandre,
-        precoUnitario: String(precoUnitario),
-      });
-      return { id: result[0].insertId, updated: false };
-    }
-  } catch (error) {
-    console.error("[Database] Failed to add item to pedido:", error);
-    throw error;
+  if (existente.length > 0) {
+    // Atualizar quantidades
+    await db.update(itens_pedidos).set({
+      quantidadeSarom,
+      quantidadeAlexandre,
+      precoUnitario: String(precoUnitario),
+    }).where(eq(itens_pedidos.id, existente[0].id));
+    return { id: existente[0].id, updated: true };
+  } else {
+    // Inserir novo item
+    const result = await db.insert(itens_pedidos).values({
+      pedidoId,
+      produtoId,
+      quantidadeSarom,
+      quantidadeAlexandre,
+      precoUnitario: String(precoUnitario),
+    });
+    return { id: result[0].insertId, updated: false };
   }
 }
 
 export async function removerItemPedido(itemId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot remove item from pedido: database not available");
-    return;
-  }
-
-  try {
-    await db.delete(itens_pedidos).where(eq(itens_pedidos.id, itemId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to remove item from pedido:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.delete(itens_pedidos).where(eq(itens_pedidos.id, itemId));
+  return { success: true };
 }
 
 export async function getItensDoPedido(pedidoId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get items of pedido: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(itens_pedidos).where(eq(itens_pedidos.pedidoId, pedidoId));
-  } catch (error) {
-    console.error("[Database] Failed to get items of pedido:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(itens_pedidos).where(eq(itens_pedidos.pedidoId, pedidoId));
 }
 
 export async function getAllItensPedidos() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get all itens pedidos: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(itens_pedidos);
-  } catch (error) {
-    console.error("[Database] Failed to get all itens pedidos:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(itens_pedidos);
 }
 
 // ============= CONTAINERS =============
 
 export async function criarContainer(numero: string, capacidadeMaxima?: number, pesoMaximo?: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot create container: database not available");
-    return null;
-  }
+  const db = await withDb();
 
-  try {
-    const result = await db.insert(containers).values({
-      numero,
-      capacidadeMaxima,
-      pesoMaximo: pesoMaximo ? String(pesoMaximo) : "0",
-      status: "Vazio",
-    });
-    return { id: result[0].insertId, numero, status: "Vazio" };
-  } catch (error) {
-    console.error("[Database] Failed to create container:", error);
-    throw error;
-  }
+  const result = await db.insert(containers).values({
+    numero,
+    capacidadeMaxima,
+    pesoMaximo: pesoMaximo ? String(pesoMaximo) : "0",
+    status: "Vazio",
+  });
+  return { id: result[0].insertId, numero, status: "Vazio" };
 }
 
 export async function getContainer(containerId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get container: database not available");
-    return null;
-  }
-
-  try {
-    const result = await db.select().from(containers).where(eq(containers.id, containerId));
-    return result[0] || null;
-  } catch (error) {
-    console.error("[Database] Failed to get container:", error);
-    return null;
-  }
+  const db = await withDb();
+  const result = await db.select().from(containers).where(eq(containers.id, containerId));
+  return result[0] || null;
 }
 
 export async function getAllContainers() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get containers: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(containers).orderBy(desc(containers.dataCreacao));
-  } catch (error) {
-    console.error("[Database] Failed to get containers:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(containers).orderBy(desc(containers.dataCreacao));
 }
 
 export async function atualizarStatusContainer(containerId: number, novoStatus: "Vazio" | "Preenchendo" | "Cheio" | "Enviado" | "Entregue") {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot update container status: database not available");
-    return;
-  }
-
-  try {
-    await db.update(containers).set({ status: novoStatus }).where(eq(containers.id, containerId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to update container status:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.update(containers).set({ status: novoStatus }).where(eq(containers.id, containerId));
+  return { success: true };
 }
 
 export async function deletarContainer(containerId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot delete container: database not available");
-    return;
-  }
+  const db = await withDb();
 
-  try {
-    // Envolver em transação para garantir atomicidade
-    await db.transaction(async (tx) => {
-      // Primeiro, remover todos os pedidos vinculados
-      await tx.delete(container_pedidos).where(eq(container_pedidos.containerId, containerId));
-      // Depois, deletar o container
-      await tx.delete(containers).where(eq(containers.id, containerId));
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to delete container:", error);
-    throw error;
-  }
+  // Envolver em transação para garantir atomicidade
+  await db.transaction(async (tx) => {
+    // Primeiro, remover todos os pedidos vinculados
+    await tx.delete(container_pedidos).where(eq(container_pedidos.containerId, containerId));
+    // Depois, deletar o container
+    await tx.delete(containers).where(eq(containers.id, containerId));
+  });
+  return { success: true };
 }
 
 // ============= CONTAINER-PEDIDOS =============
 
 export async function vincularPedidoAContainer(containerId: number, pedidoId: number, sequencia: number = 0) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot link pedido to container: database not available");
-    return null;
-  }
+  const db = await withDb();
 
-  try {
-    const result = await db.insert(container_pedidos).values({
-      containerId,
-      pedidoId,
-      sequencia,
-    });
-    return { success: true, id: result[0].insertId };
-  } catch (error) {
-    console.error("[Database] Failed to link pedido to container:", error);
-    throw error;
-  }
+  const result = await db.insert(container_pedidos).values({
+    containerId,
+    pedidoId,
+    sequencia,
+  });
+  return { success: true, id: result[0].insertId };
 }
 
 export async function desvincularPedidoDoContainer(containerPedidoId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot unlink pedido from container: database not available");
-    return;
-  }
-
-  try {
-    await db.delete(container_pedidos).where(eq(container_pedidos.id, containerPedidoId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to unlink pedido from container:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.delete(container_pedidos).where(eq(container_pedidos.id, containerPedidoId));
+  return { success: true };
 }
 
 export async function getPedidosDoContainer(containerId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get container pedidos: database not available");
-    return [];
-  }
+  const db = await withDb();
 
-  try {
-    // JOIN com pedidos para retornar nome e status do pedido
-    const result = await db
-      .select({
-        id: container_pedidos.id,
-        containerId: container_pedidos.containerId,
-        pedidoId: container_pedidos.pedidoId,
-        sequencia: container_pedidos.sequencia,
-        dataVinculacao: container_pedidos.dataVinculacao,
-        pedidoNome: pedidos.nome,
-        pedidoStatus: pedidos.status,
-      })
-      .from(container_pedidos)
-      .innerJoin(pedidos, eq(container_pedidos.pedidoId, pedidos.id))
-      .where(eq(container_pedidos.containerId, containerId));
-    return result;
-  } catch (error) {
-    console.error("[Database] Failed to get container pedidos:", error);
-    return [];
-  }
+  // JOIN com pedidos para retornar nome e status do pedido
+  const result = await db
+    .select({
+      id: container_pedidos.id,
+      containerId: container_pedidos.containerId,
+      pedidoId: container_pedidos.pedidoId,
+      sequencia: container_pedidos.sequencia,
+      dataVinculacao: container_pedidos.dataVinculacao,
+      pedidoNome: pedidos.nome,
+      pedidoStatus: pedidos.status,
+    })
+    .from(container_pedidos)
+    .innerJoin(pedidos, eq(container_pedidos.pedidoId, pedidos.id))
+    .where(eq(container_pedidos.containerId, containerId));
+  return result;
 }
 
 export async function getContainersComPedidos() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get containers with pedidos: database not available");
-    return [];
-  }
+  const db = await withDb();
 
-  try {
-    // Usar LEFT JOIN + COUNT agrupado em vez de loop N+1
-    const result = await db
-      .select({
-        id: containers.id,
-        numero: containers.numero,
-        status: containers.status,
-        capacidadeMaxima: containers.capacidadeMaxima,
-        pesoMaximo: containers.pesoMaximo,
-        dataCreacao: containers.dataCreacao,
-        dataAtualizacao: containers.dataAtualizacao,
-        pedidosCount: sql<number>`COUNT(${container_pedidos.containerId})`,
-      })
-      .from(containers)
-      .leftJoin(container_pedidos, eq(containers.id, container_pedidos.containerId))
-      .groupBy(containers.id)
-      .orderBy(desc(containers.dataCreacao));
-    
-    return result;
-  } catch (error) {
-    console.error("[Database] Failed to get containers with pedidos:", error);
-    return [];
-  }
+  // Usar LEFT JOIN + COUNT agrupado em vez de loop N+1
+  const result = await db
+    .select({
+      id: containers.id,
+      numero: containers.numero,
+      status: containers.status,
+      capacidadeMaxima: containers.capacidadeMaxima,
+      pesoMaximo: containers.pesoMaximo,
+      dataCreacao: containers.dataCreacao,
+      dataAtualizacao: containers.dataAtualizacao,
+      pedidosCount: sql<number>`COUNT(${container_pedidos.containerId})`,
+    })
+    .from(containers)
+    .leftJoin(container_pedidos, eq(containers.id, container_pedidos.containerId))
+    .groupBy(containers.id)
+    .orderBy(desc(containers.dataCreacao));
+
+  return result;
 }
 
 
 // Produtos queries
 export async function importarProdutosDoArquivo() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot import produtos: database not available");
+  const db = await withDb();
+
+  // Importar dados de produtos do arquivo local
+  const produtosData = require('../client/src/data/produtos');
+  const produtosList = produtosData.produtos || [];
+
+  if (!Array.isArray(produtosList) || produtosList.length === 0) {
+    console.error("[Database] No produtos found in data file");
     return { sucesso: 0, erro: 0 };
   }
 
-  try {
-    // Importar dados de produtos do arquivo local
-    const produtosData = require('../client/src/data/produtos');
-    const produtosList = produtosData.produtos || [];
+  let sucessoCount = 0;
+  let erroCount = 0;
 
-    if (!Array.isArray(produtosList) || produtosList.length === 0) {
-      console.error("[Database] No produtos found in data file");
-      return { sucesso: 0, erro: 0 };
-    }
+  // Envolver em transação para garantir atomicidade
+  await db.transaction(async (tx) => {
+    // Limpar tabela de produtos
+    await tx.delete(produtos);
 
-    let sucessoCount = 0;
-    let erroCount = 0;
-
-    // Envolver em transação para garantir atomicidade
-    await db.transaction(async (tx) => {
-      // Limpar tabela de produtos
-      await tx.delete(produtos);
-
-      // Inserir produtos
-      for (const p of produtosList) {
-        try {
-          await tx.insert(produtos).values({
-            codigo: p.codigo,
-            descricao: p.descricao,
-            categoria: p.categoria,
-            unidade: p.unid || 'UND',
-            caixa: p.caixa || 'PAR',
-            voltagem: p.volt || 'BIVOLT',
-            codigoBarras: p.cod_barras || null,
-            ncm: p.ncm || null,
-            custoUsd: String(parseFloat(p.custo_usd) || 0),
-            precoVendaBrl: String(parseFloat(p.preco_venda) || 0),
-            ativo: 'true',
-          });
-          sucessoCount++;
-        } catch (error) {
-          console.error(`[Database] Failed to insert produto ${p.codigo}:`, error);
-          erroCount++;
-        }
+    // Inserir produtos
+    for (const p of produtosList) {
+      try {
+        await tx.insert(produtos).values({
+          codigo: p.codigo,
+          descricao: p.descricao,
+          categoria: p.categoria,
+          unidade: p.unid || 'UND',
+          caixa: p.caixa || 'PAR',
+          voltagem: p.volt || 'BIVOLT',
+          codigoBarras: p.cod_barras || null,
+          ncm: p.ncm || null,
+          custoUsd: String(parseFloat(p.custo_usd) || 0),
+          precoVendaBrl: String(parseFloat(p.preco_venda) || 0),
+          ativo: 'true',
+        });
+        sucessoCount++;
+      } catch (error) {
+        console.error(`[Database] Failed to insert produto ${p.codigo}:`, error);
+        erroCount++;
       }
-    });
+    }
+  });
 
-    console.log(`[Database] Importação concluída: ${sucessoCount} sucesso, ${erroCount} erro`);
-    return { sucesso: sucessoCount, erro: erroCount };
-  } catch (error) {
-    console.error("[Database] Failed to import produtos:", error);
-    return { sucesso: 0, erro: 0 };
-  }
+  console.log(`[Database] Importação concluída: ${sucessoCount} sucesso, ${erroCount} erro`);
+  return { sucesso: sucessoCount, erro: erroCount };
 }
 
 export async function listarProdutos() {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot list produtos: database not available");
-    return [];
-  }
-
-  try {
-    return await db.select().from(produtos);
-  } catch (error) {
-    console.error("[Database] Failed to list produtos:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(produtos);
 }
 
 export async function getProduto(produtoId: number) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get produto: database not available");
-    return undefined;
-  }
-
-  try {
-    const result = await db.select().from(produtos).where(eq(produtos.id, produtoId)).limit(1);
-    return result.length > 0 ? result[0] : undefined;
-  } catch (error) {
-    console.error("[Database] Failed to get produto:", error);
-    return undefined;
-  }
+  const db = await withDb();
+  const result = await db.select().from(produtos).where(eq(produtos.id, produtoId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function criarProduto(data: InsertProduto) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot create produto: database not available");
-    return undefined;
-  }
+  const db = await withDb();
 
-  try {
-    const result = await db.insert(produtos).values(data);
-    // Usar insertId em vez de buscar por código (evita race condition)
-    const insertId = result[0].insertId;
-    const produtoCriado = await db.select().from(produtos).where(eq(produtos.id, insertId)).limit(1);
-    return produtoCriado[0];
-  } catch (error) {
-    console.error("[Database] Failed to create produto:", error);
-    throw error;
-  }
+  const result = await db.insert(produtos).values(data);
+  // Usar insertId em vez de buscar por código (evita race condition)
+  const insertId = result[0].insertId;
+  const produtoCriado = await db.select().from(produtos).where(eq(produtos.id, insertId)).limit(1);
+  return produtoCriado[0];
 }
 
 // ============= PROCESSOS SR (Importação) =============
 
 export async function criarProcessoSR(data: InsertProcessoSR) {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot create processo SR: database not available");
-    return null;
-  }
+  const db = await withDb();
 
-  try {
-    const result = await db.insert(processos_sr).values(data);
-    const insertId = result[0].insertId;
-    const processoCriado = await db.select().from(processos_sr).where(eq(processos_sr.id, insertId)).limit(1);
-    return processoCriado[0];
-  } catch (error) {
-    console.error("[Database] Failed to create processo SR:", error);
-    throw error;
-  }
+  const result = await db.insert(processos_sr).values(data);
+  const insertId = result[0].insertId;
+  const processoCriado = await db.select().from(processos_sr).where(eq(processos_sr.id, insertId)).limit(1);
+  return processoCriado[0];
 }
 
 export async function getProcessoSR(processoId: number) {
-  const db = await getDb();
-  if (!db) return null;
-
-  try {
-    const result = await db.select().from(processos_sr).where(eq(processos_sr.id, processoId)).limit(1);
-    return result[0] || null;
-  } catch (error) {
-    console.error("[Database] Failed to get processo SR:", error);
-    return null;
-  }
+  const db = await withDb();
+  const result = await db.select().from(processos_sr).where(eq(processos_sr.id, processoId)).limit(1);
+  return result[0] || null;
 }
 
 export async function getAllProcessosSR() {
-  const db = await getDb();
-  if (!db) return [];
-
-  try {
-    return await db.select().from(processos_sr).orderBy(desc(processos_sr.criadoEm));
-  } catch (error) {
-    console.error("[Database] Failed to get processos SR:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(processos_sr).orderBy(desc(processos_sr.criadoEm));
 }
 
 export async function atualizarProcessoSR(processoId: number, data: Partial<InsertProcessoSR>) {
-  const db = await getDb();
-  if (!db) return null;
-
-  try {
-    await db.update(processos_sr).set(data).where(eq(processos_sr.id, processoId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to update processo SR:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.update(processos_sr).set(data).where(eq(processos_sr.id, processoId));
+  return { success: true };
 }
 
 export async function atualizarStatusProcessoSR(processoId: number, novoStatus: "Em andamento" | "Finalizado" | "Cancelado") {
-  const db = await getDb();
-  if (!db) return null;
-
-  try {
-    await db.update(processos_sr).set({ status: novoStatus }).where(eq(processos_sr.id, processoId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to update processo SR status:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.update(processos_sr).set({ status: novoStatus }).where(eq(processos_sr.id, processoId));
+  return { success: true };
 }
 
 export async function deletarProcessoSR(processoId: number) {
-  const db = await getDb();
-  if (!db) return null;
+  const db = await withDb();
 
-  try {
-    await db.transaction(async (tx) => {
-      // 1. Remover itens do processo
-      await tx.delete(itens_processo).where(eq(itens_processo.processoId, processoId));
-      // 2. Remover o processo
-      await tx.delete(processos_sr).where(eq(processos_sr.id, processoId));
-    });
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to delete processo SR:", error);
-    throw error;
-  }
+  await db.transaction(async (tx) => {
+    // 1. Remover itens do processo
+    await tx.delete(itens_processo).where(eq(itens_processo.processoId, processoId));
+    // 2. Remover o processo
+    await tx.delete(processos_sr).where(eq(processos_sr.id, processoId));
+  });
+  return { success: true };
 }
 
 // ============= ITENS DE PROCESSO SR =============
 
 export async function adicionarItemProcesso(processoId: number, data: Omit<InsertItemProcesso, 'processoId'>) {
-  const db = await getDb();
-  if (!db) return null;
-
-  try {
-    const result = await db.insert(itens_processo).values({ ...data, processoId });
-    return { id: result[0].insertId, success: true };
-  } catch (error) {
-    console.error("[Database] Failed to add item to processo:", error);
-    throw error;
-  }
+  const db = await withDb();
+  const result = await db.insert(itens_processo).values({ ...data, processoId });
+  return { id: result[0].insertId, success: true };
 }
 
 export async function getItensDoProcesso(processoId: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  try {
-    return await db.select().from(itens_processo).where(eq(itens_processo.processoId, processoId));
-  } catch (error) {
-    console.error("[Database] Failed to get items of processo:", error);
-    return [];
-  }
+  const db = await withDb();
+  return await db.select().from(itens_processo).where(eq(itens_processo.processoId, processoId));
 }
 
 export async function atualizarItemProcesso(itemId: number, data: Partial<InsertItemProcesso>) {
-  const db = await getDb();
-  if (!db) return null;
-
-  try {
-    await db.update(itens_processo).set(data).where(eq(itens_processo.id, itemId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to update item processo:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.update(itens_processo).set(data).where(eq(itens_processo.id, itemId));
+  return { success: true };
 }
 
 export async function removerItemProcesso(itemId: number) {
-  const db = await getDb();
-  if (!db) return null;
-
-  try {
-    await db.delete(itens_processo).where(eq(itens_processo.id, itemId));
-    return { success: true };
-  } catch (error) {
-    console.error("[Database] Failed to remove item from processo:", error);
-    throw error;
-  }
+  const db = await withDb();
+  await db.delete(itens_processo).where(eq(itens_processo.id, itemId));
+  return { success: true };
 }

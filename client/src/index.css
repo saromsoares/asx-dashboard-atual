@@ -50,12 +50,47 @@
   /* ASX Brand Colors */
   --color-asx-red: oklch(0.48 0.22 25);
   --color-asx-red-hover: oklch(0.54 0.22 25);
-  --color-asx-dark: oklch(0.12 0.005 285);
-  --color-asx-surface: oklch(0.16 0.005 285);
-  --color-asx-surface-2: oklch(0.20 0.005 285);
-  --color-asx-border: oklch(0.26 0.005 285);
+  --color-asx-red-muted: oklch(0.48 0.22 25 / 0.15);
   --color-profit-positive: oklch(0.72 0.17 145);
   --color-profit-negative: oklch(0.65 0.22 25);
+
+  /* ASX Semantic Backgrounds (5 levels) */
+  --color-asx-dark: oklch(0.12 0.005 285);         /* bg-asx-dark: page background */
+  --color-asx-base: oklch(0.14 0.005 285);         /* bg-asx-base: header, sidebar */
+  --color-asx-surface: oklch(0.16 0.005 285);      /* bg-asx-surface: cards */
+  --color-asx-surface-2: oklch(0.20 0.005 285);    /* bg-asx-surface-2: inputs, elevated */
+  --color-asx-surface-3: oklch(0.24 0.005 285);    /* bg-asx-surface-3: hover state */
+
+  /* ASX Text (4 levels) */
+  --color-asx-text: oklch(0.90 0.005 65);          /* text-asx: primary text */
+  --color-asx-text-secondary: oklch(0.70 0.010 285); /* text-asx-secondary: labels */
+  --color-asx-text-muted: oklch(0.60 0.010 285);   /* text-asx-muted: placeholders */
+  --color-asx-text-heading: oklch(0.85 0.005 65);  /* text-asx-heading: headings */
+
+  /* ASX Borders (3 levels) */
+  --color-asx-border: oklch(0.26 0.005 285);       /* border-asx: default borders */
+  --color-asx-border-subtle: oklch(0.22 0.005 285);/* border-asx-subtle: card dividers */
+  --color-asx-border-strong: oklch(0.35 0.005 285);/* border-asx-strong: input focus */
+
+  /* ASX Semantic Status */
+  --color-asx-success: oklch(0.72 0.17 145);
+  --color-asx-success-bg: oklch(0.72 0.17 145 / 0.12);
+  --color-asx-warning: oklch(0.80 0.18 80);
+  --color-asx-warning-bg: oklch(0.80 0.18 80 / 0.12);
+  --color-asx-error: oklch(0.65 0.22 25);
+  --color-asx-error-bg: oklch(0.65 0.22 25 / 0.12);
+  --color-asx-info: oklch(0.65 0.18 240);
+  --color-asx-info-bg: oklch(0.65 0.18 240 / 0.12);
+
+  /* ASX Process Status Colors */
+  --color-status-pendente: oklch(0.80 0.18 80);
+  --color-status-confirmado: oklch(0.65 0.18 240);
+  --color-status-recebido: oklch(0.72 0.17 145);
+  --color-status-vazio: oklch(0.60 0.010 285);
+  --color-status-preenchendo: oklch(0.80 0.18 80);
+  --color-status-cheio: oklch(0.65 0.18 240);
+  --color-status-enviado: oklch(0.55 0.20 290);
+  --color-status-entregue: oklch(0.72 0.17 145);
 }
 
 :root {

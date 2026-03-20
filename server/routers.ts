@@ -515,6 +515,7 @@ export const appRouter = router({
     atualizar: protectedProcedure
       .input(z.object({
         itemId: z.number().int().positive(),
+        processoId: z.number().int().positive(),
         quantidade: z.number().int().min(0).max(999999).optional(),
         precoUnitarioDolar: z.number().min(0).max(999999.99).optional(),
         pedidoSarom: z.number().int().min(0).max(999999).optional(),
@@ -522,8 +523,8 @@ export const appRouter = router({
         ordemCompra: z.string().max(64).trim().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { itemId, ...data } = input;
-        const updateData: any = {};
+        const { itemId, processoId, ...data } = input;
+        const updateData: Record<string, unknown> = {};
         if (data.quantidade !== undefined) updateData.quantidade = data.quantidade;
         if (data.precoUnitarioDolar !== undefined) updateData.precoUnitarioDolar = String(data.precoUnitarioDolar);
         if (data.pedidoSarom !== undefined) updateData.pedidoSarom = data.pedidoSarom;
@@ -531,8 +532,11 @@ export const appRouter = router({
         if (data.ordemCompra !== undefined) updateData.ordemCompra = data.ordemCompra;
         // Recalcular preço total se quantidade ou preço unitário mudaram
         if (data.quantidade !== undefined || data.precoUnitarioDolar !== undefined) {
-          const qty = data.quantidade ?? 0;
-          const price = data.precoUnitarioDolar ?? 0;
+          // Buscar item atual para usar valores existentes como fallback
+          const itensAtuais = await getItensDoProcesso(processoId);
+          const itemAtual = itensAtuais.find(i => i.id === itemId);
+          const qty = data.quantidade ?? (itemAtual?.quantidade ?? 0);
+          const price = data.precoUnitarioDolar ?? parseFloat(String(itemAtual?.precoUnitarioDolar ?? "0"));
           updateData.precoTotalDolar = String(Math.round(qty * price * 100) / 100);
         }
         return await atualizarItemProcesso(itemId, updateData);

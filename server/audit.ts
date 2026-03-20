@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import { getDb, type Transaction } from './db';
 import { auditLogs } from '../drizzle/schema';
 import type { InsertAuditLog } from '../drizzle/schema';
@@ -32,8 +33,12 @@ export async function registrarAuditoria(
       acao,
       entidade,
       entidadeId,
-      dadosAntigos: dadosAntigos ? JSON.stringify(dadosAntigos) : null,
-      dadosNovos: dadosNovos ? JSON.stringify(dadosNovos) : null,
+      dadosAntigos: dadosAntigos
+        ? (typeof dadosAntigos === 'string' ? dadosAntigos : JSON.stringify(dadosAntigos))
+        : null,
+      dadosNovos: dadosNovos
+        ? (typeof dadosNovos === 'string' ? dadosNovos : JSON.stringify(dadosNovos))
+        : null,
       descricao,
       ipAddress,
       userAgent,
@@ -47,8 +52,13 @@ export async function registrarAuditoria(
 /**
  * Extrai informações do contexto da requisição
  */
-export function extrairContextoRequisicao(req: any) {
-  const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'desconhecido';
+export function extrairContextoRequisicao(req: Pick<Request, 'headers' | 'ip' | 'socket'>) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ipAddress =
+    (Array.isArray(forwarded) ? forwarded[0] : forwarded) ||
+    req.ip ||
+    req.socket?.remoteAddress ||
+    'desconhecido';
   const userAgent = req.headers['user-agent'] || 'desconhecido';
   return { ipAddress, userAgent };
 }
@@ -71,6 +81,11 @@ export function criarDescricaoAcao(acao: string, entidade: string, dados?: any):
     item_pedido: 'Item do Pedido',
     estoque: 'Estoque',
     preco: 'Preço',
+    container: 'Container',
+    container_pedido: 'Vínculo Container-Pedido',
+    produto: 'Produto',
+    processo_sr: 'Processo SR',
+    item_processo: 'Item do Processo',
   };
 
   const acaoTexto = acoes[acao] || acao;
